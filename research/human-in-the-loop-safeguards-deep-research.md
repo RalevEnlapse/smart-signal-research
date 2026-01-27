@@ -14,6 +14,23 @@ This document deepens item 23 in [`kali-task-research.md`](../kali-task-research
 
 ---
 
+## Why this theme matters for a City Digital Twin (and how it helps you run it)
+
+### Why you need it
+A City Digital Twin is most valuable when it influences real operational decisions (dispatch, signal timing, inspection prioritization, emergency actions). As soon as the twin contains optimization or AI/ML-driven recommendations, it introduces automation risk: over-trust, hidden tradeoffs (equity vs efficiency), and failure modes that can scale harm quickly.
+
+Human-in-the-loop safeguards are the mechanism that makes these high-impact workflows governable. They define decision boundaries, preserve legitimate authority, and ensure the twin’s recommendations remain contestable and auditable—so you can use automation without surrendering accountability.
+
+### How it helps you run the twin (practical operational impact)
+- **Decision tiering enables safe autonomy**: low-risk actions can be automated or fast-approved, while higher-risk actions require the right approver chain (quorum/incident commander) and tighter constraints.
+- **Creates an evidence-backed operational UI**: approvers see *why* the twin recommends an action, key drivers, uncertainty, and what would change the recommendation—reducing rubber-stamping and enabling informed overrides.
+- **Improves incident performance without “black box” fragility**: during time pressure, pre-defined approval playbooks and time-bound privileges keep decisions moving while remaining compliant.
+- **Enables auditability and post-incident learning**: immutable case records (recommendation → approval/override → outcome) support after-action reviews, drift detection, and governance reporting.
+- **Provides fail-safe operating modes**: explicit rollback/manual modes prevent the twin from forcing unsafe actions when inputs are degraded or models drift.
+
+### Evidence pointers (deep research starting points)
+- NIST’s AI Risk Management Framework (AI RMF 1.0) frames AI risk management as an ongoing practice (“intended to be a living document” with periodic review/updates), reinforcing that operational systems using AI need continuous governance, monitoring, and update discipline—not one-time model deployment. (PDF: https://nvlpubs.nist.gov/nistpubs/ai/nist.ai.100-1.pdf)
+
 ## 1. Background and context
 Automation in city systems appears in:
 - Incident detection and dispatch recommendations

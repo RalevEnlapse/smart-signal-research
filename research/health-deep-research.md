@@ -9,6 +9,23 @@ This document deepens item 12 in [`kali-task-research.md`](../kali-task-research
 
 ---
 
+## Why this theme matters for a City Digital Twin (and how it helps you run it)
+
+### Why you need it
+A City Digital Twin becomes operationally useful when it can connect *what the city is doing and experiencing* (traffic volumes, heat islands, air pollution, service accessibility) to *what outcomes residents experience* (respiratory events, heat illness, avoidable emergency demand). “Health” is where many cross-domain interventions ultimately get judged: whether actions taken in mobility, environment, housing, or emergency planning measurably reduce harm.
+
+A health-capable twin also provides a defensible way to prioritize investments: it helps quantify which corridors, neighborhoods, or populations are most exposed and most vulnerable—so interventions can be targeted for maximum benefit while monitoring equity impacts.
+
+### How it helps you run the twin (practical operational impact)
+- **Turns sensor + city-ops data into outcome-focused KPIs**: link exposure surfaces (air quality, heat, noise, greenspace access) to aggregated health signals (ED visits, ambulance dispatch counts) to measure whether operations and policies are working.
+- **Enables “detect → decide → act → verify” loops for environmental health**: detect abnormal exposure (e.g., heatwave + high PM2.5), decide/triage using vulnerability and service accessibility layers, act via operational measures (cooling center hours, targeted outreach, traffic restrictions), verify via subsequent changes in aggregated demand/health indicators.
+- **Supports intervention evaluation, not just monitoring**: run before/after analyses and counterfactual methods so the twin can answer “did this policy reduce harm?” rather than only “did exposures change?”.
+- **Improves surge planning**: use exposure forecasts and syndromic/dispatch aggregates to anticipate spikes in demand (heat-related illness, respiratory events) and pre-position resources.
+- **Operationalizes privacy**: health data can remain de-identified and aggregated (with thresholds/bins), while the twin still supports planning and evaluation—reducing re-identification risk while keeping the system actionable.
+
+### Evidence pointers (deep research starting points)
+- The systematic review *Environmental determinants of population health in urban settings* synthesizes evidence that urban health is shaped by environmental determinants (e.g., air pollution, noise, greenspace, built environment), supporting the twin’s need to represent exposures and built environment as first-class layers, not “nice-to-have” maps. (Open-access via PubMed Central: https://pmc.ncbi.nlm.nih.gov/articles/PMC7271472/)
+
 ## 1. Background and context
 Urban health is shaped by:
 - Environmental exposures: air pollution, heat, noise, greenspace

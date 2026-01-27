@@ -5,9 +5,28 @@ Citizen engagement platforms provide digital channels for residents to report ur
 
 The critical technical outputs are: (1) multi-channel issue reporting (mobile apps, web, SMS, social media), (2) transparent tracking of reported issues and resolutions, (3) participatory budgeting and voting systems, and (4) analytics dashboards for city officials to understand citizen concerns. Achieving these requires user-friendly interfaces, robust backend systems, integration with city operations, and strong privacy and security measures.
 
-This document deepens item 27 in [`kali-task-research.md`](../kali-task-research.md:1): *"Citizen engagement platforms: Create digital channels for residents to report issues, participate in decision-making, and co-create solutions for urban challenges."*
+This document deepens item 27 in [`kali-task-research.md`](../kali-task-research.md:1): *"Citizen engagement platforms: Create digital channels for residents to report urban issues, participate in decision-making processes, and co-create solutions for city challenges."*
 
 ---
+
+## Why this theme matters for a City Digital Twin (and how it helps you run it)
+
+### Why you need it
+
+A City Digital Twin that only ingests IoT/enterprise data risks optimizing for what is *measurable*, not what is *experienced*. Citizen engagement platforms provide a structured “human sensor” channel that captures high-salience issues (nuisances, service quality, safety perceptions) and converts them into actionable, geolocated signals that can be fused with the twin’s operational data.
+
+This is also an adoption lever: when residents see the twin driving real fixes and receiving feedback, participation rises, improving coverage and model fidelity.
+
+### How it helps you run the twin (practical operational impact)
+
+- **Closes the operational loop (detect → triage → dispatch → verify):** citizen reports become events in the twin; they are routed to responsible teams, tracked through completion, and verified (including resident confirmation), so you can measure cycle time, backlog, and repeat incidents.
+- **Improves model validity and prioritization:** reports highlight blind spots, help ground-truth model outputs, and provide labeled “events” (e.g., recurring flooding complaints) that guide sensor placement, maintenance, and model updates.
+- **Enables service-level governance:** you can define SLAs (time-to-acknowledge, time-to-fix) by issue type and geography, then operate the twin as a management system for performance.
+- **Strengthens trust and transparency:** two-way feedback (“we heard you; here’s what we did”) increases legitimacy and reduces the risk of the twin being perceived as surveillance-only.
+
+### Evidence pointers (deep research starting points)
+
+- Frontiers in Sustainable Cities (2025) case study of Bangkok’s **Traffy Fondue** platform reports operational outcomes (e.g., high citizen satisfaction and reported cost savings) and describes how structured citizen reporting supports city service workflows and decision-making. Source: https://www.frontiersin.org/journals/sustainable-cities/articles/10.3389/frsc.2025.1491621/full
 
 ## 1. Background and context
 Traditional citizen engagement faces significant challenges:

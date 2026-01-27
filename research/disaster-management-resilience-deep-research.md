@@ -9,6 +9,24 @@ This document deepens item 38 in [`kali-task-research.md`](../kali-task-research
 
 ---
 
+## Why this theme matters for a City Digital Twin (and how it helps you run it)
+
+### Why you need it
+
+Disaster management is one of the clearest “operational proofs” of a City Digital Twin: the twin must help reduce time-to-detect, time-to-decide, and time-to-act under uncertainty. Without an integrated resilience capability, the twin remains a planning artifact—useful in workshops, but disconnected from the high-stakes response and recovery loops that matter most.
+
+### How it helps you run the twin (practical operational impact)
+
+- **Enables multi-source detection and verification:** fusing sensors, reports, and external feeds into a single event model reduces false alarms and improves confidence.
+- **Coordinates action across agencies:** the twin becomes the shared situational picture (who/what/where), tying incidents to assets, teams, and resources for dispatch and tracking.
+- **Improves warning effectiveness:** standardized alerting formats and multi-channel dissemination turn model outputs (flood extents, smoke forecasts) into actionable public warnings.
+- **Connects response to recovery:** damage assessments and restoration progress become state updates in the twin, enabling recovery KPIs and prioritization.
+
+### Evidence pointers (deep research starting points)
+
+- OASIS **Common Alerting Protocol (CAP) v1.2** describes CAP as a general format for exchanging all-hazard emergency alerts over many kinds of networks, enabling a consistent warning message to be disseminated simultaneously over multiple warning systems (improving effectiveness while simplifying warning). Source: https://www.oasis-open.org/standard/cap/
+- UNDP/UNDRR (2025) notes that early warning systems are among the most effective and cost-efficient methods for reducing disaster-related deaths and losses, and describes how real-time data and multi-channel communications help turn early warnings into timely action. Source: https://iddrr.undrr.org/news/technology-dividend-empowering-and-protecting-communities-through-early-warnings
+
 ## 1. Background and context
 Disaster management faces significant challenges:
 - Limited early warning capabilities

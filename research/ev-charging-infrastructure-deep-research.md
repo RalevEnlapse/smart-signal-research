@@ -9,6 +9,23 @@ This document deepens item 35 in [`kali-task-research.md`](../kali-task-research
 
 ---
 
+## Why this theme matters for a City Digital Twin (and how it helps you run it)
+
+### Why you need it
+
+EV charging is a fast-growing, spiky, location-specific load that sits at the intersection of mobility and energy. Without a charging infrastructure view, a City Digital Twin can’t plan the “physical-digital” rollout (where chargers go, what power they need, who uses them, and when) or manage second-order effects like transformer overloads, curb management conflicts, and inequitable access.
+
+### How it helps you run the twin (practical operational impact)
+
+- **Operational situational awareness:** real-time station status/availability and utilization become live twin state, improving routing, user experience, and incident response (faults/outages).
+- **Grid-aware planning and control:** managed charging / load management integrates into twin scenarios so you can test peak impacts, identify constrained nodes, and evaluate mitigation (storage, DR, pricing).
+- **Supports standards-based interoperability:** choosing open protocols for charge-point ↔ central-system communications reduces vendor lock-in and makes it easier to integrate charging networks into the twin’s data/controls fabric.
+- **Enables performance and equity governance:** KPIs like uptime, wait time, and coverage by neighborhood can be tracked continuously, informing expansion priorities.
+
+### Evidence pointers (deep research starting points)
+
+- Open Charge Alliance overview of **OCPP** states the goal is a uniform method of communication between charge points and central systems, enabling any central system to connect with any charge point regardless of vendor (reducing coordination problems / improving interoperability). Source: https://openchargealliance.org/protocols/open-charge-point-protocol/
+
 ## 1. Background and context
 EV charging infrastructure faces significant challenges:
 - Range anxiety limiting EV adoption

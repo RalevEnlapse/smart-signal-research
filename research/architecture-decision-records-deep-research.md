@@ -4,6 +4,24 @@
 
 Architecture Decision Records (ADRs) are lightweight documents that capture important architectural decisions, their context, and consequences. For a city digital twin program, ADRs provide a structured approach to documenting design choices, enabling knowledge transfer, supporting decision review, and maintaining architectural coherence over time. This research outlines a comprehensive ADR framework including record structure, decision categories, lifecycle management, integration with development processes, and governance mechanisms.
 
+## Why this theme matters for a City Digital Twin (and how it helps you run it)
+A city digital twin is a long-lived, integration-heavy system-of-systems. The “twin” will evolve across vendors, data contracts, security postures, modeling approaches, and operating procedures. ADRs are how you keep that evolution coherent and auditable: they preserve the why behind key technical choices so operations teams can run the platform safely and engineers can change it without breaking governance promises.
+
+### Why you need it
+- **Prevents architectural drift in a complex program:** Digital twins accumulate one-off integrations; ADRs create a decision log that makes cross-team alignment enforceable.
+- **Supports public-sector accountability:** Many twin decisions have privacy, security, and procurement implications; ADRs provide an audit trail for review boards and compliance.
+- **Reduces rework and vendor lock-in risk:** Documented alternatives and consequences make it easier to revisit choices (e.g., data model, OGC/NGSI standards, cloud patterns) when constraints change.
+- **Improves onboarding and continuity:** Staff turnover is guaranteed in multi-year programs; ADRs shorten ramp-up time and reduce institutional knowledge loss.
+
+### How it helps you run the twin (practical operational impact)
+- **Operational runbooks become traceable:** When an incident happens (latency, data loss, security event), ADRs explain why key tradeoffs were made (e.g., eventual consistency, edge vs cloud processing) and what failure modes were accepted.
+- **Change management becomes safer:** You can tie deployments, schema changes, and policy updates back to ADRs, enabling controlled rollout and easier rollback.
+- **Governance integration:** ADRs align with architecture review boards and can be referenced by CI/CD checks, compliance reviews, and stage-gate approvals.
+
+### Evidence pointers (deep research starting points)
+- The ADR community defines ADRs as justified design choices addressing architecturally significant requirements, emphasizing lightweight, decision-log documentation ([`adr.github.io`](https://adr.github.io/)).
+- AWS Prescriptive Guidance describes ADRs as an “architecture decision log” with a practical lifecycle and example template ([`docs.aws.amazon.com` ADR process](https://docs.aws.amazon.com/prescriptive-guidance/latest/architectural-decision-records/adr-process.html)).
+
 ## 1. Background and context
 
 Architecture Decision Records emerged from the software architecture community as a response to the challenge of capturing and communicating architectural decisions. Traditional approaches to architecture documentation often produced heavy, static documents that quickly became outdated and were rarely consulted. ADRs take a different approach: they are small, focused documents created at the time decisions are made, capturing the essential information needed to understand and evaluate the decision.

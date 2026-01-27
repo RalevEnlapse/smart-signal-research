@@ -9,6 +9,25 @@ This document deepens item 8 in [`kali-task-research.md`](../kali-task-research.
 
 ---
 
+## Why this theme matters for a City Digital Twin (and how it helps you run it)
+
+### Why you need it
+
+Climate risk is where a City Digital Twin stops being a “current-state mirror” and becomes a decision tool for **future operating conditions**. Cities make long-lived commitments (roads, pumps, substations, housing policy) while hazards are changing. Without climate risk stress-testing, the twin can optimize maintenance and capital plans for yesterday’s climate and systematically under-prepare for extremes and compounding events.
+
+A climate-risk capability gives you a defensible way to connect: **hazard scenarios → asset/service impacts → priority actions → triggers for when to act**, with uncertainty stated explicitly.
+
+### How it helps you run the twin (practical operational impact)
+
+- **Scenario operations as a first-class workflow:** you maintain a versioned catalog of hazard scenarios (time horizons, pathways), run reproducible stress tests, and publish comparable metrics (downtime, affected population, loss) so leadership can make trade-offs.
+- **Turns maps into executable plans:** outputs feed capital planning and maintenance prioritization (renewal, hardening, redundancy), and define decision triggers (thresholds) for adaptive pathways.
+- **Improves emergency readiness:** compound-event simulations (heat + outage, storm + high tide) become playbook inputs and training scenarios, tightening the loop between planning and operations.
+- **Creates governance around uncertainty:** the twin becomes a managed system with audit trails for assumptions, scenario versions, and model updates—reducing “cherry-picked scenario” risk.
+
+### Evidence pointers (deep research starting points)
+
+- UK Environment Agency guidance on integrating climate change risk assessment and adaptation planning into a management system describes assessing current and future climate hazards, completing risk assessments, identifying control measures, writing an adaptation plan, and monitoring/reviewing the plan; it also points to ISO 14090/14091 and emphasizes thresholds and “adaptive pathways”. Source: https://www.gov.uk/guidance/climate-change-risk-assessment-and-adaptation-planning-in-your-management-system
+
 ## 1. Background and context
 Climate risk differs from historical risk because the hazard distribution is changing:
 - More frequent and intense heatwaves

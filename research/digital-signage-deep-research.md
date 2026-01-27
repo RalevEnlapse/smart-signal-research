@@ -9,6 +9,23 @@ This document deepens item 28 in [`kali-task-research.md`](../kali-task-research
 
 ---
 
+## Why this theme matters for a City Digital Twin (and how it helps you run it)
+
+### Why you need it
+
+A City Digital Twin’s impact depends on whether insights reach people in time and in the right context. Digital signage is a “last-mile interface” that turns twin outputs (alerts, detours, service changes, safety guidance) into **situational awareness and action** for residents and visitors—especially when mobile connectivity is limited, apps aren’t installed, or an area is crowded.
+
+### How it helps you run the twin (practical operational impact)
+
+- **Operationalizes decisions at street level:** the twin can drive dynamic content (e.g., reroutes, queue guidance, hazard zones) tied to location and time, making interventions visible and actionable.
+- **Supports emergency communications:** signage provides a managed broadcast channel for critical alerts, including priority overrides that can supersede normal content.
+- **Creates a feedback loop:** basic engagement telemetry (interactions, dwell time, “most requested routes”) helps validate whether messages are understood and where information gaps exist.
+- **Improves resilience:** local caching/offline modes and distributed displays provide continuity when central systems or networks are degraded.
+
+### Evidence pointers (deep research starting points)
+
+- OASIS **Common Alerting Protocol (CAP) v1.2** describes CAP as a general format for exchanging all-hazard emergency alerts over many kinds of networks, enabling a consistent warning message to be disseminated simultaneously over multiple warning systems (improving effectiveness while simplifying warning). Source: https://www.oasis-open.org/standard/cap/
+
 ## 1. Background and context
 Traditional public information dissemination faces challenges:
 - Static signage with limited update capability

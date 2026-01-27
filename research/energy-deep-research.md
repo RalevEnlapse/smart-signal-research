@@ -9,6 +9,25 @@ This document deepens item 5 in [`kali-task-research.md`](../kali-task-research.
 
 ---
 
+## Why this theme matters for a City Digital Twin (and how it helps you run it)
+
+### Why you need it
+
+Energy is a core interdependency: when the grid is constrained or disrupted, everything else (mobility, water, health, comms) degrades. An energy twin gives the city a way to reason about electrification, DER, storage, and demand response under **real constraints** (hosting capacity, coincident peaks, outage scenarios) rather than aspirational targets.
+
+Without this, a City Digital Twin can’t answer operational questions like “what breaks first under a heatwave + EV peak?” or “which investments reduce overloads and improve resilience fastest?”
+
+### How it helps you run the twin (practical operational impact)
+
+- **Turns decarbonization into executable scenarios:** run electrification/DER/EV scenarios and quantify constraint violations, reinforcement needs, and emissions impacts to guide policy and capital planning.
+- **Improves resilience planning:** outage simulations identify critical facilities at risk and the value of storage/microgrids/DR for continuity.
+- **Enables utility-city collaboration with controlled exposure:** the twin can separate restricted topology/ops datasets from city analytics while still producing publishable, aggregated outputs (e.g., zonal hosting capacity).
+- **Creates ongoing operating cadence:** periodic data refresh + forecast validation + scenario reruns become part of how the city manages adoption uncertainty and grid readiness.
+
+### Evidence pointers (deep research starting points)
+
+- NREL overview of **Advanced Hosting Capacity Analysis** describes hosting capacity analysis as a method to understand how much DER can be added to a distribution system without violating operational criteria, supporting DER integration planning. Source: https://www.nrel.gov/solar/market-research-analysis/advanced-hosting-capacity-analysis
+
 ## 1. Background and context
 Cities influence energy through:
 - Building electrification and efficiency

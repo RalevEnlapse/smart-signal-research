@@ -9,6 +9,24 @@ This document deepens item 32 in [`kali-task-research.md`](../kali-task-research
 
 ---
 
+## Why this theme matters for a City Digital Twin (and how it helps you run it)
+Noise is a “quality of life” variable that becomes operational when you can measure it continuously, locate hotspots, and connect it to controllable levers (traffic management, construction permitting, enforcement routing, and planning constraints). In a city digital twin, noise monitoring is not just a map—it is a closed loop from sensing → detection → response → verification.
+
+### Why you need it
+- **Turns complaints into evidence:** A twin helps reconcile citizen reports with time-stamped, location-based measurements so you can act consistently and transparently.
+- **Improves day-to-day operations:** Real-time detection of spikes and recurring hotspots supports dispatch/enforcement prioritization and faster response.
+- **Feeds planning and permitting decisions:** Longitudinal noise layers can be used to evaluate land-use changes, construction schedules, and mitigation (barriers, routing, curfews).
+- **Strengthens governance and trust:** Clear measurement standards, privacy controls, and auditability reduce disputes over selective enforcement.
+
+### How it helps you run the twin (practical operational impact)
+- **Event workflows:** Route detected events into ticketing/dispatch with location, context (time, weather, nearby roadworks), and evidence packets.
+- **Policy effectiveness tracking:** Compare baseline vs post-intervention noise levels for specific corridors or neighborhoods to validate benefits.
+- **Reusable platform capabilities:** Edge analytics, time-series storage, geospatial heatmaps, and privacy-by-design patterns generalize to other sensing-heavy twin domains.
+
+### Evidence pointers (deep research starting points)
+- OGC’s Urban Digital Twin Interoperability work highlights urban DT use-cases and interoperability patterns (including environmental layers such as noise) that connect simulation/visualization with planning and management decisions ([`docs.ogc.org/per/24-067r1.pdf`](https://docs.ogc.org/per/24-067r1.pdf)).
+- Decision-support framing for urban digital twins emphasizes using the digital replica as a basis for operational optimization and management (see DSS-oriented DT literature; e.g., open-access DT DSS article indexed on PMC).
+
 ## 1. Background and context
 Urban noise pollution presents significant challenges:
 - Negative health impacts (stress, sleep disturbance, cardiovascular issues)

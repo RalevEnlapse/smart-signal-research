@@ -9,6 +9,24 @@ This document deepens item 2 in [`kali-task-research.md`](../kali-task-research.
 
 ---
 
+## Why this theme matters for a City Digital Twin (and how it helps you run it)
+Asset management is where a digital twin stops being “a model” and becomes “an operator.” If the twin cannot reliably answer *what assets exist, where they are, what condition they’re in, what risk they carry, and what work is planned*, it will not be trusted for day-to-day operations or capital planning. This theme gives the twin a canonical asset truth and the workflows to turn insight into action.
+
+### Why you need it
+- **Creates a canonical infrastructure inventory:** Most cities have fragmented registries (GIS, CMMS/EAM, spreadsheets). A twin needs one reconciled identity/hierarchy to avoid duplicated work, missed assets, and unsafe decisions.
+- **Links evidence to decisions:** Inspections, telemetry, imagery, and failures become structured evidence that drives condition/risk scoring rather than anecdotal prioritization.
+- **Makes renewal defensible:** Risk-based prioritization under budget constraints is a core public-sector need; twin-based scenario planning supports transparent “why this project now” reasoning.
+- **Improves reliability and safety:** Predictive/condition-based maintenance reduces unplanned outages and supports safer field operations.
+
+### How it helps you run the twin (practical operational impact)
+- **Work execution loop:** The twin can generate/optimize work packages (by corridor, crew, access window), push them into CMMS, and then update asset state from as-maintained records.
+- **Operational KPIs that matter:** You can run the platform against service outcomes (planned vs reactive work, MTBF, risk reduction per $) rather than only technical telemetry.
+- **Reusable governance patterns:** Canonical IDs, audit logs, and data quality checks become shared infrastructure for other domains (water, energy, transport).
+
+### Evidence pointers (deep research starting points)
+- ISO describes ISO 55000 as the foundational standard for asset management, providing overview/terminology/principles and a framework to manage assets over their life cycles to realize value, improve performance, manage risk, and support sustainability ([`iso.org` ISO 55000:2024](https://www.iso.org/standard/83053.html)).
+- Smart-city digital twin literature positions DTs as decision-support systems for urban operations and lifecycle optimization (see Yessef et al., 2025; Crespo-Aguado et al., 2024 in references).
+
 ## 1. Background and context
 City infrastructure spans heterogeneous asset classes (roads, bridges, streetlights, signals, water mains, pumps, substations, buildings, parks equipment). Each class has distinct:
 - Failure modes and criticality

@@ -4,6 +4,26 @@
 
 Data Quality Service Level Agreements (SLAs) are formal contracts that define expected levels of data quality, including metrics for accuracy, completeness, timeliness, consistency, and validity. For a city digital twin program, data quality SLAs provide measurable standards for data reliability, enable proactive quality management, support data-driven decision-making, and establish accountability for data stewardship. This research outlines a comprehensive data quality SLA framework including quality dimensions, metric definitions, monitoring and alerting, remediation workflows, governance structures, and integration with data pipelines and business processes.
 
+## Why this theme matters for a City Digital Twin (and how it helps you run it)
+
+### Why you need it
+
+A City Digital Twin is only as trustworthy as its inputs. If data latency, missingness, or drift varies silently by source, the twin becomes operationally dangerous: alerts misfire, simulations calibrate against bad baselines, and teams lose confidence and stop using outputs.
+
+Data quality SLAs convert “data trust” into an **operational contract**: explicit, measurable promises about the data services the twin depends on.
+
+### How it helps you run the twin (practical operational impact)
+
+- **Defines fitness-for-use by workflow:** different twin use-cases (real-time incident response vs long-horizon planning) get different SLAs (freshness, completeness, accuracy), preventing one-size-fits-none quality targets.
+- **Enables automated guardrails:** monitoring and alerting against SLA thresholds turns quality failures into actionable incidents (with owners, escalation paths, and remediation workflows) instead of hidden degradation.
+- **Improves model stability:** consistent, versioned quality metrics help you detect upstream changes (schema shifts, sensor bias, API changes) early so you can retrain/recalibrate models and avoid “silent drift.”
+- **Supports governance and accountability:** a published “data SLA promise” aligns producers and consumers and reduces disputes about whether an operational miss was a data issue or a decision issue.
+
+### Evidence pointers (deep research starting points)
+
+- IBM overview of a data SLA frames it as a public promise to deliver a quantifiable level of service (analogous to infrastructure uptime commitments). Source: https://www.ibm.com/think/topics/data-sla
+- Gable.ai discussion of data SLAs highlights common quality dimensions (reliability/accuracy/timeliness/consistency) and tailoring SLAs to stakeholder needs. Source: https://www.gable.ai/blog/data-sla
+
 ## 1. Background and context
 
 Data quality is a critical success factor for city digital twin programs. Digital twins rely on accurate, timely, and complete data from multiple sources including sensors, IoT devices, enterprise systems, and external APIs. Poor data quality can lead to incorrect insights, flawed decisions, operational inefficiencies, and loss of stakeholder trust.

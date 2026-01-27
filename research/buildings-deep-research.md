@@ -9,6 +9,23 @@ This document deepens item 6 in [`kali-task-research.md`](../kali-task-research.
 
 ---
 
+## Why this theme matters for a City Digital Twin (and how it helps you run it)
+Buildings are one of the highest-leverage “systems” in a city: they drive energy demand, emissions, comfort/health outcomes, and large O&M budgets. A buildings twin makes the digital twin program operational at portfolio scale by linking building identity (registry/BIM) with live operations (BMS/metering/work orders) so you can detect issues early, prioritize retrofits, and verify savings.
+
+### Why you need it
+- **Portfolio-scale performance management:** Without a normalized building layer (metadata, tagging, baselines), you can’t compare buildings or prioritize interventions beyond anecdote.
+- **Turns BMS data into decisions:** Semantic tagging + FDD converts noisy point telemetry into actionable fault queues and maintenance work.
+- **Enables defensible retrofit prioritization:** Baselines + scenario scoring produce a repeatable way to rank retrofit candidates and estimate impact.
+- **Supports safety, comfort, and IAQ:** Operational building data is essential to keep critical public buildings healthy and comfortable.
+
+### How it helps you run the twin (practical operational impact)
+- **Fault-to-work loop:** FDD findings become tickets/work orders with evidence; outcomes feed back into model calibration.
+- **Savings persistence monitoring:** The twin can continuously validate whether energy/comfort improvements persist after commissioning or retrofits.
+- **Standardized onboarding:** Tagging standards and registry governance become a reusable onboarding playbook for more buildings.
+
+### Evidence pointers (deep research starting points)
+- NREL’s report “Metrics and Methods to Assess Building Fault Detection and Diagnosis Tools” frames how to evaluate FDD tools and discusses methodologies/metrics for detection and diagnosis—useful for making your buildings twin operational and measurable ([`docs.nrel.gov` FDD metrics report (PDF)](https://docs.nrel.gov/docs/fy19osti/72801.pdf)).
+
 ## 1. Background and context
 Buildings are often the largest share of urban energy use and emissions. Cities and large owners manage portfolios across:
 - Public buildings (schools, hospitals, offices)

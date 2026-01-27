@@ -13,6 +13,25 @@ This document deepens item 9 in [`kali-task-research.md`](../kali-task-research.
 
 ---
 
+## Why this theme matters for a City Digital Twin (and how it helps you run it)
+Air quality becomes “operational” in a city digital twin when you can translate noisy, sparse observations into decisions: what is happening now, what will happen next, what caused it, and what interventions will change it. This theme is valuable because it gives the twin a measurable public-outcome loop (exposure and health risk) that can drive day-to-day operations (alerts, incident response) and longer-horizon policy/asset decisions (traffic, heating, industrial controls).
+
+### Why you need it
+- **Turns environment sensing into actionable situational awareness:** A twin that only visualizes sensors is brittle; fusing monitors, low-cost sensors, and meteorology into nowcasts/forecasts supports timely advisories and targeted operational interventions.
+- **Enables attribution and “what-if” evaluation:** By linking emissions activity (traffic, heating, industry) with dispersion/chemistry models, the twin can quantify which sources drive hotspots and evaluate counterfactuals (e.g., low-emission zones, fleet electrification).
+- **Supports equity and health co-benefits tracking:** Exposure estimation at neighborhood scale lets you measure distributional impacts and prioritize interventions where health burden is highest.
+- **Improves resilience operations:** During wildfire smoke, inversions, or industrial incidents, air-quality forecasting and uncertainty communication becomes a core resilience capability for coordinated response.
+
+### How it helps you run the twin (practical operational impact)
+- **Operational dashboards + alerts:** Feed calibrated concentrations and confidence intervals into your serving layer for real-time alerts (schools, hospitals) and public dashboards.
+- **Closed-loop intervention measurement:** Use the same pipeline to compare pre/post intervention conditions (with traceable assumptions), supporting benefits realization and continuous improvement.
+- **Data governance leverage:** Air quality is a forcing function for sensor QA/QC, calibration workflows, and model/version lineage—capabilities you will reuse across other twin domains.
+
+### Evidence pointers (deep research starting points)
+- U.S. EPA guidance on dispersion modeling “preferred and recommended models” provides a baseline for fitness-for-purpose modeling choices in operational/regulatory contexts ([`epa.gov` dispersion modeling page](https://www.epa.gov/scram/air-quality-dispersion-modeling-preferred-and-recommended-models)).
+- Reviews highlight that combining models with measurements (hybrid approaches, calibration, and assimilation) is key to producing high-resolution exposure estimates suitable for decision support ([`PMC7313251` open-access review](https://pmc.ncbi.nlm.nih.gov/articles/PMC7313251/)).
+- Smart-city digital twin literature describes DTs integrating real-time data and analytics to support urban operations and emissions-reduction strategies (e.g., Yessef et al., 2025, Energy Reports; see references).
+
 ## 1. Background and context
 Urban air quality outcomes are driven by:
 - Emissions intensity and location (roads, stacks, heating)

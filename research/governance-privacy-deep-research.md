@@ -11,6 +11,23 @@ This document deepens item 13 in [`kali-task-research.md`](../kali-task-research
 
 ---
 
+## Why this theme matters for a City Digital Twin (and how it helps you run it)
+
+### Why you need it
+
+A City Digital Twin concentrates power: it aggregates operational data, correlates signals across domains, and can influence decisions that affect people’s lives. That makes privacy and governance a prerequisite for *operating* the twin, not a legal afterthought. Without strong governance, teams either (a) block access until the twin becomes unusable, or (b) ship fast and eventually trigger a privacy/security incident that shuts the program down.
+
+### How it helps you run the twin (practical operational impact)
+
+- **Enables safe multi-agency data sharing:** classification + purpose limitation + tiered access let you move faster without turning every access request into a bespoke legal negotiation.
+- **Reduces inference/linkability risk:** governance forces you to design aggregation thresholds, de-identification, and restricted zones so correlated datasets don’t become re-identification engines.
+- **Provides auditability and accountability:** consistent logging, access reviews, and incident playbooks make the twin operable under scrutiny (auditors, oversight bodies, public).
+- **Makes policy enforceable in architecture:** policy-as-code and enforcement points ensure rules are consistently applied across APIs, queries, and exports.
+
+### Evidence pointers (deep research starting points)
+
+- NIST describes the **Privacy Framework** as a voluntary tool intended to help organizations identify and manage privacy risk, supporting innovation while protecting individuals’ privacy. Source: https://www.nist.gov/privacy-framework
+
 ## 1. Background and context
 City data ecosystems typically involve:
 - Multiple agencies and external partners (utilities, vendors, universities)

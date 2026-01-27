@@ -4,6 +4,22 @@
 
 Benefits realization tracking is the systematic process of identifying, planning, measuring, and monitoring the expected benefits from investments, projects, and initiatives throughout their lifecycle. For a city digital twin program, this capability ensures that investments deliver measurable value to stakeholders, enables data-driven decision-making, and provides accountability for outcomes. This research outlines a comprehensive framework for benefits realization tracking including baseline establishment, benefit categorization, measurement methodologies, governance structures, and integration with project portfolio management.
 
+## Why this theme matters for a City Digital Twin (and how it helps you run it)
+Digital twin programs often fail in public-sector settings not because the tech is impossible, but because the “value story” is vague, benefits are claimed without baselines, and funding confidence erodes. Benefits realization tracking turns the twin into an outcomes-driven program: you define what success means, measure leading indicators, and keep an auditable link from platform capabilities → interventions → real-world impact.
+
+### Why you need it
+- **Protects the program from “demo-ware”:** Without agreed benefit definitions and baselines, the twin risks becoming a visualization project rather than a service-improving platform.
+- **Aligns stakeholders across agencies:** Benefits are cross-cutting (ops efficiency, safety, sustainability). A formal benefits model clarifies ownership and makes trade-offs explicit.
+- **Improves investment decisions:** Measurement and attribution allow you to scale what works and stop what doesn’t, supporting portfolio governance.
+
+### How it helps you run the twin (practical operational impact)
+- **Benefit dashboards as an operating instrument:** Track leading indicators (adoption, data quality, response times) and lagging indicators (cost avoidance, service reliability, exposure reduction).
+- **Closed-loop governance:** Use variance reviews to trigger corrective actions (data fixes, process changes, additional training) rather than post-hoc reporting.
+- **Better change management:** Clear “why” and visible outcomes increase adoption of new workflows enabled by the twin.
+
+### Evidence pointers (deep research starting points)
+- Monday.com’s benefits management guidance emphasizes that projects can finish “on time and on budget” yet miss expectations, and that benefits management connects deliverables to measurable outcomes via clear ownership, baselines, success metrics, and continuous tracking ([`monday.com` benefits management](https://monday.com/blog/project-management/benefits-management/)).
+
 ## 1. Background and context
 
 Benefits realization management (BRM) emerged from project management and portfolio management disciplines as organizations recognized that project completion does not guarantee value delivery. Traditional project management focuses on delivering outputs (products, services, results) on time, on budget, and to specification. However, the ultimate purpose of investments is to achieve outcomes and benefits that justify the expenditure.
