@@ -1,490 +1,344 @@
-# Architecture decision records — Deep research
+# Architecture decision records (ADRs) — Deep research (decision-grade + operational)
 
 ## Executive summary
-
-Architecture Decision Records (ADRs) are lightweight documents that capture important architectural decisions, their context, and consequences. For a city digital twin program, ADRs provide a structured approach to documenting design choices, enabling knowledge transfer, supporting decision review, and maintaining architectural coherence over time. This research outlines a comprehensive ADR framework including record structure, decision categories, lifecycle management, integration with development processes, and governance mechanisms.
-
-## Why this theme matters for a City Digital Twin (and how it helps you run it)
-A city digital twin is a long-lived, integration-heavy system-of-systems. The “twin” will evolve across vendors, data contracts, security postures, modeling approaches, and operating procedures. ADRs are how you keep that evolution coherent and auditable: they preserve the why behind key technical choices so operations teams can run the platform safely and engineers can change it without breaking governance promises.
-
-### Why you need it
-- **Prevents architectural drift in a complex program:** Digital twins accumulate one-off integrations; ADRs create a decision log that makes cross-team alignment enforceable.
-- **Supports public-sector accountability:** Many twin decisions have privacy, security, and procurement implications; ADRs provide an audit trail for review boards and compliance.
-- **Reduces rework and vendor lock-in risk:** Documented alternatives and consequences make it easier to revisit choices (e.g., data model, OGC/NGSI standards, cloud patterns) when constraints change.
-- **Improves onboarding and continuity:** Staff turnover is guaranteed in multi-year programs; ADRs shorten ramp-up time and reduce institutional knowledge loss.
-
-### How it helps you run the twin (practical operational impact)
-- **Operational runbooks become traceable:** When an incident happens (latency, data loss, security event), ADRs explain why key tradeoffs were made (e.g., eventual consistency, edge vs cloud processing) and what failure modes were accepted.
-- **Change management becomes safer:** You can tie deployments, schema changes, and policy updates back to ADRs, enabling controlled rollout and easier rollback.
-- **Governance integration:** ADRs align with architecture review boards and can be referenced by CI/CD checks, compliance reviews, and stage-gate approvals.
-
-### Evidence pointers (deep research starting points)
-- The ADR community defines ADRs as justified design choices addressing architecturally significant requirements, emphasizing lightweight, decision-log documentation ([`adr.github.io`](https://adr.github.io/)).
-- AWS Prescriptive Guidance describes ADRs as an “architecture decision log” with a practical lifecycle and example template ([`docs.aws.amazon.com` ADR process](https://docs.aws.amazon.com/prescriptive-guidance/latest/architectural-decision-records/adr-process.html)).
-
-## 1. Background and context
-
-Architecture Decision Records emerged from the software architecture community as a response to the challenge of capturing and communicating architectural decisions. Traditional approaches to architecture documentation often produced heavy, static documents that quickly became outdated and were rarely consulted. ADRs take a different approach: they are small, focused documents created at the time decisions are made, capturing the essential information needed to understand and evaluate the decision.
-
-In the context of a city digital twin program, ADRs address several critical challenges:
-- **Complex technical landscape**: Digital twins involve multiple technologies, data sources, and integration patterns
-- **Long-lived systems**: Architecture decisions have long-term implications that must be understood years later
-- **Team turnover**: Staff changes require knowledge transfer mechanisms
-- **Stakeholder communication**: Decisions must be understandable to both technical and non-technical stakeholders
-- **Regulatory compliance**: Certain decisions may have legal or policy implications
-
-ADRs provide several key benefits:
-- **Decision transparency**: Clear documentation of why decisions were made
-- **Knowledge preservation**: Capture of architectural knowledge for future reference
-- **Decision review**: Ability to revisit and potentially reverse decisions
-- **Onboarding support**: New team members can understand architectural history
-- **Audit trail**: Documentation of decisions for compliance and governance
-
-The lightweight nature of ADRs makes them practical for ongoing use, unlike comprehensive architecture documents that are often created once and then neglected.
-
-## 2. Stakeholders
-
-### Decision makers
-- **Solution architects**: Primary authors and owners of ADRs
-- **Technical leads**: Contributors to technical decisions and ADR content
-- **Engineering managers**: Reviewers and approvers of significant decisions
-- **Enterprise architects**: Reviewers for cross-cutting and strategic decisions
-
-### Decision consumers
-- **Development teams**: Reference ADRs when implementing features
-- **DevOps engineers**: Use ADRs to understand infrastructure and deployment decisions
-- **Data engineers**: Reference data architecture and integration decisions
-- **Security engineers**: Review security-related ADRs for compliance
-
-### Governance stakeholders
-- **Architecture review board**: Reviews and approves significant ADRs
-- **PMO**: Tracks ADRs as project deliverables
-- **Compliance officers**: Reviews ADRs for regulatory implications
-- **Audit teams**: Uses ADRs as evidence of decision processes
-
-### External stakeholders
-- **Vendors and partners**: Reference ADRs to understand integration requirements
-- **Regulatory bodies**: May review ADRs for compliance verification
-- **Citizen representatives**: May need to understand privacy and data decisions
-
-## 3. Threat model / abuse cases
-
-### Documentation quality threats
-- **Incomplete records**: ADRs missing critical context or consequences
-- **Outdated records**: Decisions superseded but ADRs not marked as such
-- **Inconsistent format**: Varying quality and structure making comparison difficult
-- **Technical jargon**: ADRs inaccessible to non-technical stakeholders
-
-### Process threats
-- **Decision avoidance**: Teams avoiding documentation to save time
-- **Retrospective documentation**: Creating ADRs after decisions without proper context
-- **Decision reversal without documentation**: Changes made without updating ADRs
-- **Selective documentation**: Only documenting "successful" decisions
-
-### Governance threats
-- **Lack of review**: Significant decisions made without proper architectural review
-- **Bypassing process**: Decisions made outside the ADR framework
-- **Insufficient authority**: ADRs created without proper decision-making authority
-- **Political influence**: Decisions influenced by factors outside technical merit
-
-### Mitigation strategies
-- Mandatory ADR creation for significant decisions
-- Standardized templates and quality criteria
-- Regular review of ADR currency and accuracy
-- Integration with development workflows
-- Clear escalation paths for controversial decisions
-
-## 4. Reference architecture (components + data flows)
-
-### Core components
-
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                        ADR Management Platform                               │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                              │
-│  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐                  │
-│  │  ADR         │    │  Template    │    │  Decision    │                  │
-│  │  Repository  │◄──►│  Engine      │◄──►│  Categorizer │                  │
-│  └──────────────┘    └──────────────┘    └──────────────┘                  │
-│         │                   │                   │                           │
-│         └───────────────────┼───────────────────┘                           │
-│                             ▼                                               │
-│  ┌──────────────────────────────────────────────────────────────────────┐  │
-│  │                      ADR Lifecycle Management                         │  │
-│  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌───────────┐ │  │
-│  │  │  Creation    │  │  Review      │  │  Approval    │  │  Status    │ │  │
-│  │  │  Workflow    │  │  Process     │  │  Workflow    │  │  Tracking  │ │  │
-│  │  └──────────────┘  └──────────────┘  └──────────────┘  └───────────┘ │  │
-│  └──────────────────────────────────────────────────────────────────────┘  │
-│                             │                                               │
-│                             ▼                                               │
-│  ┌──────────────────────────────────────────────────────────────────────┐  │
-│  │                      Discovery & Analysis                             │  │
-│  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌───────────┐ │  │
-│  │  │  Search      │  │  Decision    │  │  Impact      │  │  Trend     │ │  │
-│  │  │  & Browse    │  │  Graph       │  │  Analysis    │  │  Analysis  │ │  │
-│  │  └──────────────┘  └──────────────┘  └──────────────┘  └───────────┘ │  │
-│  └──────────────────────────────────────────────────────────────────────┘  │
-│                             │                                               │
-│                             ▼                                               │
-│  ┌──────────────────────────────────────────────────────────────────────┐  │
-│  │                      Integration & Reporting                          │  │
-│  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌───────────┐ │  │
-│  │  │  Code        │  │  CI/CD       │  │  Architecture │  │  Compliance│ │  │
-│  │  │  Integration │  │  Integration │  │  Dashboard   │  │  Reports   │ │  │
-│  │  └──────────────┘  └──────────────┘  └──────────────┘  └───────────┘ │  │
-│  └──────────────────────────────────────────────────────────────────────┘  │
-│                                                                              │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
-
-### Data flows
-
-1. **Creation flow**: Decision identification → Template selection → ADR drafting → Review → Approval → Publication
-2. **Update flow**: Decision change → ADR revision → Review → Approval → Status update → Supersession
-3. **Discovery flow**: Search query → ADR retrieval → Related decision identification → Impact analysis
-4. **Integration flow**: ADR creation → Code reference → CI/CD validation → Architecture dashboard update
-
-### Integration points
-- **Version control**: Store ADRs alongside code for traceability
-- **Issue tracking**: Link ADRs to related issues and pull requests
-- **CI/CD pipelines**: Validate architecture decisions during builds
-- **Documentation sites**: Publish ADRs for broader access
-- **Architecture review tools**: Integrate with review processes
-
-## 5. Methods / algorithms / standards
-
-### ADR structure
-- **Title**: Clear, descriptive name for the decision
-- **Status**: Proposed, accepted, rejected, deprecated, superseded
-- **Date**: Date of decision creation
-- **Decision makers**: Individuals responsible for the decision
-- **Context**: Background and problem statement
-- **Decision**: The actual decision made
-- **Consequences**: Positive and negative outcomes
-- **Alternatives considered**: Other options evaluated
-- **Related decisions**: Links to related ADRs
-
-### Decision categories
-- **Structural decisions**: System organization and component relationships
-- **Technology decisions**: Technology stack and tooling choices
-- **Data decisions**: Data models, schemas, and integration patterns
-- **Infrastructure decisions**: Deployment, scaling, and operational choices
-- **Security decisions**: Security controls and compliance measures
-- **Integration decisions**: External system integration patterns
-
-### Status lifecycle
-- **Proposed**: Decision under consideration
-- **Accepted**: Decision approved and implemented
-- **Rejected**: Decision not approved with rationale
-- **Deprecated**: Decision no longer recommended but still in use
-- **Superseded**: Decision replaced by a new decision
-
-### Standards and frameworks
-- **ADR format**: Lightweight template from Michael Nygard's original ADR concept
-- **arc42**: Comprehensive architecture documentation template
-- **ISO/IEC/IEEE 42010**: Standard for architecture description
-- **TOGAF ADM**: Architecture Development Method with decision capture
-- **C4 model**: Context, containers, components, and code architecture documentation
-
-### Decision quality criteria
-- **Clarity**: Decision and rationale clearly articulated
-- **Completeness**: All relevant context and consequences documented
-- **Traceability**: Links to related decisions and requirements
-- **Actionability**: Decision can be implemented and verified
-- **Reversibility**: Consideration of how to reverse the decision if needed
-
-## 6. Data requirements
-
-### ADR metadata
-- Unique identifier and version
-- Creation and modification dates
-- Author and contributors
-- Decision category and tags
-- Related ADRs and requirements
-- Implementation status
-
-### Decision content
-- Problem statement and context
-- Decision criteria and constraints
-- Options considered with pros/cons
-- Selected decision with rationale
-- Implementation approach
-- Expected consequences and risks
-
-### Relationship data
-- Dependencies on other decisions
-- Decisions that depend on this ADR
-- Related requirements and user stories
-- Related code changes and commits
-- Related issues and pull requests
-
-### Review data
-- Reviewer comments and feedback
-- Approval decisions and dates
-- Revision history and changes
-- Quality assessment scores
-- Compliance verification results
-
-### Data quality requirements
-- Accuracy: Decision content must accurately reflect the actual decision
-- Completeness: All required sections must be populated
-- Timeliness: ADRs must be created at time of decision
-- Consistency: Standardized format and terminology
-- Traceability: Clear links to related artifacts
-
-## 7. Implementation plan (phases)
-
-### Phase 1: Foundation (Months 1-2)
-- Define ADR template and structure
-- Establish decision categorization framework
-- Create ADR creation guidelines
-- Identify initial decision owners
-- Select pilot projects for ADR implementation
-
-### Phase 2: Tooling setup (Months 2-3)
-- Implement ADR repository structure
-- Set up version control integration
-- Create ADR templates and automation
-- Establish review and approval workflows
-- Configure notification and alerting
-
-### Phase 3: Pilot implementation (Months 3-5)
-- Create ADRs for pilot project decisions
-- Train teams on ADR process
-- Conduct ADR reviews and approvals
-- Gather feedback and refine process
-- Establish quality criteria
-
-### Phase 4: Rollout (Months 5-7)
-- Expand ADR process to all projects
-- Integrate with development workflows
-- Implement ADR discovery and search
-- Create architecture dashboard
-- Establish regular review cadence
-
-### Phase 5: Optimization (Months 7-12)
-- Implement decision graph visualization
-- Add impact analysis capabilities
-- Integrate with CI/CD pipelines
-- Establish ADR quality metrics
-- Create best practices library
-
-## 8. Testing and validation
-
-### Process validation
-- Conduct walkthrough of ADR creation process
-- Validate template completeness and usability
-- Test review and approval workflows
-- Verify integration with development tools
-
-### Quality validation
-- Review sample ADRs for completeness and clarity
-- Assess decision traceability and relationships
-- Validate status lifecycle management
-- Test search and discovery functionality
-
-### Stakeholder validation
-- Review ADR format with architects and developers
-- Validate usability with new team members
-- Test accessibility for non-technical stakeholders
-- Confirm integration with existing workflows
-
-### Continuous validation
-- Regular audit of ADR quality and currency
-- Peer review of significant ADRs
-- Analysis of ADR usage patterns
-- Feedback collection and process improvement
-
-## 9. Observability (SLIs/SLOs)
-
-### Service Level Indicators (SLIs)
-- **ADR creation timeliness**: Time from decision to ADR creation
-- **ADR completeness**: Percentage of required sections populated
-- **ADR review cycle time**: Time from submission to approval
-- **ADR currency**: Percentage of ADRs with current status
-- **ADR usage**: Number of ADR views and references
-
-### Service Level Objectives (SLOs)
-- **ADR creation timeliness**: ADRs created within 5 business days of decision
-- **ADR completeness**: 100% of required sections populated
-- **ADR review cycle time**: Reviews completed within 10 business days
-- **ADR currency**: 95% of ADRs with current status
-- **ADR usage**: 80% of significant decisions have ADRs
-
-### Monitoring and alerting
-- Dashboard tracking of ADR creation and review metrics
-- Automated alerts for overdue ADR reviews
-- Reporting on ADR quality and completeness
-- Regular review of SLI performance
-
-## 10. Governance and compliance
-
-### Governance structure
-- **Architecture Review Board**: Reviews and approves significant ADRs
-- **ADR Coordinators**: Responsible for ADR process administration
-- **Decision Owners**: Accountable for specific ADRs
-- **ADR Champions**: Promote ADR adoption and best practices
-
-### Decision rights
-- ADR creation: Any architect or technical lead
-- ADR review: Architecture Review Board for significant decisions
-- ADR approval: Architecture Review Board or designated approver
-- ADR status changes: Decision owners with review board notification
-- ADR deprecation: Architecture Review Board with impact assessment
-
-### Compliance requirements
-- Architecture documentation standards
-- Regulatory compliance for security and privacy decisions
-- Audit trail requirements for significant decisions
-- Documentation retention policies
-- Accessibility requirements for public sector transparency
-
-### Documentation requirements
-- ADR process documentation and guidelines
-- ADR template and quality criteria
-- Review and approval procedures
-- Integration with development workflows
-- Regular ADR quality reports
-
-## 11. Risks and mitigations
-
-### Risk: Low adoption
-- **Impact**: ADRs not created for significant decisions
-- **Mitigation**: Executive sponsorship, integration with workflows, demonstrated value
-
-### Risk: Poor quality ADRs
-- **Impact**: ADRs not useful for understanding decisions
-- **Mitigation**: Quality criteria, review process, training and templates
-
-### Risk: ADRs become outdated
-- **Impact**: Misleading or incorrect information
-- **Mitigation**: Regular review, status lifecycle, automated currency checks
-
-### Risk: Over-documentation
-- **Impact**: Excessive time spent on documentation
-- **Mitigation**: Clear scope criteria, lightweight templates, focus on significant decisions
-
-### Risk: Tool fragmentation
-- **Impact**: ADRs scattered across multiple systems
-- **Mitigation**: Centralized repository, integration with existing tools, clear ownership
-
-### Risk: Decision paralysis
-- **Impact**: Delays due to ADR process requirements
-- **Mitigation**: Proportional rigor, fast-track for low-risk decisions, clear escalation
-
-## 12. Costs and FinOps
-
-### Implementation costs
-- Framework design and documentation: $20K-$40K
-- Tooling setup and integration: $30K-$60K
-- Training and change management: $15K-$30K
-- Pilot implementation and refinement: $10K-$20K
-
-### Operating costs
-- ADR coordinator time: $100K-$200K annually
-- Architecture review board time: $150K-$300K annually
-- Tool maintenance and support: $10K-$25K annually
-- Training and onboarding: $10K-$20K annually
-
-### Cost-benefit considerations
-- ADR process typically costs 0.5-1% of development effort
-- ROI through reduced rework: 3:1 to 8:1
-- Avoided costs from better decision-making
-- Improved onboarding efficiency and knowledge transfer
-
-### FinOps practices
-- Regular review of ADR process efficiency
-- Optimization of templates to reduce documentation time
-- Leveraging existing development tools
-- Prioritizing ADR creation based on decision significance
-
-## 13. KPIs
-
-### Effectiveness KPIs
-- **ADR coverage**: Percentage of significant decisions with ADRs
-- **ADR quality score**: Composite measure of completeness and clarity
-- **ADR usage rate**: Number of ADR views and references per month
-- **Decision reversal rate**: Percentage of decisions that are later reversed
-
-### Efficiency KPIs
-- **ADR creation time**: Average time from decision to ADR publication
-- **ADR review time**: Average time from submission to approval
-- **Documentation effort**: Time spent on ADRs as percentage of development time
-- **Search success rate**: Percentage of searches finding relevant ADRs
-
-### Quality KPIs
-- **ADR completeness**: Percentage of ADRs with all required sections
-- **ADR currency**: Percentage of ADRs with current status
-- **Stakeholder satisfaction**: Survey results on ADR usefulness
-- **Review quality**: Assessment of review thoroughness
-
-### Strategic KPIs
-- **Knowledge preservation**: Percentage of architectural knowledge documented
-- **Onboarding efficiency**: Time reduction for new team members
-- **Decision consistency**: Alignment of decisions with architecture principles
-- **Compliance rate**: Percentage of decisions meeting compliance requirements
-
-## 14. Deliverables and checklists
-
-### Phase 1 deliverables
-- [ ] ADR template and structure document
-- [ ] Decision categorization framework
-- [ ] ADR creation guidelines
-- [ ] Decision owner assignment matrix
-- [ ] Pilot project selection report
-
-### Phase 2 deliverables
-- [ ] ADR repository structure
-- [ ] Version control integration documentation
-- [ ] ADR templates and automation scripts
-- [ ] Review and approval workflow documentation
-- [ ] Notification and alerting configuration
-
-### Phase 3 deliverables
-- [ ] Pilot project ADRs
-- [ ] Training materials and session records
-- [ ] ADR review and approval records
-- [ ] Process refinement recommendations
-- [ ] Quality criteria documentation
-
-### Phase 4 deliverables
-- [ ] Expanded implementation plan
-- [ ] Development workflow integration documentation
-- [ ] Search and discovery functionality
-- [ ] Architecture dashboard implementation
-- [ ] Regular review cadence schedule
-
-### Phase 5 deliverables
-- [ ] Decision graph visualization
-- [ ] Impact analysis capabilities
-- [ ] CI/CD pipeline integration
-- [ ] ADR quality metrics implementation
-- [ ] Best practices library
-
-### Ongoing deliverables
-- [ ] ADR creation and review reports
-- [ ] ADR quality and currency reports
-- [ ] Architecture dashboard updates
-- [ ] Process improvement recommendations
-- [ ] Training and onboarding materials
+Architecture Decision Records (ADRs) are small, durable documents that capture **what was decided**, **why**, **who decided**, **what was considered**, and **what the operational consequences are**.
+
+For a municipal “city twin” program—multi-team, multi-vendor, long-lived—ADRs are a core governance and delivery mechanism:
+- They reduce **architectural drift** across years of procurement cycles and staff turnover.
+- They create **audit-ready rationale** for privacy/security/interoperability choices.
+- They make change safer by connecting deployments, schema changes, and operational runbooks to explicit decisions.
+
+This revision strengthens implementation realism by:
+- Right-sizing “docs-as-code” vs “ADR platform” choices.
+- Defining **ADR-worthy triggers** for city twin work, with decision authority and emergency pathways.
+- Adding a **city-twin-specific taxonomy** and templates.
+- Connecting ADRs to **procurement/compliance** artifacts (SoW clauses, DPIAs, risk acceptance).
+- Replacing gameable metrics with higher-signal measures and acceptance criteria.
+
+Assumptions (defaults): public-sector procurement, multi-vendor delivery, limited staffing; advisory-first governance; options-not-prescriptions; high equity focus; balanced transparency.
+
+---
+
+## 1. Why this theme matters (and how it helps you run the twin)
+A city digital twin is a long-lived system-of-systems: data contracts, geospatial representations, identity/consent models, and security postures evolve over time. Without decision records, the program becomes a collection of integrations held together by personal memory.
+
+ADRs make the platform operable:
+- **Safer operations**: incident response teams can see why a tradeoff exists (e.g., eventual consistency, buffering, edge processing) and what failure modes were accepted.
+- **Controlled change**: you can pin changes to decisions, define rollout gates, and enforce review for high-impact modifications.
+- **Cross-department alignment**: privacy, security, and data-sharing agreements become traceable to explicit, reviewable decisions.
+
+---
+
+## 2. Scope: ADR practice vs ADR tooling (avoid over-tooling)
+### 2.1 Decision: when “docs-as-code” is enough
+Use a simple Git-based approach when:
+- ≤ 5–8 teams actively changing architecture
+- You can enforce ADR templates via pull request (PR) checks
+- Search needs are satisfied by repo search + a static docs site
+- You don’t need cross-repo linking at scale
+
+**Minimum viable ADR system (“docs-as-code”)**
+- ADRs stored as markdown under a single folder (example: `docs/adr/`)
+- A required template + lightweight CI check
+- A generated index page (by status/category/tags)
+- PR template includes an “ADR impacted?” prompt
+
+### 2.2 Decision: when an ADR platform is warranted
+Consider an ADR “platform” only when:
+- Many vendors/repos need a single cross-program view
+- Decision relationships matter (decision graph, dependencies, supersession)
+- You need role-based access for sensitive decisions (security exceptions)
+- You must produce audit reports across portfolios quickly
+
+Right-sizing rule: **prove the practice first**, then scale tooling.
+
+---
+
+## 3. Stakeholders, decision authority, and RACI
+### 3.1 Roles (minimum)
+- **ADR Author**: writes draft, captures options and consequences
+- **Decision Owner**: accountable for outcome; ensures implementation alignment
+- **Reviewers**: security, privacy, data governance, operations, domain leads
+- **Architecture Review Board (ARB)**: approves high-impact decisions
+- **Procurement/Legal liaison**: ensures vendor obligations and data-sharing terms align
+
+### 3.2 RACI for ADR lifecycle
+| Activity | Responsible | Accountable | Consulted | Informed |
+|---|---|---|---|---|
+| Identify ADR-worthy decision | Tech lead / architect | Product/platform owner | Ops + security | ARB |
+| Draft ADR | ADR Author | Decision Owner | Domain leads | Platform teams |
+| Review | Reviewers | ARB (for major) | Procurement/legal | Stakeholders |
+| Approve | ARB or delegated approver | ARB chair / CTO equivalent | Security/privacy | Teams |
+| Implement + verify | Delivery team | Decision Owner | Ops | ARB |
+| Supersede/deprecate | Decision Owner | ARB | Affected owners | Program |
+
+### 3.3 Emergency / incident-driven decisions
+For incidents (security events, major outages), you need a fast path:
+- Create an **Emergency ADR** within 48 hours of the incident.
+- Mark it `status: accepted-temporary` with an explicit expiry date.
+- Require a follow-up ADR within 30–60 days to either:
+  - confirm as permanent, or
+  - revert/supersede with a durable design.
+
+---
+
+## 4. “ADR-worthy” trigger conditions for city twins
+The most common failure is teams not knowing what deserves an ADR. Use the triggers below.
+
+### 4.1 Always ADR-worthy (must write)
+- **Canonical data contracts** and breaking schema changes
+- **Identity/consent model** (citizen identity linkage, pseudonymization approach)
+- **Privacy posture** (retention, redaction, secondary-use constraints)
+- **Security boundaries** (network segmentation, key management, admin access model)
+- **Interoperability profile** choices (OGC/NGSI-LD profiles, conformance claims)
+- **Geospatial representation** (tiling vs hex; CRS standards; accuracy targets)
+- **Eventing/streaming design** for core telemetry (ordering, dedupe, replay)
+- **Model governance** decisions (versioning, validation gates, human-in-loop)
+- **Vendor selection constraints** that lock in interfaces or formats
+
+### 4.2 Sometimes ADR-worthy (use judgment)
+- Switching ETL orchestration approach
+- Introducing a new “golden record” entity
+- Changes to observability standards and SLOs
+
+### 4.3 Not ADR-worthy (use normal docs)
+- Routine refactors with no architecture impact
+- Minor UI changes
+- Non-breaking dependency bumps
+
+---
+
+## 5. City-twin ADR taxonomy (domain-specific)
+Use a taxonomy that maps to city twin reality so decisions are discoverable.
+
+| Category | Examples |
+|---|---|
+| **Data contracts & semantics** | canonical entity definitions, versioning policy, schema evolution rules |
+| **Geospatial & time** | spatial index choice, CRS, tiling strategy, temporal aggregation standards |
+| **Interoperability** | OGC SensorThings profile, NGSI-LD context strategy, API conformance |
+| **Security & identity** | authn/authz, tenant separation, privileged access model |
+| **Privacy & ethics** | DPIA outcomes, de-identification, retention/redaction, public transparency posture |
+| **Integration patterns** | batch vs streaming, idempotency, replay, edge vs cloud partitioning |
+| **Reliability & ops** | SLOs, degraded mode behavior, DR strategy |
+| **Procurement & vendor management** | data-sharing terms, exit strategy, escrow, SLA obligations |
+| **Analytics/model governance** | validation requirements, release gates, bias/equity checks |
+
+---
+
+## 6. ADR template (operationally actionable)
+A good ADR is implementable and testable.
+
+### 6.1 Required fields (minimum)
+- `adr_id` (unique)
+- `title`
+- `status` (see 6.3)
+- `date`
+- `decision_owner`
+- `decision_makers`
+- `context`
+- `decision`
+- `options_considered` (with tradeoffs)
+- `consequences` (positive/negative)
+- `operational_impact` (runbooks/SLOs/degraded mode)
+- `security_privacy_notes` (or explicit “N/A” with justification)
+- `procurement_compliance_links` (or “N/A”)
+- `implementation_plan` (phased)
+- `acceptance_criteria`
+- `references` (PRs, issues, contracts)
+
+### 6.2 “Decision at a glance” block (for non-technical stakeholders)
+Include a short block near the top:
+- What is the decision?
+- What changes for residents/operators?
+- What risks are accepted?
+- What would make us reverse this decision?
+
+### 6.3 Status lifecycle (expanded)
+- `proposed`
+- `accepted`
+- `accepted-temporary` (emergency)
+- `rejected`
+- `deprecated`
+- `superseded` (must link to superseding ADR)
+
+---
+
+## 7. Integration into decision moments (how it actually gets used)
+### 7.1 Workflow integration points
+- **PR template**: “Does this change require an ADR?” (link to triggers)
+- **Architecture review gate**: ARB agenda is driven by proposed ADRs
+- **CI checks**:
+  - validate ADR front-matter fields
+  - ensure `superseded` includes a link
+  - require `acceptance_criteria` for `accepted`
+- **Release governance**: major releases include an ADR delta summary
+
+### 7.2 Minimal “ADR checks” for CI/CD (docs-as-code)
+- Schema lint for ADR metadata (YAML front matter or markdown headings)
+- Broken link checking for referenced ADRs/PRs
+- Index generation verification
+
+### 7.3 Publishing and access
+Balance transparency with security:
+- Public or cross-department ADRs should have a redacted summary version when needed.
+- Security exception ADRs may be restricted; still require an internal audit trail.
+
+---
+
+## 8. Data requirements: ADR metadata and decision graph (practical)
+### 8.1 Canonical entity: `ADR`
+Minimum contract fields (store in markdown + extractable metadata):
+- `adr_id`, `title`, `status`, `date`
+- `category[]`, `tags[]`
+- `system_scope` (which subsystems)
+- `affected_contracts[]` (data contract IDs)
+- `security_classification` (public/internal/restricted)
+- `links` (PRs, issues, SoWs, DPIAs)
+
+### 8.2 Canonical entity: `DecisionLink`
+To avoid overbuilding a graph database early, start as extracted edges:
+- `from_adr_id`, `to_adr_id`, `relationship` (depends-on/supersedes/relates-to)
+
+---
+
+## 9. Validation & acceptance criteria (make it “good enough to use”)
+### 9.1 Acceptance criteria for the ADR practice (program-level)
+- ≥ 80% of **ADR-worthy triggers** produce an ADR within 5 business days.
+- ≥ 95% of ADRs have a valid owner and status.
+- ≥ 90% of accepted ADRs include explicit operational impact + acceptance criteria.
+- New joiners can answer “why did we choose X?” within 10 minutes using ADR search.
+
+### 9.2 Acceptance criteria for each ADR (quality gate)
+An ADR is “acceptable” when:
+- Context explains the decision pressure and constraints.
+- Options include at least one credible alternative.
+- Consequences include operational impacts and failure modes.
+- Reversal conditions are explicit.
+- Links exist to implementation evidence (PRs/issues) after acceptance.
+
+### 9.3 Backtesting / historical replay (for ADR quality)
+Quarterly, sample a set of incidents and major changes:
+- Can responders find the governing ADR in < 5 minutes?
+- Did the ADR predict the failure mode?
+- Was a reversal/supersession captured?
+
+---
+
+## 10. Operational SLIs/SLOs and metrics (avoid gameable metrics)
+### 10.1 Operational SLIs
+- **Decision capture latency**: decision date → ADR created
+- **Review cycle time**: draft → accepted
+- **Adoption signal**: ADR referenced in PRs/design docs for affected areas
+- **Supersession hygiene**: percent of superseded ADRs correctly linked
+
+### 10.2 Suggested SLOs
+| Metric | SLO |
+|---|---|
+| ADR created after decision | ≤ 5 business days |
+| Review completed | ≤ 10 business days |
+| Superseded ADRs properly linked | ≥ 98% |
+| ADR references in major PRs | ≥ 70% of major changes |
+
+### 10.3 Higher-signal quality measures
+- **Decision reversal rate with root causes** (good programs reverse sometimes; measure why)
+- **Decision regret postmortems** (explicit learning loop)
+- **Operational impact accuracy** (did reality match predicted consequences?)
+
+---
+
+## 11. Linking ADRs to procurement and compliance (public-sector reality)
+### 11.1 Procurement linkages
+For vendor-involved decisions, ADRs should reference:
+- SoW requirements that depend on the decision (APIs, standards conformance)
+- Exit/portability clauses (data export formats, IP rights)
+- Vendor SLAs and audit obligations
+
+### 11.2 Compliance linkages
+ADRs should link to (or summarize outcomes of):
+- DPIA / privacy impact assessments
+- Security risk acceptance and exceptions
+- Data-sharing agreements and retention schedules
+
+### 11.3 Exception handling
+When teams request exceptions (e.g., storage in a non-standard location):
+- Create an ADR with `status: accepted-temporary`.
+- Include expiry date and remediation plan.
+- Track exceptions as a register driven by ADRs.
+
+---
+
+## 12. Runbooks (operationalization)
+### 12.1 Runbook: “major schema change proposed”
+Trigger: breaking change to canonical entity/data contract.
+
+Checklist:
+- [ ] Confirm ADR-worthy trigger
+- [ ] Draft ADR includes migration plan + compatibility window
+- [ ] Identify affected systems and vendors
+- [ ] Define rollout phases and rollback plan
+- [ ] Approval gate: ARB + data governance
+- [ ] Release notes prepared (internal + external)
+
+### 12.2 Runbook: “emergency architecture change during incident”
+Trigger: outage/security incident requires immediate architectural modification.
+
+Checklist:
+- [ ] Implement emergency fix with incident ticket reference
+- [ ] Create Emergency ADR within 48 hours
+- [ ] Set expiry date + follow-up owner
+- [ ] Post-incident review: decide to revert or formalize
+
+### 12.3 Runbook: “ADR drift / outdated decision discovered”
+Trigger: implementation diverges from ADR, or ADR assumptions invalid.
+
+Checklist:
+- [ ] Determine whether to update or supersede
+- [ ] If superseding: create new ADR, link both ways
+- [ ] Communicate to affected teams and vendors
+- [ ] Update operational docs/runbooks impacted
+
+---
+
+## 13. Implementation roadmap (0–3, 3–12, 12–24 months)
+### 0–3 months (foundation, low staffing)
+- Adopt standard ADR template and taxonomy (Sections 5–6)
+- Define triggers and ARB decision rights (Section 4)
+- Implement docs-as-code repo structure and CI checks
+- Pilot with 1–2 high-change areas (data contracts + security boundary)
+
+### 3–12 months (scale across vendors)
+- Roll out ADR practice to all delivery streams
+- Add extraction for metadata + index site
+- Introduce quarterly “decision regret” review
+- Implement procurement/compliance link fields and exception register
+
+### 12–24 months (maturity)
+- If justified: add cross-repo ADR discovery and decision graph views
+- Integrate ADRs into stage gates and release governance
+- Formalize external transparency posture (public summaries, redactions)
+
+Dependencies:
+- Clear ARB charter and meeting cadence
+- A shared contract catalog (even if minimal)
+- Program-level security/privacy governance processes
+
+---
+
+## 14. Risks & mitigations (with detect + respond)
+| Risk | How we detect | How we respond |
+|---|---|---|
+| Low adoption | few ADRs for trigger events | enforce PR prompts; ARB checks; coaching |
+| Over-documentation | cycle time increases; teams complain | tighten trigger list; lightweight templates |
+| Gameable metrics | “complete” ADRs with low usefulness | shift to adoption + regret metrics; sampling audits |
+| Vendor drift | vendor implements different patterns | tie SoW conformance to ADR references; enforce interface tests |
+| Emergency decisions become permanent silently | accepted-temporary with no follow-up | expiry alerts; ARB review queue |
+
+---
 
 ## 15. References
-
 ### 15.1 Workspace source
 - [`kali-task-research.md`](../kali-task-research.md:1) — Item 18: Architecture decision records
 
 ### 15.2 External references (retrieved via Firecrawl MCP)
-- Joel Parker Henderson. *Architecture decision record (ADR) examples for software*. GitHub Repository. Retrieved from https://github.com/joelparkerhenderson/architecture-decision-record — Provides ADR examples and defines an ADR as a document that captures an important architectural decision made along with its context and consequences.
-
-- ADR Community. *Architectural Decision Records (ADRs)*. Retrieved from https://adr.github.io/ — Defines an Architectural Decision (AD) as a justified design choice that addresses a functional or non-functional requirement that is architecturally significant.
-
-- AWS. *ADR process - AWS Prescriptive Guidance*. Retrieved from https://docs.aws.amazon.com/prescriptive-guidance/latest/architectural-decision-records/adr-process.html — Describes the ADR process that outputs a collection of architectural decision records, creating a decision log, with an example ADR in the appendix.
-
-### 15.3 Suggested further reading (not fetched)
-- *Documenting Architecture Decisions* — Blog post by Michael Nygard, originator of the ADR concept
-- *arc42 — Architecture Documentation Template* — Comprehensive template for architecture documentation
-- *Building Evolutionary Architectures* — Book by Neal Ford, Rebecca Parsons, and Patrick Kua
-- *Software Architecture in Practice* — Book by Len Bass, Paul Clements, and Rick Kazman
-- *The Art of Scalability* — Book by Abbott, Lorio, and Williams on architectural decision-making
+- ADR Community — https://adr.github.io/
+- AWS Prescriptive Guidance ADR process — https://docs.aws.amazon.com/prescriptive-guidance/latest/architectural-decision-records/adr-process.html
