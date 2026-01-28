@@ -1,313 +1,321 @@
 # Energy — Deep research
 
 ## Executive summary
-An urban energy “twin” represents electricity (and often heat/gas) supply, demand, and network constraints to support decarbonization planning, resilience, and operational decision-making. It connects asset topology (feeders, substations, DER), consumption profiles (buildings, EV charging), and grid physics/constraints (thermal limits, voltage, contingency limits) with policy levers (electrification, storage, demand response).
 
-The practical value is in answering: *What happens to reliability, costs, and emissions if we electrify buildings, add EV charging, deploy storage, and implement demand response—under realistic peak conditions and outage scenarios?* Delivering this requires careful data governance with utilities, uncertainty-aware forecasting, and a reference architecture that separates sensitive operational grid data from city analytics while enabling secure collaboration.
+An urban energy “twin” is a **decision-support system** that represents energy supply/demand, distribution constraints, electrification trajectories, and emissions impacts to guide city policy and investment—**without pretending the city has utility-grade operational visibility or control**.
 
-This document deepens item 5 in [`kali-task-research.md`](../kali-task-research.md:1): *“Energy: Represent supply, demand, and grid constraints to plan decarbonization, storage, and demand response.”*
+The core question remains:
 
----
+> What happens to reliability, costs, and emissions if we electrify buildings, add EV charging, deploy DER/storage, and implement demand response—under realistic coincident peaks and outage scenarios?
 
-## Why this theme matters for a City Digital Twin (and how it helps you run it)
+This revision makes the theme operational by adding:
 
-### Why you need it
+- A concrete **utility–city collaboration operating model** (joint steering, custodianship, dispute resolution, publish approvals, procurement boundary).
+- A **fitness-for-purpose labeling scheme** and a decision tree for model fidelity under limited topology access, including uncertainty quantification and misuse prevention.
+- Equity and affordability guardrails for DR/managed charging and electrification scenarios with auditable reporting.
+- A clear cyber-physical boundary: advisory-by-default, partner-mediated actuation only, with security/safety constraints.
+- Emissions accounting governance (average vs marginal factors, provenance/versioning, disclosure aligned to GHG Protocol).
+- Validation and benchmark concepts (“golden feeder” sets) and acceptance thresholds for hosting capacity and forecasts.
 
-Energy is a core interdependency: when the grid is constrained or disrupted, everything else (mobility, water, health, comms) degrades. An energy twin gives the city a way to reason about electrification, DER, storage, and demand response under **real constraints** (hosting capacity, coincident peaks, outage scenarios) rather than aspirational targets.
+## 0. Scope, decisions, and fitness-for-purpose
 
-Without this, a City Digital Twin can’t answer operational questions like “what breaks first under a heatwave + EV peak?” or “which investments reduce overloads and improve resilience fastest?”
+### 0.1 Decisions the energy twin must support
 
-### How it helps you run the twin (practical operational impact)
+1. **Hosting capacity / DER interconnection guidance** (where is DER likely feasible; what upgrades might be needed)
+2. **DER siting and value stacking** (storage, PV + storage, resilience hubs)
+3. **EV charging load impacts** (transformer/feeder stress; managed charging potential)
+4. **Resilience / backup power planning** (critical facilities, outage scenarios, microgrids)
+5. **DR / managed charging program design** (targets, guardrails, measurement)
+6. **Emissions and co-benefits reporting** (GHG impacts by program/scenario)
 
-- **Turns decarbonization into executable scenarios:** run electrification/DER/EV scenarios and quantify constraint violations, reinforcement needs, and emissions impacts to guide policy and capital planning.
-- **Improves resilience planning:** outage simulations identify critical facilities at risk and the value of storage/microgrids/DR for continuity.
-- **Enables utility-city collaboration with controlled exposure:** the twin can separate restricted topology/ops datasets from city analytics while still producing publishable, aggregated outputs (e.g., zonal hosting capacity).
-- **Creates ongoing operating cadence:** periodic data refresh + forecast validation + scenario reruns become part of how the city manages adoption uncertainty and grid readiness.
+### 0.2 Fitness-for-purpose labels (publishability and misuse prevention)
 
-### Evidence pointers (deep research starting points)
+All outputs must carry a label. Labels are controls, not marketing.
 
-- NREL overview of **Advanced Hosting Capacity Analysis** describes hosting capacity analysis as a method to understand how much DER can be added to a distribution system without violating operational criteria, supporting DER integration planning. Source: https://www.nrel.gov/solar/market-research-analysis/advanced-hosting-capacity-analysis
+| Label | Allowed uses | Forbidden uses | Typical data/model burden | Publishability |
+|---|---|---|---|---|
+| **Advisory / Screening** | early planning, candidate siting, program sizing ranges | engineering interconnection decisions, compliance claims | aggregated data, proxy models | can be public if aggregated + caveated |
+| **Planning-grade** | capital planning, non-wires alternatives screening, resilience portfolio | device-level operational control | partial topology + validated models | public with approvals + redaction |
+| **Engineering-grade (Utility)** | interconnection studies, operational constraints | public release of sensitive topology | full topology + utility validation | generally restricted |
 
-## 1. Background and context
-Cities influence energy through:
-- Building electrification and efficiency
-- EV adoption and charging infrastructure
-- Distributed energy resources (DER): rooftop PV, batteries
-- Demand response programs and flexible loads
+Rules:
 
-Constraints:
-- Distribution grid capacity and hosting limits
-- Peak demand and coincident peaks (hot/cold events)
-- Interdependencies with telecom, water, transportation
+- Default label is **Advisory / Screening** when `grid_visibility_level = limited`.
+- Any public “hosting capacity map” must include:
+  - label badge
+  - last-updated date
+  - uncertainty/range and what it excludes
+  - prohibition statement: “Not an interconnection determination.”
 
-Twin-enabled energy planning supports:
-- DER hosting capacity and interconnection planning
-- Electrification pathway analysis and grid reinforcement needs
-- Resilience: critical load continuity during outages
-- Demand flexibility and peak shaving strategies
+## 1. Utility–city collaboration operating model (make it concrete)
 
----
+### 1.1 Governance structure
 
-## 2. Stakeholders
-- **Electric utility / distribution system operator (DSO)**: grid operations and planning
-- **City sustainability/energy office**: decarbonization goals, programs
-- **Building owners and facility managers**: retrofits, load management
-- **DER developers**: PV/storage projects, interconnection
-- **EV charging operators**: site planning and load management
-- **Regulators**: reliability standards, consumer protection
-- **Emergency management**: critical facilities, outage response
-- **IT/data platform**: secure data exchange and modeling infrastructure
+Establish a **Utility–City Energy Data & Modeling Board** with a clear charter.
 
----
-
-## 3. Threat model / abuse cases
-
-### 3.1 Assets to protect
-- Confidentiality of grid topology and operational states
-- Integrity of forecasts and planning models used for investment decisions
-- Availability of modeling services during emergencies
-
-### 3.2 Abuse/failure cases
-- **Sensitive grid data leakage** enabling targeting of critical infrastructure
-- **Model manipulation** to favor specific projects or hide constraints
-- **Incorrect hosting capacity outputs** leading to unsafe interconnections
-- **Outage scenario underestimation** causing resilience gaps
-
-### 3.3 Controls
-- Data sharing agreements and tiered access
-- Secure enclaves / segmentation for operational grid datasets
-- Reproducible modeling with audit logs and versioned assumptions
-- Independent review for high-impact planning outputs
-
----
-
-## 4. Reference architecture (components + data flows)
-
-### 4.1 Components
-1. **Energy data exchange layer**
-   - Secure ingestion from utility and city datasets
-   - Data contracts, de-identification/aggregation
+Minimum bodies:
 
-2. **Grid representation layer**
-   - Network topology (substations, feeders, transformers)
-   - Constraints (thermal ratings, voltage limits)
+1. **Joint Steering Committee** (monthly/quarterly)
+   - city energy office lead + utility planning lead + CIO/CISO + legal/privacy
+   - owns scope, priorities, and publication posture
 
-3. **Load and DER modeling**
-   - Baseline load profiles by node/area
-   - DER generation profiles (PV), storage dispatch models
-   - EV charging profiles and managed charging strategies
+2. **Data Custodianship Working Group** (biweekly)
+   - data stewards from utility + city platform
+   - owns data contracts, refresh cadence, quality SLAs, access grants
 
-4. **Scenario and planning engine**
-   - Electrification uptake scenarios
-   - Reinforcement planning and non-wires alternatives
-   - Resilience/outage simulations for critical loads
+3. **Model Review Panel** (monthly; ad hoc for releases)
+   - utility engineers + city analysts
+   - approves model versions, benchmarks, and acceptance thresholds
 
-5. **Optimization layer**
-   - Storage siting and dispatch
-   - Demand response program design and activation policies
-   - Managed EV charging control policies
-
-6. **Serving layer**
-   - Dashboards, APIs, scenario reports
-
-7. **Observability/governance**
-   - Data freshness/quality SLAs, model drift, audit trails
-
-### 4.2 Data flows
-- Utility topology + constraints → grid model store (restricted)
-- Meter/load aggregates + building data → load modeling
-- DER/EV plans → scenario inputs
-- Scenario engine → outputs: constraint violations, reinforcement needs, costs/emissions
-- Recommendations → program design and infrastructure investment planning
-
----
-
-## 5. Methods / algorithms / standards
-
-### 5.1 Forecasting demand and flexibility
-- Time-series forecasting by feeder/zone with weather covariates
-- Coincident peak analysis and extreme event stress testing
-- Flexibility modeling: controllable loads (HVAC, water heating, EV)
-- AI/ML models for energy consumption prediction with federated learning
-- Differential privacy for privacy-preserving energy analytics
-
-### 5.2 Power flow and constraint analysis
-- Distribution power flow (steady-state) for voltage and thermal constraints
-- Hosting capacity analysis for DER integration
-- Contingency analysis for critical components (where data supports)
-- Digital twin-based predictive maintenance for grid infrastructure
-- Real-time monitoring and anomaly detection
-
-### 5.3 DER and storage modeling
-- PV generation profiles (irradiance-based)
-- Storage dispatch (rule-based or optimization) under tariffs and constraints
-- Value stacking: peak shaving, resilience, ancillary services (where applicable)
-- Solar panel digital twin features for performance optimization
-- Wind energy digital twin framework for enhanced monitoring
-
-### 5.4 Demand response and managed charging
-- Program targeting and enrollment models
-- Dispatch strategies that respect customer comfort and fairness
-- Managed charging to avoid transformer overloads and reduce peaks
-- Smart grid IoT framework for predicting energy consumption
-
-### 5.5 Emissions accounting
-- Marginal vs average emissions factors
-- Temporal granularity matters (hourly emissions for DR value)
-- Real-time carbon intensity monitoring (e.g., Microsoft Azure for BP)
-
-### 5.6 Standards and protocols
-- IEC 61850 for substation automation
-- OpenADR for demand response communication
-- IEEE 2030.5 for smart energy profile
-- MQTT/AMQP for real-time energy data
-- NGSI-LD context models for interoperability
-
----
-
-## 6. Data requirements
-
-### 6.1 Minimum viable data
-- Aggregated load by geography (and ideally by feeder/transformer with controls)
-- Asset capacity metadata (substation/feeder/transformer ratings)
-- Weather and climate normals/extremes
-- Building stock and electrification plans (where available)
-
-### 6.2 High-value data
-- Advanced metering (AMI) time series (aggregated and privacy-protected)
-- Detailed grid topology (restricted)
-- DER interconnection queue and installed DER inventory
-- EV registrations and charging station utilization
-
-### 6.3 Data governance
-- Define which outputs can be public (e.g., zonal hosting capacity) vs restricted
-- Ensure privacy constraints for meter data aggregation thresholds
-
----
-
-## 7. Implementation plan (phases)
-
-### Phase 0 — Partnership and scope
-- Establish utility-city data sharing and governance
-- Define planning questions and decision cadence
-
-### Phase 1 — Baseline load + coarse constraint model
-- Build aggregated load models by zone
-- Introduce simplified capacity constraints (proxy model) if topology is limited
-
-### Phase 2 — Detailed feeder-level modeling (where feasible)
-- Integrate restricted topology and run distribution power flow
-- Produce hosting capacity and reinforcement candidate lists
-
-### Phase 3 — DER/storage/DR scenario engine
-- Implement electrification and EV scenarios
-- Evaluate non-wires alternatives and program designs
-
-### Phase 4 — Operational integration and resilience
-- Tie to outage management inputs for resilience planning
-- Deploy dashboards for critical facilities and continuity plans
-
----
-
-## 8. Testing and validation
-- Data QA: load totals reconcile across sources and time
-- Forecast validation by season and extreme events
-- Power flow validation against utility engineering benchmarks
-- Scenario sanity checks and sensitivity analysis (tariffs, adoption rates)
-
----
-
-## 9. Observability (SLIs/SLOs)
-
-### 9.1 SLIs
-- Data freshness for load and DER inventory updates
-- Forecast error metrics by zone/feeder
-- Scenario run success rate and reproducibility (same inputs → same outputs)
-- End-to-end latency (ms)
-- Synchronicity error between physical and virtual states
-- Update rate (Hz)
-- Service availability (%)
-- Mean time to detect/recover (MTTD/MTTR)
-
-### 9.2 Example SLOs
-- 99% of daily load aggregates available by 06:00 local time
-- Scenario runs complete within defined time budget for decision cycles
-- System uptime ≥ 99.9%
-- Update rate ≥ 1 Hz for critical grid monitoring
-- End-to-end latency < 5 seconds for real-time state updates
-
----
-
-## 10. Governance and compliance
-- Formal agreements for critical infrastructure data
-- Access tiering and secure enclaves
-- Model transparency: publish assumptions and uncertainty ranges for policy use
-- Procurement governance to avoid vendor lock-in
-
----
-
-## 11. Risks and mitigations
-- **Limited topology access** → use proxy constraint models and refine with utility
-- **Forecast failure during extremes** → stress testing and conservative margins
-- **Equity impacts of DR** → opt-in design, safeguards, distributional analysis
-- **Cybersecurity concerns** → strict segmentation and least privilege
-
----
-
-## 12. Costs and FinOps
-- Compute for scenario simulation and power flow
-- Data storage and secure environment costs
-- Staff time for utility coordination and model maintenance
-
-FinOps metrics:
-- Cost per scenario run
-- Cost per feeder modeled per year
-
----
-
-## 13. KPIs
-- Reduction in projected overload violations under target adoption scenarios
-- DER interconnection cycle time improvements (if supported)
-- Peak demand reduction from DR/managed charging
-- Emissions reductions attributable to interventions
-- Resilience: % critical load served under outage scenarios
-
----
-
-## 14. Deliverables and checklists
-
-### 14.1 Deliverables
-- Secure energy data exchange and governance model
-- Baseline load and constraint dashboards
-- Hosting capacity outputs (appropriately aggregated)
-- Electrification/EV/DER scenario engine with reports
-- Resilience analysis for critical facilities
-
-### 14.2 Readiness checklist
-- [ ] Data sharing and access controls approved
-- [ ] Load reconciliation validated
-- [ ] Scenario assumptions documented and versioned
-- [ ] Sensitivity and uncertainty communicated
-
----
-
-## 15. References
-
-### 15.1 Workspace source
+### 1.2 Data custodianship and dispute resolution
+
+- Each dataset has:
+  - `system_of_record`
+  - `custodian` (accountable)
+  - `allowed_uses` + `prohibited_uses`
+  - retention and sharing rules
+
+Dispute resolution:
+
+- step 1: custodianship group attempts resolution within 5 business days
+- step 2: model review panel adjudicates technical disputes
+- step 3: steering committee resolves policy/publication disputes
+
+### 1.3 Publish approvals for aggregated outputs
+
+Any public release (e.g., hosting capacity zones) follows:
+
+1. draft artifact + label + uncertainty disclosure
+2. redaction review (sensitive infrastructure inference risks)
+3. utility approval (engineering + security)
+4. city approval (comms + legal/privacy)
+5. publish with immutable release metadata and rollback plan
+
+### 1.4 Procurement and vendor boundary management
+
+- City-owned platform vendors must not receive raw restricted topology unless explicitly contracted and isolated.
+- Prefer a separation model:
+  - utility runs sensitive studies in its enclave
+  - city consumes aggregated outputs with provenance
+- Contract clauses:
+  - data handling, audit logs, breach notification
+  - portability and exit plan
+  - model transparency (inputs/assumptions disclosed at the allowed level)
+
+## 2. Model fidelity vs data access trade-offs (limited visibility)
+
+### 2.1 Decision tree: proxy vs detailed
+
+Given `grid_visibility_level = limited`, choose the simplest model that is safe for the decision.
+
+| Decision | Minimum safe model class | If visibility improves | Notes |
+|---|---|---|---|
+| Public screening map | zonal/proxy constraints + conservative margins | feeder-level power flow | must be labeled advisory |
+| City siting for public chargers | transformer screening + historical peak proxies | feeder/transformer models | include equity metrics |
+| DR/managed charging program sizing | load shape + diversity factors + weather | feeder constraints where available | comfort constraints required |
+| Resilience hubs planning | critical facility load + outage scenarios | utility outage model integration | avoid operational dependencies |
+
+### 2.2 Uncertainty representation
+
+Under incomplete topology, uncertainty is not optional.
+
+- represent outputs as ranges (P10/P50/P90) or conservative bounds
+- separate uncertainty sources:
+  - topology unknowns
+  - load forecast error
+  - DER adoption uncertainty
+
+Example disclosure snippet:
+
+- “Hosting capacity shown is a **screening estimate** derived from aggregated constraints and historical peaks; local equipment conditions may materially change results.”
+
+### 2.3 Misuse-prevention patterns
+
+- UI label badges + hover “allowed/forbidden uses.”
+- Default to **zonal** aggregation for public maps.
+- Watermark exports.
+- “What would change this result?” fields on reports (data needed for upgrade).
+
+## 3. Equity and affordability guardrails (high focus)
+
+### 3.1 Required equity/affordability metrics
+
+Report distributions, not just averages:
+
+- **bill impact distribution** (P10/P50/P90) by customer segment
+- **energy burden** proxies where feasible (share of income spent on energy)
+- participation representativeness (enrollment vs eligible population)
+- comfort constraints compliance for DR (e.g., temperature bounds, medical equipment exemptions)
+- outage resilience by neighborhood (hours without power at critical services)
+
+### 3.2 Program safeguards
+
+For DR/managed charging and electrification incentives:
+
+- opt-in by default; strong protections for vulnerable households
+- “no harm” constraints:
+  - max bill increase limits
+  - opt-out and override mechanisms
+  - equipment safety constraints
+- avoid siting reinforcement and public charging in ways that systematically exclude underserved areas
+
+### 3.3 Auditable monitoring and reporting
+
+- publish an internal quarterly equity report with:
+  - metrics above
+  - sampling/audit methodology
+  - corrective actions
+- require third-party or cross-department review for high-impact programs
+
+## 4. Cyber-physical boundary and actuation
+
+### 4.1 Default: advisory-by-default
+
+The city twin does not directly write to utility OT systems.
+
+- any “control” is via utility programs or aggregators with explicit contracts
+
+### 4.2 If limited partner-mediated control is used
+
+Examples:
+
+- managed charging via aggregator API
+- DR event calls via OpenADR
+
+Safety/security constraints:
+
+- approvals for events (two-person rule for high-impact dispatch)
+- explicit rollback (event cancellation)
+- segmentation between analytics and control planes
+- audit logs for every event (who/what/when/targeting)
+- emergency exception handling + post-event review
+
+## 5. Emissions accounting governance
+
+### 5.1 Average vs marginal emissions (how to choose)
+
+- **Average (location-based)**: appropriate for inventory-style reporting and annual summaries.
+- **Marginal**: appropriate for operational decisions and DR/managed charging timing value (when shifting load changes which generators run).
+
+Rules:
+
+- every report must declare:
+  - factor type (average vs marginal)
+  - geography (balancing area)
+  - time granularity (hourly/daily/annual)
+  - version + provenance
+
+### 5.2 Provenance, versioning, and disclosure
+
+- maintain an `EmissionsFactorRegistry` with:
+  - `factor_id`, `type`, `region`, `time_granularity`
+  - `source_url`, `method_summary`
+  - `valid_from/to`, `version`
+
+Public disclosure rules:
+
+- publish both the factor and caveats at the chosen transparency level
+- align public claims to the city’s GHG inventory practices
+
+## 6. Validation and benchmarks
+
+### 6.1 “Golden feeder” benchmark sets
+
+Work with the utility to define a small set of representative feeders:
+
+- urban dense
+- suburban
+- high DER penetration
+- constrained transformer-heavy areas
+
+Use these to:
+
+- validate hosting capacity methodology
+- validate forecasts under normal and extreme regimes
+
+### 6.2 Acceptance thresholds by decision type
+
+Examples (calibrate locally):
+
+- screening maps: conservative bounds; prioritize low false positives
+- planning-grade: backtested against feeder benchmarks with documented error
+- any upgrade toward engineering-grade requires utility acceptance
+
+### 6.3 Backtesting plan
+
+- forecast backtesting by season and extreme events
+- hosting capacity validation against benchmark data and interconnection outcomes (where possible)
+- publish a quarterly “model performance” report internally
+
+## 7. Operational runbooks
+
+### 7.1 Annual emissions factor refresh and publication
+
+- pull latest factor sources
+- update registry version
+- rerun baseline emissions reports
+- publish release notes and caveats
+
+### 7.2 Hosting capacity map release workflow
+
+- generate artifact with label + uncertainty
+- run redaction review
+- obtain utility + city approvals
+- publish with release metadata; define rollback
+
+### 7.3 Data-sharing incident / utility data embargo
+
+- stop publishes dependent on embargoed data
+- switch to coarse proxy outputs with explicit labels
+- notify steering committee and consumers
+
+### 7.4 Model degradation/drift detected
+
+- freeze current public artifacts
+- revert to last-known-good model
+- run diagnostics; update benchmarks
+- publish internal incident report
+
+## 8. Key metrics
+
+- data access coverage (% feeders/assets represented; fidelity level)
+- forecast accuracy and calibration by regime
+- hosting capacity validation hit rate / false positives
+- equity/affordability metrics (bill impacts, participation)
+- publishability compliance (% outputs correctly labeled + approved)
+
+## 9. Implementation roadmap
+
+### 0–3 months
+
+- stand up steering + custodianship + model review bodies
+- complete data inventory and access tiering
+- implement labeling scheme and default disclosures
+- build initial proxy models for screening
+
+### 3–12 months
+
+- define benchmark/golden feeder sets and acceptance thresholds
+- improve fidelity where visibility allows
+- implement equity guardrails and reporting cadence
+- build publish workflow with approvals and redaction
+
+### 12–24 months
+
+- integrate interdependency/resilience coupling (critical facilities, outage scenarios)
+- mature partner-mediated actuation where justified and governed
+- continuous validation and transparency maturity
+
+## 10. References
+
+### 10.1 Workspace source
+
 - Item 5 in [`kali-task-research.md`](../kali-task-research.md:1)
 
-### 15.2 External references (retrieved via Firecrawl MCP)
-- Advanced Hosting Capacity Analysis (NREL): https://www.nrel.gov/solar/market-research-analysis/advanced-hosting-capacity-analysis
-- Hosting Capacity Analysis — overview (IREC): https://irecusa.org/our-work/hosting-capacity-analysis/
-- Yessef et al. (2025). "Digital twin technology in smart cities: A step toward intelligent urban management." Energy Reports, 14, 5539-5557. DOI: 10.1016/j.egyr.2025.11.097
-- Jerkovic et al. (2025). "Smart grid IoT framework for predicting energy consumption using federated learning homomorphic encryption." Sensors.
-- Chen & Fang (2024). "Harnessing digital twin and IoT for real-time monitoring, diagnostics, and error correction in domestic solar energy storage." Energy Reports, 11, 3614-3623.
+### 10.2 External references (retrieved via Firecrawl MCP)
 
-### 15.3 Suggested further reading (not fetched)
-- Distribution system planning and hosting capacity methods
-- Demand response program design and measurement
-- Power systems modeling and resilience planning
-- Digital Twin Implementation Readiness Level (DT-IRL) framework
-- Zero-trust architecture for energy systems
-- Federated learning for privacy-preserving energy analytics
-- Blockchain-based digital twins for energy management
+- NREL. *Data Validation for Hosting Capacity Analyses* (report). https://docs.nrel.gov/docs/fy22osti/81811.pdf — Guidance on validating inputs and methods for hosting capacity analyses to improve reliability of published results.
+- NREL. *Advanced Hosting Capacity Analysis* (overview). https://www.nrel.gov/solar/market-research-analysis/advanced-hosting-capacity-analysis — Defines hosting capacity analysis as quantifying DER additions without violating operational criteria.
+- GHG Protocol. *Scope 2 Guidance* (PDF). https://ghgprotocol.org/sites/default/files/2023-03/Scope%202%20Guidance.pdf — Defines location-based (grid-average) and market-based methods and disclosure expectations for Scope 2 electricity emissions.
+- NIST. *NISTIR 7628 — Guidelines for Smart Grid Cybersecurity* (PDF). https://www.nist.gov/system/files/documents/smartgrid/nistir-7628_total-2.pdf — Smart grid cybersecurity guidance relevant to segmentation and boundary controls between analytics and control systems.
+- NREL. *Chapter 5. Low-Income Energy Bill Equity and Affordability* (LA100 Equity Strategies) (PDF). https://docs.nrel.gov/docs/fy24osti/85952.pdf — Discusses equity/affordability considerations for energy system transitions; useful for defining guardrails and reporting.

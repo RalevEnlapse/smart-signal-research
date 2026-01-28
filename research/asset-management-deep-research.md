@@ -1,369 +1,391 @@
-# Asset management — Deep research
+# Asset management — Deep research (municipal, audit-ready, twin-enabled)
 
 ## Executive summary
-Asset management in a city-scale “digital twin” context is the discipline of maintaining a continuously accurate, decision-ready representation of infrastructure assets (what they are, where they are, their condition, risk, criticality, and lifecycle status) and using that representation to optimize inspection, maintenance, renewal, and capital planning.
+Asset management in a city-scale digital twin context is the discipline of maintaining a **decision-ready, auditable representation of infrastructure assets** (what they are, where they are, their configuration, condition, risk, and lifecycle state) and using that representation to **plan and defend** inspection, maintenance, renewal, and capital investment under real public-sector constraints.
 
-A twin-enabled asset management system goes beyond CMMS/EAM record-keeping: it links *physical reality* (inspections, sensor telemetry, imagery, failures) to *engineering models* (deterioration/remaining useful life), and to *work execution* (work orders, crews, budgets, permits). The payoff is improved service reliability, safer operations, reduced total cost of ownership, and defensible prioritization of spend.
+Twin-enabled asset management goes beyond CMMS/EAM recordkeeping:
+- It reconciles **GIS location truth** with **CMMS work history truth** and with **engineering evidence** (as-builts, inspections, photos, telemetry).
+- It maintains a **digital thread** from as-designed → as-built → as-maintained → as-operated.
+- It treats inspection evidence as governed records (QA, sampling, chain-of-custody) because many outcomes touch safety, claims, and regulatory contexts.
 
-This document deepens item 2 in [`kali-task-research.md`](../kali-task-research.md:1): *“Asset management: Track lifecycle, condition, and maintenance of infrastructure assets using twin-based inspection and work planning.”*
-
----
-
-## Why this theme matters for a City Digital Twin (and how it helps you run it)
-Asset management is where a digital twin stops being “a model” and becomes “an operator.” If the twin cannot reliably answer *what assets exist, where they are, what condition they’re in, what risk they carry, and what work is planned*, it will not be trusted for day-to-day operations or capital planning. This theme gives the twin a canonical asset truth and the workflows to turn insight into action.
-
-### Why you need it
-- **Creates a canonical infrastructure inventory:** Most cities have fragmented registries (GIS, CMMS/EAM, spreadsheets). A twin needs one reconciled identity/hierarchy to avoid duplicated work, missed assets, and unsafe decisions.
-- **Links evidence to decisions:** Inspections, telemetry, imagery, and failures become structured evidence that drives condition/risk scoring rather than anecdotal prioritization.
-- **Makes renewal defensible:** Risk-based prioritization under budget constraints is a core public-sector need; twin-based scenario planning supports transparent “why this project now” reasoning.
-- **Improves reliability and safety:** Predictive/condition-based maintenance reduces unplanned outages and supports safer field operations.
-
-### How it helps you run the twin (practical operational impact)
-- **Work execution loop:** The twin can generate/optimize work packages (by corridor, crew, access window), push them into CMMS, and then update asset state from as-maintained records.
-- **Operational KPIs that matter:** You can run the platform against service outcomes (planned vs reactive work, MTBF, risk reduction per $) rather than only technical telemetry.
-- **Reusable governance patterns:** Canonical IDs, audit logs, and data quality checks become shared infrastructure for other domains (water, energy, transport).
-
-### Evidence pointers (deep research starting points)
-- ISO describes ISO 55000 as the foundational standard for asset management, providing overview/terminology/principles and a framework to manage assets over their life cycles to realize value, improve performance, manage risk, and support sustainability ([`iso.org` ISO 55000:2024](https://www.iso.org/standard/83053.html)).
-- Smart-city digital twin literature positions DTs as decision-support systems for urban operations and lifecycle optimization (see Yessef et al., 2025; Crespo-Aguado et al., 2024 in references).
-
-## 1. Background and context
-City infrastructure spans heterogeneous asset classes (roads, bridges, streetlights, signals, water mains, pumps, substations, buildings, parks equipment). Each class has distinct:
-- Failure modes and criticality
-- Inspection regimes (visual, NDT, telemetry-based)
-- Maintenance actions and safety constraints
-- Data sources and standards
-
-Traditional asset management challenges:
-- Fragmented systems (GIS, CMMS/EAM, SCADA/OT, spreadsheets)
-- Incomplete/incorrect asset registry (unknown assets, wrong locations)
-- Condition data that is sparse, inconsistent, or non-comparable
-- Reactive maintenance driven by failures rather than risk
-
-Twin-based asset management addresses these by:
-- Establishing a canonical asset identity and geospatial representation
-- Integrating inspection evidence (photos, LiDAR, CV features, notes)
-- Maintaining versioned asset state (as-installed vs as-maintained)
-- Enabling scenario planning (budget vs risk vs service impacts)
+This document deepens item 2 in [`kali-task-research.md`](kali-task-research.md:1): “Asset management: Track lifecycle, condition, and maintenance of infrastructure assets using twin-based inspection and work planning.”
 
 ---
 
-## 2. Stakeholders and operating model
-Primary stakeholders:
-- **Asset owners** (public works, utilities, transport agencies): accountable for service and safety
-- **Operations & maintenance (O&M)**: executes inspections and work orders
-- **Capital planning / engineering**: renewal programs, design standards, long-term planning
-- **Finance/procurement**: budgets, contracts, vendor management
-- **Field contractors**: construction, specialized inspection
-- **Public safety/regulators**: compliance for critical assets (bridges, pressure vessels)
-- **IT/data/platform teams**: integration, security, data governance
+## Evidence pointers (external sources, implementation-grade)
+The program should ground policy language and audit posture in recognized standards/guidance:
 
-RACI patterns (example):
-- Asset registry stewardship: Asset owner (A), Data team (R), GIS (C), CMMS admins (C)
-- Condition model governance: Engineering (A/R), Data science (C), O&M (C)
-- Work planning rules: O&M (A/R), Engineering (C), Finance (C)
+- **ISO 55000:2024 — Asset management — Vocabulary, overview and principles (ISO)**
+  - URL: https://www.iso.org/standard/83053.html
+  - Takeaway: ISO positions asset management as a systematic, lifecycle approach to realize value, improve performance, and manage risk; ISO 55000 provides overview/terminology/principles, with ISO 55001 requirements and ISO 55002 guidance.
 
----
+- **NIST SP 800-82 — Guide to Operational Technology (OT) Security (NIST)**
+  - URL: https://csrc.nist.gov/pubs/sp/800/82/r3/ipd
+  - Takeaway: OT/ICS environments have unique safety/reliability constraints; security architectures should respect segmentation and controlled interfaces—useful for defining IT analytics vs OT boundary for SCADA-adjacent asset telemetry.
 
-## 3. Threat model / abuse cases
-Even “non-security” domains have meaningful abuse/failure modes.
+- **NIST SP 1270 (2022) — A Proposal for Identifying and Managing Bias in AI (NIST, PDF)**
+  - URL: https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.1270.pdf
+  - Takeaway: Bias management must address datasets, evaluation/validation/verification, and human/systemic factors; directly applicable to computer vision (CV) inspection pipelines and labeling QA.
 
-### 3.1 Assets to protect
-- Integrity of asset registry (location, attributes, criticality)
-- Integrity of condition/inspection results
-- Availability of work planning and dispatch
-- Confidentiality of sensitive asset locations (critical infrastructure)
+- **AASHTO Innovation Initiative — Linear Referencing System (AASHTO)**
+  - URL: https://aii.transportation.org/pages/linearreferencingsystem.aspx
+  - Takeaway: LRS aligns linear reference points across databases to integrate roadway-related data (e.g., safety, pavement, asset inventories); relevant to municipal road corridor and network asset modeling.
 
-### 3.2 Abuse/failure cases
-- **Fraudulent inspection records** (fabricated condition scores to meet KPIs)
-- **Tampering with criticality** to influence prioritization and budgets
-- **Work order manipulation** (unauthorized creation/closure)
-- **Data poisoning** of predictive models via biased labeling
-- **Denial of service** on dispatch tools affecting response times
-
-### 3.3 Controls
-- Strong identity, least-privilege roles, and separation of duties
-- Immutable audit logs for inspection edits and work order lifecycle
-- Data validation rules and outlier detection for condition scoring
-- Approval workflows for critical fields (criticality class, replacement cost)
-- Secure handling of critical infrastructure data (need-to-know)
+Note: “Chain of custody” guidance is often sourced from digital forensics literature; for municipal claims contexts, adopt the core principles (provenance, immutability, access logs, exportability) and align with your legal counsel’s evidentiary requirements.
 
 ---
 
-## 4. Reference architecture (components + data flows)
+## 1) Scope and non-goals
 
-### 4.1 Components
-1. **Canonical asset registry**
-   - Unique asset IDs, geometry, hierarchy (system → subsystem → component)
-   - Linkages to GIS feature IDs and CMMS asset IDs
+### 1.1 Scope: what “twin-enabled asset management” means here
+In scope:
+- Canonical asset registry and reconciliation across **GIS + CMMS/EAM + document management + as-builts + field observations**, with traceable lineage.
+- Digital thread/configuration management (as-designed/as-built/as-maintained/as-operated).
+- Evidence governance: inspection QA, sampling, bias controls for CV/ML, retention and chain-of-custody.
+- Decision support for O&M + capital planning under real-world constraints.
+- Cyber-physical boundary when telemetry/SCADA is involved.
 
-2. **Condition evidence store**
-   - Inspections (structured forms), photos/video, LiDAR/point clouds, NDT results
-   - Versioned, time-stamped, with provenance and inspector identity
+### 1.2 Non-goals (to keep this implementable)
+- Replacing the CMMS/EAM. The twin **integrates and governs**; the CMMS remains the system of record for work execution.
+- Full “closed-loop” automation (twin directly dispatches crews or actuates controls). Default posture is **decision support**.
+- A single mega-schema for every asset type on day one. Start with a minimum canonical model + domain extensions.
 
-3. **Telemetry/monitoring ingestion** (where applicable)
-   - IoT sensors (vibration, pressure, current draw), SCADA tags
-
-4. **Asset state model**
-   - Current condition, health index, risk score, RUL estimate, confidence
-   - History for trend analysis
-
-5. **Work management integration**
-   - CMMS/EAM connectors for work orders, crews, costs, inventory
-
-6. **Planning and optimization services**
-   - Inspection planning, preventive maintenance scheduling
-   - Renewal prioritization under budgets and constraints
-
-7. **Serving layer**
-   - APIs, dashboards, mobile field apps, reporting exports
-
-8. **Governance/observability**
-   - Data quality checks, access logs, lineage, SLA monitoring
-
-### 4.2 Core data flows
-- **Register/ingest**: GIS + as-built + CMMS seed → canonical asset registry
-- **Inspect**: Field app captures structured inspection + media → evidence store
-- **Enrich**: CV/analytics extract features (cracks, corrosion) → condition metrics
-- **Fuse/update**: Condition/telemetry → asset state model (health, risk, RUL)
-- **Plan**: Optimizer proposes work packages → CMMS work orders
-- **Execute/close**: Work completion updates parts/costs → feeds back to state
+### 1.3 Safety boundary (mandatory policy statement)
+- Default: **no direct actuation** from the digital twin into OT/SCADA. Twin outputs are advisory unless a formal safety case exists.
+- Any workflow that influences dispatch/operations must have:
+  - human approval gates,
+  - rollback procedures,
+  - training and accountability,
+  - incident drills.
 
 ---
 
-## 5. Methods / algorithms / standards
+## 2) Canonical asset data model (minimum viable + extensions)
+The canonical model must support: identity resolution, cross-system reconciliation, linear + point assets, configuration, and auditability.
 
-### 5.1 Asset identity and hierarchy
-- Deterministic mapping: GIS feature ID ↔ CMMS asset ID ↔ canonical ID
-- Hierarchical modeling: location-based (network) + functional decomposition
-- Digital twin-based asset representation with real-time state synchronization
+### 2.1 Minimum viable canonical asset record (required fields)
+Recommended canonical entity: `Asset` (with `AssetInstance` for physical instances when needed).
 
-### 5.2 Condition assessment and scoring
-- Structured condition indices per asset class (e.g., 1–5, or 0–100)
-- Evidence-based scoring with required fields and photo requirements
-- Inter-rater reliability processes (training sets, QA reviews)
-- AI/ML-based automated condition assessment from imagery and sensor data
-- Computer vision for defect detection (cracks, corrosion, wear)
-- Time-series analysis for predictive condition monitoring
+| Field | Type | Required | Notes |
+|---|---:|:---:|---|
+| `asset_id` | string | ✅ | Program-wide stable ID (never reused) |
+| `source_ids` | object | ✅ | Mapping keys: `gis_feature_id`, `cmms_asset_id`, `doc_mgmt_id` etc. |
+| `asset_class` | enum/string | ✅ | Controlled vocabulary (roads, bridge, hydrant, pump, facility HVAC…) |
+| `asset_type` | enum/string | ✅ | More specific classification; supports standards/ontology mapping |
+| `lifecycle_state` | enum | ✅ | planned / installed / in_service / out_of_service / retired |
+| `owner_org` | string | ✅ | Department/utility/agency |
+| `operator_org` | string | ✅ | Often differs from owner |
+| `criticality` | enum | ✅ | Tiered (e.g., 1–4) with documented rubric |
+| `replacement_cost_est` | number | ⛔ | Useful for risk/renewal; may be estimated |
+| `geometry` | GeoJSON/WKT | ✅ | Point/line/polygon; geometry validity enforced |
+| `crs` | string | ✅ | EPSG code (e.g., EPSG:4326); store authoritative CRS metadata |
+| `linear_ref` | object | ⛔ | For linear assets: route ID, from/to measures, measure method, calibration date |
+| `admin_area` | string | ⛔ | Ward/district/service zone for equity reporting |
+| `parent_asset_id` | string | ⛔ | Hierarchy (system → subsystem → component) |
+| `install_date` | date | ⛔ | If unknown, store `install_year_est` + confidence |
+| `material` | string | ⛔ | For pipes/roads/structures |
+| `capacity_rating` | string/number | ⛔ | As applicable |
+| `authoritative_source` | enum | ✅ | `GIS` for location; `CMMS` for work history; as-built for design attributes (configurable) |
+| `data_quality_flags` | array | ✅ | e.g., `missing_install_date`, `geometry_suspect`, `id_conflict` |
+| `created_at` / `updated_at` | datetime | ✅ | Audit timestamps |
+| `provenance` | object | ✅ | Who/what asserted changes; ingestion job ID; source version |
 
-### 5.3 Deterioration and risk modeling
-Typical approaches:
-- **Markov deterioration models** (condition states with transition probabilities)
-- **Survival/hazard models** (time-to-failure as function of covariates)
-- **Bayesian updating** to incorporate new inspections and uncertainty
-- **Health index** aggregation (weighted subcomponent scores)
-- **Machine learning models** for remaining useful life (RUL) prediction
-- **LSTM/GRU networks** for time-series-based deterioration forecasting
-- **Random forests** and **gradient boosting** for failure prediction
+Defaults (overrideable): GIS authoritative for location; CMMS authoritative for work history.
 
-Risk framing:
-- Risk = Probability of failure × Consequence of failure
-- Consequence dimensions: safety, service, environment, cost, reputational
-- Digital twin-based risk simulation and scenario analysis
+### 2.2 Linear vs point assets (modeling guidance)
+- **Point assets** (hydrants, valves, signs, sensors, poles): use point geometry + optional offset.
+- **Linear assets** (roads, pipes, cables): store both:
+  - geometry (for mapping and spatial joins), and
+  - **linear reference** (route + measures) for stable corridor-level reporting and split/merge handling.
 
-### 5.4 Work planning and optimization
-- Preventive maintenance scheduling with constraints (crew, access windows)
-- Renewal prioritization as constrained optimization:
-  - Maximize risk reduction / service improvement under budget
-  - Consider bundling/coordination (dig-once, corridor works)
-- Reinforcement learning for dynamic maintenance scheduling
-- Genetic algorithms for multi-objective optimization
-- Digital twin-based work planning simulation
+Practical rule: GIS geometry changes frequently; LRS/measures provide a stable reference for “work at mile 3.2–4.1” even after resegmentation.
 
-### 5.5 Predictive maintenance
-- Condition-based maintenance (CBM) using real-time sensor data
-- Predictive maintenance (PdM) with ML-based failure prediction
-- Anomaly detection using time-series autoencoders
-- Digital twin-based predictive maintenance workflows
+### 2.3 Ontologies and controlled vocabularies (vendor-neutral)
+Start with controlled vocabularies that are:
+- small enough to govern,
+- mapped to source system codes,
+- extensible per asset domain.
 
-### 5.6 Data/semantic standards (guidance)
-Keep standards selection pragmatic:
-- GIS feature schemas and linear referencing for network assets
-- BIM for building assets (where present)
-- Consistent unit and timestamp conventions
-- Controlled vocabularies for defect types, severity, and actions
-- ISO 55000 series for asset management
-- ISO 19650 for BIM information management
-- IEC 62264 for enterprise-control system integration
-- MQTT/AMQP for real-time asset telemetry
-- NGSI-LD for context-aware asset data sharing
-- OGC SensorThings API for IoT asset monitoring
-- OPC UA for industrial asset integration
+Minimum:
+- `asset_class`, `asset_type`, `failure_mode` (high-level), `condition_grade`, `work_type`, `defect_type`.
 
----
+### 2.4 Reconciliation rules (GIS vs CMMS vs as-builts vs field observations)
+Use explicit “truth rules” with exception handling:
 
-## 6. Data requirements
+| Attribute group | Default authoritative source | Common exceptions |
+|---|---|---|
+| Location/geometry | GIS | Field verification overrides GIS pending steward approval |
+| Work history/status | CMMS/EAM | Emergency work during CMMS outage captured as provisional then reconciled |
+| Design attributes (material, diameter, rating) | As-built / engineering record | If as-built missing, use field observation with confidence + follow-up |
+| Current condition score | Inspection evidence system | If multiple methods disagree, retain both + confidence + adjudication |
 
-### 6.1 Minimum viable data
-- Asset registry: ID, type, geometry, install date (or estimate), ownership, criticality, replacement cost
-- Work history: work orders, failure events, costs, downtime
-- Condition snapshots: last inspection date, score, method, inspector
+Identity resolution approach (recommended):
+- deterministic joins where possible (`source_ids`),
+- probabilistic matching for legacy/unknown assets (geometry proximity + attributes),
+- mandatory steward adjudication for conflicts.
 
-### 6.2 High-value enhancements
-- Environmental covariates (corrosion zones, soil type, traffic loads)
-- Telemetry for condition proxies (pressure transients, vibration signatures)
-- Imagery analytics outputs with confidence scores
-- Inventory/parts lead times
-
-### 6.3 Data quality dimensions
-- Completeness: % assets with location, type, install year
-- Accuracy: field-verified location/attributes
-- Timeliness: stale condition > threshold by criticality
-- Consistency: taxonomy and scoring rubric adherence
+### 2.5 Schema evolution and versioning
+- Version the canonical schema and publish a **data contract** for consumers.
+- Define breaking vs non-breaking change policy.
+- Maintain mapping tables and transformation code with automated tests.
 
 ---
 
-## 7. Implementation plan (phases)
+## 3) Digital thread / configuration & identity management
+Asset management fails when “the asset” changes but the record doesn’t. The twin must represent time and configuration.
 
-### Phase 0 — Foundation
-- Establish asset taxonomy and canonical ID strategy
-- Define data contracts for GIS and CMMS integration
-- Identify critical asset classes and service objectives
+### 3.1 Definitions and where each “truth” lives
+- **As-designed**: engineering design intent (CAD/BIM, specs). System: engineering document management / BIM repository.
+- **As-built**: what was constructed/installed (as-built drawings, redlines, commissioning). System: document management + GIS update workflow.
+- **As-maintained**: changes from maintenance/repairs (parts replaced, settings changed). System: CMMS/EAM + maintenance notes.
+- **As-operated**: operational state (telemetry, setpoints, runtime conditions). System: OT/SCADA historian / IoT platform (read-only into twin by default).
 
-### Phase 1 — Build the canonical registry + integrations
-- Ingest GIS/CMMS, reconcile duplicates, create mapping tables
-- Implement audit logging and role-based access
-- Deliver basic dashboards (inventory, completeness, map views)
+Rule: the twin stores a **normalized view** + links back to authoritative evidence.
 
-### Phase 2 — Condition evidence and inspection workflows
-- Deploy field inspection forms and media capture
-- Add QA workflows and scoring governance
-- Build condition history views and basic prioritization lists
+### 3.2 Component hierarchy and partial replacement accounting
+Model:
+- `Asset` (system) → `AssetComponent` (replaceable subassembly) → `AssetPart` (optional)
 
-### Phase 3 — Risk and deterioration modeling
-- Implement risk scoring per asset class
-- Calibrate deterioration models using history + expert review
-- Add scenario planning (budget vs risk) and defensible reporting
+Guidance:
+- Track **component-level lifecycle** (e.g., pump motor replaced but station remains).
+- Costs and work history attach at the correct level.
 
-### Phase 4 — Optimization + continuous improvement
-- Work bundling/route optimization, preventive scheduling
-- Feedback loops: outcomes → model recalibration
-- Expand to additional asset classes and agencies
+### 3.3 Split/merge identity playbook (linear assets)
+Common events:
+- Road segment resegmentation (GIS edits)
+- Pipe replacement of a subsection
+- Re-alignment/realignment of corridor
 
----
+Rules (recommended):
+- `asset_id` is stable for a physical “lifecycle unit.” When split/merge occurs:
+  - Create new child assets with new `asset_id`s.
+  - Maintain `identity_events` ledger:
+    - `split_from`, `merged_from`, `retired_into`.
+  - Keep historical measures/geometry snapshots.
 
-## 8. Testing and validation
-
-### 8.1 Data validation
-- Schema validation at ingest (types, required fields)
-- Spatial plausibility checks (assets in wrong admin area, invalid geometry)
-- Duplicate detection (near-identical geometry + attributes)
-
-### 8.2 Model validation
-- Backtesting: historical inspections vs predicted deterioration
-- Ground truth sampling: field audits for a subset of assets
-- Uncertainty calibration: confidence bands that match observed error
-
-### 8.3 Process validation
-- Work order reconciliation: planned vs executed vs closed outcomes
-- Inspector QA: inter-rater consistency metrics
+Example: road segment split
+- Before: `ROAD-001` measures 0.0–2.0
+- After resegmentation:
+  - `ROAD-101` 0.0–1.2 (split_from `ROAD-001`)
+  - `ROAD-102` 1.2–2.0 (split_from `ROAD-001`)
+- Preserve work history linkages via route+measure mapping.
 
 ---
 
-## 9. Observability (SLIs/SLOs) and operations
+## 4) Evidence governance and QA (inspection, imagery, telemetry)
+Municipal asset decisions can be contested (claims, audits, safety investigations). Evidence must be trustworthy.
 
-### 9.1 Suggested SLIs
-- Asset registry completeness (% required fields filled)
-- Condition freshness (% critical assets inspected within policy window)
-- Work order latency (time from identification → creation → start → close)
-- Data pipeline health (ingest success rate, lag, error rate)
-- Digital twin synchronization metrics (DT-IRL framework)
-- Model prediction accuracy for condition and RUL estimates
-- Anomaly detection precision/recall for predictive maintenance
-- Cross-system data exchange success rate
+### 4.1 Evidence types
+- Field inspection forms (structured)
+- Photos/video
+- LiDAR/point clouds
+- NDT results
+- Telemetry summaries (read-only extracts)
 
-### 9.2 Example SLOs
-- 99% of inspection submissions processed within 5 minutes
-- <0.5% daily ingest failures requiring manual intervention
-- 95% of tier-1 critical assets have condition age < 180 days
-- System uptime ≥ 99.9%
-- Model accuracy ≥ 90% for failure predictions
-- End-to-end latency < 5 seconds for critical alerts
+### 4.2 Sampling and audit plan (operational QA)
+Recommended minimum QA controls:
+- **Spot checks**: random sampling of inspections (e.g., 5–10% depending on criticality).
+- **Blind re-inspections**: second inspector repeats inspection without seeing prior score.
+- **Inter-rater reliability**: measure consistency for categorical scores (e.g., Cohen’s kappa) and continuous scores (ICC) per inspector/team.
+- **Targeted audits**: oversample high-impact assets (bridges, pressure systems, critical corridors).
 
-### 9.3 Runbooks
-- Duplicate asset resolution procedure
-- Backfill/replay after integration outage
-- Emergency work order creation during CMMS downtime
-- Model retraining and deployment procedures
-- Data quality incident response
+Audit artifacts to retain:
+- sampling frame + method,
+- QA outcomes and corrective actions,
+- inspector training and calibration dates.
 
----
+### 4.3 CV/ML defect detection bias controls + human review gates
+If using CV/ML for inspection support:
+- Maintain labeled datasets with provenance and representativeness checks (NIST bias guidance).
+- Require human review for:
+  - low-confidence detections,
+  - high-severity defects,
+  - model drift alerts.
+- Monitor bias proxies:
+  - performance by lighting/weather conditions,
+  - performance by neighborhood infrastructure types (avoid inequitable under-detection).
+- Document model versions, thresholds, and rollback conditions.
 
-## 10. Governance, privacy, compliance
-- Stewardship: named owners for asset classes and datasets
-- Change control: schema evolution, scoring rubric updates
-- Retention: keep work history and condition snapshots for lifecycle analysis; define retention for raw media
-- Sensitive infrastructure: apply access tiering and redaction as needed
+### 4.4 Retention + chain-of-custody (evidence that can stand up to scrutiny)
+Principles:
+- **Immutability**: raw evidence objects are write-once (no overwrite); corrections create new versions.
+- **Provenance**: capture who collected it, device/app version, timestamp, location, and method.
+- **Access log**: who viewed/exported/annotated evidence.
+- **Evidentiary export**: reproducible export package with hashes.
 
----
-
-## 11. Risks and mitigations
-- **Incomplete registry** → prioritize reconciliation and field verification sprints
-- **Inconsistent scoring** → training, QA sampling, and rubric enforcement
-- **Integration brittleness** → contracts, versioning, and monitoring
-- **Overfitting models** → simple baselines first, documented assumptions
-- **Operational resistance** → co-design with field teams; reduce clicks; show value
-
----
-
-## 12. Costs and FinOps considerations
-Cost drivers:
-- Storage for inspection media (photos/video/point clouds)
-- Stream/ETL compute for enrichment and CV inference (if used)
-- GIS and routing services
-- Mobile devices/data plans for field teams
-- Integration maintenance with CMMS/EAM vendors
-
-FinOps controls:
-- Tiered storage (hot vs cold), lifecycle policies
-- Batch CV processing where real-time is not required
-- Unit-cost metrics: cost per inspected asset, per work order, per GB of media
+Minimum evidence metadata:
+- `evidence_id`, `asset_id`, `captured_at`, `captured_by`, `capture_device_id`, `capture_method`, `location_at_capture`, `hash`, `storage_uri`, `classification`, `related_work_order_id`.
 
 ---
 
-## 13. KPIs (outcome-oriented)
-- Reduction in unplanned failures (count and severity)
-- MTBF increase for targeted assets
-- Maintenance cost per asset (normalized) and trend
-- % work that is planned vs reactive
-- Risk reduction per dollar spent (renewal effectiveness)
-- Service impact reductions (downtime, outages)
+## 5) Decision support + optimization under real public works constraints
+Optimization is often oversold. Municipal reality has constraints that dominate the math.
+
+### 5.1 Explicit constraint list (use in planning tools)
+Operational constraints:
+- permits and lane closures (lead times, allowed windows)
+- seasonal windows (freeze/thaw, paving season, storm seasons)
+- crew skills/certifications and union rules
+- depot geography and travel time
+- safety constraints (work at heights, confined space)
+
+Program constraints:
+- contract boundaries (different vendors for paving vs utilities)
+- “dig once” bundling across utilities and departments
+- inventory lead times (parts, valves, transformers)
+- procurement rules (bid thresholds, sole source constraints)
+- multi-year budget cycles, political commitments, grant conditions
+
+### 5.2 Practical approach: heuristics → decision support → constrained optimization
+Start here:
+- Heuristics: priority = risk score × service criticality × evidence confidence.
+- Corridor bundling rules: bundle by geography + time window + permits.
+- Present options with tradeoffs, not a single “optimal” answer.
+
+Graduate to optimization only when:
+- constraints are captured reliably,
+- work execution data quality is high,
+- the city can operationalize recommended schedules.
+
+### 5.3 When not to optimize
+Do not optimize (yet) when:
+- asset registry has high ID conflict rate,
+- condition evidence is sparse or unreliable,
+- work orders are not closed accurately,
+- the city cannot enforce schedules due to emergency-driven work.
 
 ---
 
-## 14. Deliverables and checklists
+## 6) Cyber-physical boundary and security (IT analytics vs OT/SCADA)
 
-### 14.1 Key deliverables
-- Canonical asset registry + mapping to source systems
-- Inspection forms, mobile workflow, and evidence store
-- Condition scoring rubric and QA process
-- Risk model and renewal prioritization dashboards
-- Work planning integration and runbooks
+### 6.1 Trust boundaries
+- OT/SCADA is safety- and reliability-critical; prioritize stability and deterministic behavior.
+- IT analytics/twin is decision-support; treat OT data feeds as **inputs**, not control channels.
 
-### 14.2 Readiness checklist
-- [ ] Asset taxonomy agreed and documented
-- [ ] Canonical ID rules implemented and auditable
-- [ ] Data quality metrics and ownership in place
-- [ ] Condition scoring trained and calibrated
-- [ ] Work order lifecycle metrics tracked end-to-end
+### 6.2 Default posture
+- Read-only ingestion from OT historians/DMZ into IT.
+- No write-back to OT.
+- Any exceptions require security + safety review (align to NIST SP 800-82 principles).
+
+### 6.3 Safety constraints for operational recommendations
+If twin outputs influence dispatch:
+- require supervisor approval,
+- limit to recommendation sets with confidence and constraints visible,
+- log decisions (who accepted/overrode) for audit.
 
 ---
 
-## 15. References
-### 15.1 Workspace source
-- Item 2 in [`kali-task-research.md`](../kali-task-research.md:1)
+## 7) Validation and acceptance criteria
 
-### 15.2 External references (retrieved via Firecrawl MCP)
+### 7.1 Data model QA checks
+- Geometry validity (self-intersections, topology errors)
+- CRS correctness + transformation tests
+- Required field completeness by criticality tier
+- Duplicate detection (near-duplicate geometry + attributes)
+- Identity conflict rate (unresolved merges/splits)
+
+### 7.2 Model validation (deterioration/RUL)
+- Baseline first (simple survival/hazard/Markov models) before complex ML.
+- Backtesting on historical failures and inspections.
+- Calibration cadence (quarterly for high-change assets; annually otherwise).
+- Accuracy bands by asset class (define acceptable error ranges and confidence reporting).
+
+### 7.3 Operational validation
+- Field crew feedback loop: reject/accept reason codes for recommendations.
+- Drill-based validation: “time to find evidence + governing record” exercises.
+
+---
+
+## 8) Benefits realization and attribution (defensible, audit-friendly)
+Avoid claiming benefits that are really caused by budget/staffing/weather shifts.
+
+### 8.1 Benefits (examples)
+- fewer unplanned failures/outages
+- reduced emergency callouts/overtime
+- better renewal targeting (risk reduction per $)
+- improved compliance (inspection coverage)
+
+### 8.2 Measurement designs (credible counterfactuals)
+Use one or more:
+- **Before/after with controls**: compare similar corridors/areas not using the twin.
+- **Matched pairs**: match assets on age/material/traffic and compare outcomes.
+- **Seasonal adjustment**: normalize for weather and seasonal work windows.
+- **Interrupted time series**: evaluate trend break after adoption.
+
+### 8.3 Confounders to explicitly account for
+- staffing levels and contractor availability
+- budget changes and grant funding
+- extreme weather events
+- policy changes (e.g., new inspection mandates)
+
+### 8.4 “Evidence required to claim benefit” thresholds
+Examples:
+- benefit claim requires ≥ 2 quarters of comparable data plus documented controls.
+- for failure reduction: show statistically meaningful change or clear operational narrative + evidence pack.
+
+---
+
+## 9) Implementation roadmap (owners + dependencies)
+
+### 0–3 months (foundation)
+Owners: asset owners + GIS lead + CMMS admin + data governance.
+- agree asset taxonomy and minimum canonical model
+- implement source mapping (`source_ids`) and authoritative-source rules
+- stand up evidence metadata capture (even before full CV/ML)
+
+### 3–12 months (integrate + govern)
+Owners: platform team + O&M leads + security.
+- build reconciliation workflows (duplicate/identity conflicts)
+- deploy inspection QA sampling + inter-rater reliability measures
+- integrate CMMS work orders end-to-end; enforce closure quality
+- define OT boundary and implement read-only telemetry ingestion where needed
+
+### 12–24 months (optimize + scale)
+Owners: capital planning + O&M + analytics.
+- corridor bundling + constrained scheduling decision support
+- mature deterioration/RUL models with backtesting and drift monitoring
+- operationalize benefit attribution with controls and audit packs
+
+---
+
+## 10) Key metrics (harder to game)
+
+### 10.1 Operational SLIs/SLOs
+- asset registry completeness by criticality tier
+- condition freshness vs policy
+- work order cycle time (identify → create → start → close)
+- evidence coverage (% inspections with required media + metadata)
+
+### 10.2 Outcome KPIs
+- unplanned failures avoided (with attribution method)
+- downtime reduction for critical services
+- backlog risk reduction per $ spent
+
+### 10.3 Data governance metrics
+- identity conflict rate (unresolved split/merge)
+- split/merge rate (change pressure)
+- QA audit findings rate and closure time
+
+---
+
+## 11) Risks & mitigations (detect + respond playbooks)
+
+| Risk | Detection signals | Response playbook |
+|---|---|---|
+| Fraud/manipulation of inspections | abnormal score distributions; repeated patterns; missing metadata | targeted re-inspections; revoke privileges; retrain; disciplinary process |
+| Model misuse/automation bias | crews follow low-confidence recs; overrides not logged | enforce approval gates; require confidence display; add training |
+| Vendor lock-in | proprietary exports; closed APIs | require export formats + data contracts in SoWs; escrow/transition clauses |
+| Privacy/worker surveillance concerns | complaints; excessive tracking | minimize personal data; purpose limitation; access tiering; retention controls |
+| OT risk (unsafe coupling) | write-back paths appear; anomalies in OT | enforce segmentation; disable write-back; incident response drill |
+
+---
+
+## 12) References
+### 12.1 Workspace source
+- Item 2 in [`kali-task-research.md`](kali-task-research.md:1)
+
+### 12.2 External references (retrieved via Firecrawl MCP)
 - ISO 55000:2024 — Asset management — Vocabulary, overview and principles (ISO): https://www.iso.org/standard/83053.html
-- Yessef et al. (2025). "Digital twin technology in smart cities: A step toward intelligent urban management." Energy Reports, 14, 5539-5557. DOI: 10.1016/j.egyr.2025.11.097
-- Crespo-Aguado et al. (2024). "Digital twins for smart cities: A systematic review." IEEE Access.
-- Arun et al. (2025). "AI-driven smart building systems: A comprehensive review of deep learning model analysis." Scientific Reports, 15, 29230.
-- Jerkovic et al. (2025). "Smart grid IoT framework for predicting energy consumption using federated learning homomorphic encryption." Sensors.
-
-### 15.3 Suggested further reading (not fetched)
-- Reliability engineering (hazard models, survival analysis)
-- Risk-based maintenance and renewal prioritization methods
-- Digital twins for predictive maintenance
-- Computer vision for infrastructure inspection
-- Time-series forecasting for asset condition monitoring
-- Federated learning for distributed asset analytics
+- NIST SP 800-82 Rev. 3 (IPD) — Guide to Operational Technology (OT) Security (NIST): https://csrc.nist.gov/pubs/sp/800/82/r3/ipd
+- NIST SP 1270 (2022) — A Proposal for Identifying and Managing Bias in AI (NIST, PDF): https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.1270.pdf
+- AASHTO Innovation Initiative — Linear Referencing System (LRS): https://aii.transportation.org/pages/linearreferencingsystem.aspx

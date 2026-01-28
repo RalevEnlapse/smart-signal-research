@@ -1,333 +1,352 @@
-# Citizen engagement platforms — Deep research
+# Citizen engagement platforms — Deep research (operations-integrated)
 
 ## Executive summary
-Citizen engagement platforms provide digital channels for residents to report urban issues, participate in decision-making processes, and co-create solutions for city challenges. These platforms transform traditional top-down governance into collaborative, participatory democracy by enabling real-time communication, transparent feedback loops, and data-driven policy making.
+Citizen engagement platforms are not “an app”. They are a **service-delivery feedback loop** that turns resident input into **dispatchable work** and turns city action into **truthful, auditable status**.
 
-The critical technical outputs are: (1) multi-channel issue reporting (mobile apps, web, SMS, social media), (2) transparent tracking of reported issues and resolutions, (3) participatory budgeting and voting systems, and (4) analytics dashboards for city officials to understand citizen concerns. Achieving these requires user-friendly interfaces, robust backend systems, integration with city operations, and strong privacy and security measures.
+A City Digital Twin benefits because this channel provides:
+- a structured “human sensor” stream (reports, photos, perceptions, repeated nuisances)
+- a measurable operational loop (intake → triage → dispatch → resolution → learning)
+- legitimacy and adoption mechanisms (two-way updates, transparency)
 
-This document deepens item 27 in [`kali-task-research.md`](../kali-task-research.md:1): *"Citizen engagement platforms: Create digital channels for residents to report urban issues, participate in decision-making processes, and co-create solutions for city challenges."*
-
----
-
-## Why this theme matters for a City Digital Twin (and how it helps you run it)
-
-### Why you need it
-
-A City Digital Twin that only ingests IoT/enterprise data risks optimizing for what is *measurable*, not what is *experienced*. Citizen engagement platforms provide a structured “human sensor” channel that captures high-salience issues (nuisances, service quality, safety perceptions) and converts them into actionable, geolocated signals that can be fused with the twin’s operational data.
-
-This is also an adoption lever: when residents see the twin driving real fixes and receiving feedback, participation rises, improving coverage and model fidelity.
-
-### How it helps you run the twin (practical operational impact)
-
-- **Closes the operational loop (detect → triage → dispatch → verify):** citizen reports become events in the twin; they are routed to responsible teams, tracked through completion, and verified (including resident confirmation), so you can measure cycle time, backlog, and repeat incidents.
-- **Improves model validity and prioritization:** reports highlight blind spots, help ground-truth model outputs, and provide labeled “events” (e.g., recurring flooding complaints) that guide sensor placement, maintenance, and model updates.
-- **Enables service-level governance:** you can define SLAs (time-to-acknowledge, time-to-fix) by issue type and geography, then operate the twin as a management system for performance.
-- **Strengthens trust and transparency:** two-way feedback (“we heard you; here’s what we did”) increases legitimacy and reduces the risk of the twin being perceived as surveillance-only.
-
-### Evidence pointers (deep research starting points)
-
-- Frontiers in Sustainable Cities (2025) case study of Bangkok’s **Traffy Fondue** platform reports operational outcomes (e.g., high citizen satisfaction and reported cost savings) and describes how structured citizen reporting supports city service workflows and decision-making. Source: https://www.frontiersin.org/journals/sustainable-cities/articles/10.3389/frsc.2025.1491621/full
-
-## 1. Background and context
-Traditional citizen engagement faces significant challenges:
-- Limited channels for communication (phone, in-person)
-- Lack of transparency in issue resolution
-- Low participation rates in civic processes
-- Difficulty gathering diverse community input
-- Slow response times to citizen concerns
-
-A digital engagement approach supports:
-- 24/7 accessibility for reporting and feedback
-- Real-time tracking of issues and responses
-- Increased participation through convenient digital channels
-- Data-driven understanding of community needs
-- Collaborative problem-solving between citizens and government
+This document strengthens item 27 in [`kali-task-research.md`](kali-task-research.md:1) by specifying **integration patterns**, **governed triage**, **identity/eligibility models**, **equity operations**, **moderation**, and **privacy/retention** so the platform remains defensible under public scrutiny.
 
 ---
 
-## 2. Stakeholders
-- **Municipal government departments**: issue resolution and policy implementation
-- **Citizens and residents**: primary users and beneficiaries
-- **Community organizations**: advocacy and local representation
-- **Elected officials**: policy making and accountability
-- **City operations teams**: field work and service delivery
-- **IT/development teams**: platform maintenance and enhancement
-- **Privacy and civil liberties advocates**: oversight and rights protection
+## 1) Scope, success criteria, and non-goals
+### Scope
+Covers:
+- **311-style issue reporting + case tracking** (multi-channel intake)
+- **Participatory processes** (participatory budgeting, surveys, deliberation)
+- Integration with operations systems (311/CRM, CMMS/EAM, departmental ticketing, GIS/asset registry)
+- Trust & safety: moderation, abuse resistance, transparency reporting
+
+### Success criteria (operational)
+- Reports become **actionable work** with clear ownership and traceable timestamps.
+- Resident-facing status is **truthful**, not “closed-to-hit-SLA”.
+- Equity is operationalized: participation bias is measured and corrected.
+- Safety and privacy: geotagged reports and media are handled with minimization and redaction.
+
+### Non-goals (explicit)
+- Not a policing tip line unless separately governed (different risk model).
+- Not an unmoderated social network.
+- Not a replacement for emergency services.
 
 ---
 
-## 3. Threat model / abuse cases
+## 2) End-to-end integration patterns (explicit)
+### 2.1 Reference flow (text diagram)
+```
+Intake (web/app/phone/SMS/in-person)
+  → Normalize + validate (category, location, media safety checks)
+  → De-dupe + merge (with audit trail)
+  → Triage (priority score + human review where required)
+  → Route (department/service area)
+  → Create/Update downstream record (CRM/CMMS/Dept ticket)
+  → Status updates (from system-of-record)
+  → Closure (with evidence/closure code)
+  → Reopen / appeal (audit trail)
+  → Analytics + learning (hotspots, recurrence, SLA integrity)
+```
 
-### 3.1 Assets to protect
-- Privacy of citizen personal information
-- Integrity of voting and participation data
-- Availability of reporting channels
-- Security of user accounts and authentication
+### 2.2 Integration landscape
+Minimum integrations for a municipal “truth loop”:
+- **311/CRM** (case master, resident communications)
+- **CMMS/EAM** (asset-linked work orders, crews, materials)
+- **Departmental ticketing** (transport, sanitation, parks, code enforcement)
+- **GIS/asset registry** (service areas, ownership, asset IDs)
 
-### 3.2 Abuse/failure cases
-- **Fake reports** overwhelming city resources
-- **Data breaches** exposing citizen information
-- **Manipulation of voting** in participatory processes
-- **Denial of service** preventing citizen access
-- **Harassment** through platform features
+### 2.3 Patterns (practical)
+- **System-of-record (SoR) rules**
+  - Case master: typically **311/CRM**.
+  - Work execution: typically **CMMS/EAM** or departmental system.
+  - The engagement platform must not invent status; it **mirrors** status from SoR.
 
-### 3.3 Controls
-- User verification and authentication systems
-- Rate limiting and spam detection
-- Data encryption at rest and in transit
-- Audit trails for all system activities
-- Content moderation and community guidelines
+- **Idempotency**
+  - Every intake creates an immutable `intake_event_id` and a stable `case_id`.
+  - Downstream creates/updates must be idempotent on `{case_id, downstream_system}`.
 
----
+- **Timestamps and closure codes**
+  - `acknowledged_at`: when city accepts the report.
+  - `dispatched_at`: when work assigned.
+  - `resolved_at`: when fix applied (field-confirmed or sensor-confirmed).
+  - `closed_at`: administrative closure (may follow resolution).
+  - Closure codes are standardized and mapped across systems.
 
-## 4. Reference architecture (components + data flows)
-
-### 4.1 Components
-1. **User interface layer**
-   - Mobile applications (iOS, Android)
-   - Web portal
-   - SMS/USSD interfaces for basic phones
-   - Social media integration
-   - Kiosk terminals in public spaces
-
-2. **Authentication and identity layer**
-   - User registration and verification
-   - Multi-factor authentication
-   - Digital identity integration
-   - Privacy-preserving authentication options
-
-3. **Issue reporting layer**
-   - Issue categorization and routing
-   - Geolocation and photo attachment
-   - Priority assessment algorithms
-   - Duplicate detection
-
-4. **Participation layer**
-   - Survey and polling systems
-   - Participatory budgeting tools
-   - Discussion forums
-   - Voting and consensus mechanisms
-
-5. **Workflow and integration layer**
-   - Case management system
-   - Department routing and assignment
-   - SLA tracking and escalation
-   - Integration with city operations systems
-
-6. **Analytics and reporting layer**
-   - Real-time dashboards
-   - Trend analysis and insights
-   - Performance metrics
-   - Public transparency reports
-
-7. **Notification layer**
-   - Push notifications
-   - Email alerts
-   - SMS notifications
-   - In-app messaging
-
-### 4.2 Data flows
-- Citizen report → Categorization → Department assignment → Resolution → Feedback
-- Survey response → Aggregation → Analysis → Policy recommendation
-- Issue data → Analytics → Trend identification → Resource allocation
-- Citizen feedback → Service improvement → Enhanced satisfaction
+### 2.4 “Truthful status” policy (anti-premature closure)
+Rules:
+- A case can be **closed** only if:
+  1) it has a valid closure code, and
+  2) it has a resolution evidence reference (work order completion, inspection note, or verified no-action reason).
+- All status transitions are append-only events (no silent edits).
+- **Reopen** is always allowed within a defined window and requires a reason; reopen counts are tracked.
 
 ---
 
-## 5. Methods / algorithms / standards
+## 3) Governed triage: dedupe, priority, fairness
+### 3.1 Auditable triage model (inputs)
+Priority scoring must be explainable and logged using auditable inputs:
+- severity (safety hazard, accessibility impact)
+- vulnerability context (sensitive facilities, schools, senior centers)
+- asset criticality (critical infrastructure vs cosmetic)
+- recurrence (repeat complaints, repeat work)
+- service impact (road closure, flooding)
+- confidence (location accuracy, media evidence, reporter credibility signals)
 
-### 5.1 Issue categorization
-- Natural language processing for automatic classification
-- Image recognition for visual issue identification
-- Geospatial clustering for hotspot detection
-- Priority scoring based on severity and impact
+### 3.2 Duplicate detection governance
+- Use automated similarity (location proximity + category + text/image similarity) with:
+  - **confidence thresholds** (auto-merge only above high threshold)
+  - **human review queue** for mid-confidence matches
+- Maintain merge history:
+  - `merged_case_ids[]`, `merge_reason`, `merge_confidence`, `reviewer_id`, `merged_at`
+- Never delete: merged cases remain retrievable.
 
-### 5.2 Participatory processes
-- Ranked choice voting algorithms
-- Consensus decision-making models
-- Participatory budgeting allocation methods
-- Deliberative polling techniques
+### 3.3 Priority scoring governance
+- Require:
+  - explanation string (“why this is high priority”) assembled from inputs
+  - periodic bias audits (who gets routed faster by neighborhood/channel)
+  - appeal/review channel for residents (case review request)
 
-### 5.3 Analytics and insights
-- Sentiment analysis on citizen feedback
-- Time series analysis for trend detection
-- Geographic information system (GIS) mapping
-- Network analysis for community connections
-
-### 5.4 Standards and best practices
-- Open data standards for transparency
-- Accessibility standards (WCAG 2.1)
-- Privacy by design principles
-- GDPR and data protection compliance
-
----
-
-## 6. Data requirements
-
-### 6.1 Minimum datasets
-- User registration and authentication data
-- Issue reports with location and category
-- Resolution status and timestamps
-- Department assignment and response times
-- Basic demographic information (optional)
-
-### 6.2 High-value datasets
-- Historical issue patterns and trends
-- Citizen satisfaction surveys
-- Service level performance metrics
-- Geographic distribution of issues
-- Cross-departmental correlation data
-
-### 6.3 Data quality requirements
-- Issue location accuracy < 10 meters
-- Response time tracking < 1 minute
-- Data completeness > 95% for critical fields
-- User verification accuracy > 99%
+### 3.4 Anti-gaming controls for SLA metrics
+Detect and deter “close-to-hit-SLA” behavior:
+- anomaly signals:
+  - high closure rate near SLA boundary
+  - high reopen rate by team/category
+  - reclassification spikes to categories with easier SLAs
+  - high “no issue found” codes without evidence
+- governance:
+  - quarterly sampling audits
+  - penalties/incentives tied to **integrity metrics**, not just speed
 
 ---
 
-## 7. Implementation plan (phases)
+## 4) Identity, anonymity, and eligibility
+Override defaults: `identity_posture = privacy-preserving-by-default`, `anonymity_allowed = yes`, `participation_eligibility = residents + local workers`.
 
-### Phase 0 — Baseline and governance
-- Define engagement goals and KPIs
-- Establish privacy and data governance policies
-- Select pilot communities for initial deployment
-- Conduct stakeholder consultations
+### 4.1 Issue reporting identity model (anonymity-friendly)
+Support three modes:
+1. **Anonymous** (allowed):
+   - no account required
+   - rate-limited; limited follow-up
+   - higher fraud/abuse controls
+2. **Pseudonymous account**:
+   - stable handle; privacy-preserving
+   - supports follow-ups and reputation signals
+3. **Verified account**:
+   - optional for reporting; required for some high-risk categories
 
-### Phase 1 — Basic reporting system
-- Launch mobile app and web portal
-- Implement issue categorization and routing
-- Set up basic tracking and notifications
-- Train city staff on new workflows
+Accountability controls:
+- device/browser risk signals and rate limiting
+- abuse escalation (repeat malicious submissions → blocks)
+- protected reporting paths for sensitive whistleblowing categories
 
-### Phase 2 — Enhanced features
-- Add participatory budgeting tools
-- Implement discussion forums
-- Develop analytics dashboards
-- Integrate with social media channels
+### 4.2 Participatory budgeting / voting eligibility
+Eligibility target: **residents + local workers**.
 
-### Phase 3 — Advanced participation
-- Deploy voting and polling systems
-- Add co-creation tools
-- Implement AI-powered insights
-- Expand to full city coverage
+Patterns (options-not-prescriptions):
+- **In-person + assisted verification** (most inclusive): community centers verify eligibility; platform records a verification token.
+- **Document check with minimization**: verify once, then store a minimal “eligibility proof” token, not raw documents.
+- **Third-party verification**: trusted civic partner verifies and issues token.
 
-### Phase 4 — Continuous improvement
-- Implement advanced analytics
-- Develop predictive capabilities
-- Create innovation labs
-- Establish community governance
+Fraud controls:
+- one-person-one-vote enforcement (unique eligibility token)
+- anomaly detection (burst voting, correlated patterns)
+- rate limits and cooling-off for suspicious sessions
 
----
+Anti-coercion / anti vote-buying
+- Avoid providing “vote receipts” that enable proof to a coercer.
+- Limit public disclosure of individual participation.
+- Provide safe reporting channel for coercion attempts.
 
-## 8. Testing and validation
-- User experience testing with diverse citizen groups
-- Load testing for high-volume reporting periods
-- Security penetration testing
-- Accessibility compliance testing
-- Pilot deployment evaluation
-
----
-
-## 9. Observability (SLIs/SLOs)
-
-### 9.1 SLIs
-- Issue submission success rate
-- Response time to citizen reports
-- Resolution time within SLA
-- User engagement and participation rates
-- System uptime and availability
-
-### 9.2 Example SLOs
-- Issue submission success rate ≥ 99%
-- Initial response time < 24 hours
-- Resolution within SLA ≥ 90%
-- Monthly active users ≥ 10% of population
-- System availability ≥ 99.5%
+Account recovery
+- recovery mechanisms must not enable identity takeover; use step-up verification for recovery.
 
 ---
 
-## 10. Governance, compliance, and labor constraints
-- Compliance with data protection regulations (GDPR, CCPA)
-- Transparency in data usage and algorithms
-- Citizen oversight committees
-- Regular privacy impact assessments
-- Union consultation for staff workflow changes
+## 5) Moderation & harm prevention operating model
+Assumption: `moderation_capacity = limited`.
+
+### 5.1 Policy categories
+Minimum categories:
+- harassment/threats
+- hate content
+- doxxing and personal data exposure
+- explicit content
+- spam/scams
+- misinformation affecting safety (e.g., false outage instructions)
+
+### 5.2 Workflow and SLAs
+- intake filters:
+  - malware scanning for uploads
+  - PII detection in free text (flag for review)
+- queues:
+  - standard queue
+  - urgent safety/legal queue
+- SLAs:
+  - urgent: hours
+  - standard: 1–2 business days
+
+### 5.3 Appeals and transparency
+- appeal workflow with independent reviewer
+- publish a quarterly transparency report (template below)
+
+### 5.4 Coordinated abuse response
+Controls:
+- bot and brigading detection (burst + similarity)
+- temporary friction (rate limits, proof-of-work, step-up challenges that are accessibility-safe)
+- incident runbook (see §9)
+
+### 5.5 Moderator safety
+- rotate staff, provide mental health support
+- define escalation paths for credible threats
+
+#### Transparency report template
+| Metric | Value |
+|---|---|
+| Reports submitted |  |
+| Content removals |  |
+| Accounts restricted |  |
+| Appeals filed / upheld |  |
+| Median time-to-review |  |
+| Coordinated abuse incidents |  |
 
 ---
 
-## 11. Risks and mitigations
-- **Low adoption rates** → Comprehensive outreach, user-friendly design, incentives
-- **Digital divide** → Multiple access channels, community kiosks, digital literacy programs
-- **Misinformation and abuse** → Content moderation, verification systems, clear guidelines
-- **Privacy concerns** → Strong data protection, transparency, opt-in options
-- **Resource constraints** → Phased implementation, automated triage, volunteer programs
+## 6) Equity & representativeness (operationalize)
+### 6.1 Measurement plan
+Measure representativeness using privacy-safe aggregation:
+- channel mix (app/web/phone/in-person)
+- participation rates by neighborhood (and demographic proxies only where lawful)
+- accessibility and language usage
+
+### 6.2 Correction mechanisms
+- assisted digital intake (phone/in-person) with equal status visibility
+- outreach partnerships (libraries, schools, community orgs)
+- multilingual support (beyond UI: translated notifications and call scripts)
+- accessibility testing aligned to WCAG 2.2 AA
+
+### 6.3 “Do no harm” rules
+- avoid public maps that stigmatize neighborhoods (use aggregation and context)
+- avoid feeding biased enforcement (ensure triage is not a proxy for policing)
 
 ---
 
-## 12. Costs and FinOps
-- Platform development and maintenance
-- Hosting and infrastructure costs
-- User support and training
-- Marketing and outreach
-- Integration with existing systems
+## 7) Data governance, retention, and privacy
+### 7.1 Data classification (minimum)
+| Data | Classification | Notes |
+|---|---|---|
+| Account identifiers | PII | Minimize, encrypt |
+| Free-text descriptions | Potentially sensitive | PII/doxxing detection |
+| Photos/videos | Potentially sensitive | faces, addresses, license plates |
+| Precise location | Sensitive | minimize for public display |
+| Allegations about individuals | Highly sensitive | restricted access, legal review |
 
-Unit costs to track:
-- Cost per active user
-- Cost per resolved issue
-- Cost per participation event
-- ROI based on efficiency gains
+### 7.2 Precision minimization for public views
+- public maps use:
+  - rounding/jitter
+  - aggregation to blocks/areas
+  - suppression for low counts
 
----
+Anonymisation guidance should consider singling-out and linkability risks (see ICO source).
 
-## 13. KPIs
-- Citizen participation rate
-- Issue resolution time
-- Citizen satisfaction scores
-- Cost savings from improved efficiency
-- Diversity of participants
-- Policy changes influenced by citizen input
+### 7.3 Redaction workflow
+- automated detection (faces/plates/addresses) → flag
+- human review for publishable media
+- store redacted and original versions with access controls
 
----
-
-## 14. Deliverables and checklists
-
-### 14.1 Deliverables
-- Mobile applications (iOS, Android)
-- Web portal and admin dashboard
-- Issue tracking and routing system
-- Participatory budgeting platform
-- Analytics and reporting tools
-- Integration APIs for city systems
-- Privacy and security documentation
-- User training materials
-
-### 14.2 Readiness checklist
-- [ ] Stakeholder consultations completed
-- [ ] Privacy and security framework established
-- [ ] Platform developed and tested
-- [ ] City staff trained on new workflows
-- [ ] Pilot communities selected
-- [ ] Marketing and outreach plan ready
-- [ ] Integration with city systems tested
-- [ ] Accessibility compliance verified
+### 7.4 Retention and legal hold
+- define retention by data type (cases, media, identity proofs)
+- legal hold process for litigation/FOI/public records obligations
+- immutable audit logs for edits/merges/status changes
 
 ---
 
-## 15. References
+## 8) Security & abuse resistance
+- rate limiting and spam detection
+- bot mitigation with accessibility-friendly approaches
+- DoS resilience (CDN/WAF)
+- admin protection: MFA, least privilege, session monitoring
+- tamper-evident event log for status changes (append-only)
 
-### 15.1 Workspace source
-- Item 27 in [`kali-task-research.md`](../kali-task-research.md:1)
+---
 
-### 15.2 External references (retrieved via Firecrawl MCP)
-- "Traffy Fondue: a smart city citizen engagement platform for Bangkok." Frontiers in Sustainable Cities. (2025)
-- "Towards Inclusive Smart Cities." MDPI. (2024) - Digital rights, ethical data governance, and participatory practices
-- "Digital Co-Creation in Socially Sustainable Smart City Projects." IEEE Explore. (2024)
-- "How can data contribute to Smart City innovation: a study in Thailand." Frontiers in Sustainable Cities. (2024)
+## 9) Operational runbooks (minimum)
+### 9.1 Surge event intake (storm/outage)
+- activate surge mode categories
+- broaden dedupe radius and increase human triage staffing
+- communicate service expectations publicly
 
-### 15.3 Suggested further reading (not fetched)
-- Participatory budgeting implementation guides
-- Digital democracy best practices
-- Civic technology design patterns
-- Open data standards and APIs
-- Community engagement methodologies
+### 9.2 Coordinated abuse / misinformation campaign
+- enable friction controls
+- isolate affected categories
+- publish rapid transparency note
+
+### 9.3 “Ticket closed but unresolved” escalation
+- resident escalation path
+- audit closure evidence
+- reopen with supervisor review
+
+### 9.4 Privacy incident (exposed sensitive report/photo)
+- remove from public view immediately
+- incident response and notification per policy
+- postmortem and control fixes
+
+---
+
+## 10) Key metrics (include integrity/anti-gaming)
+Operational:
+- intake volume, dedupe rate
+- time-to-ack, time-to-dispatch, time-to-resolve
+- reopen rate
+
+Equity:
+- channel mix by neighborhood
+- assisted vs digital share
+- accessibility/language usage
+
+Moderation:
+- time-to-review, appeals rate, appeal uphold rate
+
+Integrity:
+- closure anomaly rate near SLA boundary
+- reclassification spikes
+- % closures with evidence references
+
+---
+
+## 11) Implementation roadmap
+### 0–3 months
+- integration mapping and SoR decisions
+- shared taxonomy + closure codes
+- minimal truthful status loop (append-only event log)
+- pilot department integration
+
+### 3–12 months
+- expand integrations (CMMS + more departments)
+- governed triage (dedupe + priority governance + audits)
+- moderation operating model + transparency report v1
+- equity measurement baseline and assisted-channel improvements
+
+### 12–24 months
+- participatory modules at scale with eligibility tokens
+- advanced analytics (hotspots, recurrence, service learning)
+- mature transparency reporting and independent audits
+
+---
+
+## 12) Risks & mitigations
+| Risk | Mitigation |
+|---|---|
+| Harassment / doxxing | moderation policies, urgent queue, redaction |
+| Fake reports / bots | rate limits, anomaly detection, friction controls |
+| Biased triage | explainability, bias audits, appeal channel |
+| SLA gaming | closure anomaly detection, evidence-required closure |
+| Privacy harms from geodata/photos | precision minimization, redaction workflows |
+| Legitimacy failure | truthful status policy, transparency reporting |
+
+---
+
+## Sources (high-signal anchors)
+- Service Manual (UK Government Digital Service). https://www.gov.uk/service-manual — Practical guidance for building and running public digital services, including user needs, accessibility, and service operations.
+- Web Content Accessibility Guidelines (WCAG) 2.2. https://www.w3.org/TR/WCAG22/ — The core standard for accessibility requirements; use AA as baseline.
+- ICO — “How do we ensure anonymisation is effective?”. https://ico.org.uk/for-organisations/uk-gdpr-guidance-and-resources/data-sharing/anonymisation/how-do-we-ensure-anonymisation-is-effective/ — Explains identifiability risk, singling out, and linkability; useful for designing privacy-safe public maps and releases.
+- HUD Exchange — Participatory Budgeting overview. https://www.hudexchange.info/programs/participatory-budgeting/ — Public-sector framing of PB; supports defining scope and governance for budgeting participation.

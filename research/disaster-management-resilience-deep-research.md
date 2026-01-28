@@ -1,327 +1,437 @@
 # Disaster management & resilience — Deep research
 
 ## Executive summary
-Disaster management and resilience systems build early warning systems, emergency response coordination, and post-disaster recovery planning using real-time data. These platforms enable proactive disaster preparedness, rapid response coordination, effective resource allocation, and data-driven recovery planning to enhance city resilience against natural and human-made disasters.
-
-The critical technical outputs are: (1) early warning and detection systems, (2) emergency response coordination platforms, (3) real-time situational awareness dashboards, and (4) recovery planning and tracking systems. Achieving these requires sensor networks, communication systems, data analytics platforms, and integration with emergency services.
-
-This document deepens item 38 in [`kali-task-research.md`](../kali-task-research.md:1): *"Disaster management & resilience: Build early warning systems, emergency response coordination, and post-disaster recovery planning using real-time data."*
-
----
-
-## Why this theme matters for a City Digital Twin (and how it helps you run it)
-
-### Why you need it
-
-Disaster management is one of the clearest “operational proofs” of a City Digital Twin: the twin must help reduce time-to-detect, time-to-decide, and time-to-act under uncertainty. Without an integrated resilience capability, the twin remains a planning artifact—useful in workshops, but disconnected from the high-stakes response and recovery loops that matter most.
-
-### How it helps you run the twin (practical operational impact)
-
-- **Enables multi-source detection and verification:** fusing sensors, reports, and external feeds into a single event model reduces false alarms and improves confidence.
-- **Coordinates action across agencies:** the twin becomes the shared situational picture (who/what/where), tying incidents to assets, teams, and resources for dispatch and tracking.
-- **Improves warning effectiveness:** standardized alerting formats and multi-channel dissemination turn model outputs (flood extents, smoke forecasts) into actionable public warnings.
-- **Connects response to recovery:** damage assessments and restoration progress become state updates in the twin, enabling recovery KPIs and prioritization.
-
-### Evidence pointers (deep research starting points)
-
-- OASIS **Common Alerting Protocol (CAP) v1.2** describes CAP as a general format for exchanging all-hazard emergency alerts over many kinds of networks, enabling a consistent warning message to be disseminated simultaneously over multiple warning systems (improving effectiveness while simplifying warning). Source: https://www.oasis-open.org/standard/cap/
-- UNDP/UNDRR (2025) notes that early warning systems are among the most effective and cost-efficient methods for reducing disaster-related deaths and losses, and describes how real-time data and multi-channel communications help turn early warnings into timely action. Source: https://iddrr.undrr.org/news/technology-dividend-empowering-and-protecting-communities-through-early-warnings
-
-## 1. Background and context
-Disaster management faces significant challenges:
-- Limited early warning capabilities
-- Fragmented emergency response coordination
-- Inefficient resource allocation during crises
-- Lack of real-time situational awareness
-- Slow recovery and reconstruction
-
-A smart disaster management approach supports:
-- Proactive disaster preparedness
-- Coordinated emergency response
-- Optimized resource allocation
-- Data-driven decision making
-- Faster recovery and resilience building
-
----
-
-## 2. Stakeholders
-- **Emergency management agencies**: coordination and response
-- **First responders**: police, fire, medical
-- **Municipal government**: policy and resources
-- **Citizens and communities**: affected populations
-- **Utility companies**: critical infrastructure
-- **Healthcare providers**: medical response
-- **Technology providers**: systems and platforms
-
----
-
-## 3. Threat model / abuse cases
-
-### 3.1 Assets to protect
-- Integrity of warning and alert systems
-- Availability of emergency communications
-- Privacy of citizen location and health data
-- Security of response coordination systems
-
-### 3.2 Abuse/failure cases
-- **False alarms** causing panic and resource waste
-- **System failures** during critical emergencies
-- **Data breaches** exposing sensitive information
-- **Denial of service** against warning systems
-- **Misinformation** spreading during crises
-
-### 3.3 Controls
-- Multi-layered verification for alerts
-- Redundant communication systems
-- Encrypted data transmission
-- Regular security and reliability testing
-- Trusted information sources
-
----
-
-## 4. Reference architecture (components + data flows)
-
-### 4.1 Components
-1. **Detection and monitoring layer**
-   - Environmental sensors (seismic, weather, water)
-   - Surveillance cameras
-   - Social media monitoring
-   - Citizen reporting systems
-
-2. **Early warning layer**
-   - Alert generation systems
-   - Multi-channel notification (SMS, app, broadcast)
-   - Warning dissemination networks
-   - Alert prioritization
-
-3. **Coordination layer**
-   - Emergency operations center (EOC) platform
-   - Resource management system
-   - Incident tracking
-   - Communication hub
-
-4. **Situational awareness layer**
-   - Real-time dashboards
-   - GIS mapping
-   - Damage assessment tools
-   - Predictive analytics
-
-5. **Response layer**
-   - First responder dispatch
-   - Resource allocation
-   - Evacuation management
-   - Medical triage systems
-
-6. **Recovery layer**
-   - Damage assessment
-   - Recovery planning
-   - Resource tracking
-   - Progress monitoring
-
-### 4.2 Data flows
-- Sensor data → Detection → Warning → Alert dissemination
-- Incident report → Coordination → Resource allocation → Response
-- Real-time data → Situational awareness → Decision making → Action
-- Damage assessment → Recovery planning → Resource tracking → Reconstruction
-
----
-
-## 5. Methods / algorithms / standards
-
-### 5.1 Early warning
-- Threshold-based detection
-- Pattern recognition
-- Predictive modeling
-- Multi-source data fusion
-
-### 5.2 Emergency coordination
-- Incident command system (ICS)
-- Resource optimization algorithms
-- Priority-based dispatch
-- Multi-agency coordination protocols
-
-### 5.3 Situational awareness
-- Real-time data aggregation
-- GIS visualization
-- Damage assessment algorithms
-- Predictive impact modeling
-
-### 5.4 Recovery planning
-- Damage assessment methodologies
-- Resource requirement estimation
-- Prioritization algorithms
-- Progress tracking systems
-
-### 5.5 Standards and protocols
-- CAP (Common Alerting Protocol)
-- Emergency data exchange standards
-- Interoperability frameworks
-- International disaster management guidelines
-
----
-
-## 6. Data requirements
-
-### 6.1 Minimum datasets
-- Real-time sensor readings
-- Alert and warning logs
-- Incident reports
-- Resource availability
-
-### 6.2 High-value datasets
-- Historical disaster data
-- Population and infrastructure data
-- Weather and environmental patterns
-- Resource and capability inventories
-
-### 6.3 Data quality requirements
-- Sensor accuracy within specified tolerances
-- Alert latency < 5 minutes
-- Data freshness < 1 minute for critical systems
-- System uptime ≥ 99.9%
-
----
-
-## 7. Implementation plan (phases)
-
-### Phase 0 — Baseline and governance
-- Define disaster management goals
-- Establish governance framework
-- Conduct risk assessment
-- Develop response protocols
-
-### Phase 1 — Basic systems
-- Deploy sensor networks
-- Implement early warning system
-- Set up basic coordination platform
-- Train emergency responders
-
-### Phase 2 — Enhanced capabilities
-- Add advanced analytics
-- Implement multi-channel alerts
-- Develop situational awareness dashboards
-- Integrate with external systems
-
-### Phase 3 — Full ecosystem
-- Deploy comprehensive response systems
-- Implement recovery planning tools
-- Create citizen engagement features
-- Establish continuous improvement
-
-### Phase 4 — Innovation and optimization
-- Develop AI-powered prediction
-- Implement automated response
-- Create innovation partnerships
-- Establish resilience metrics
-
----
-
-## 8. Testing and validation
-- Early warning system testing
-- Emergency response drills
-- System reliability testing
-- User training validation
-- Full-scale simulation exercises
-
----
-
-## 9. Observability (SLIs/SLOs)
-
-### 9.1 SLIs
-- Warning system accuracy and timeliness
-- Response coordination effectiveness
-- System uptime and availability
-- Resource allocation efficiency
-- Recovery progress metrics
-
-### 9.2 Example SLOs
-- Warning accuracy ≥ 95%
-- Alert latency < 5 minutes
-- System uptime ≥ 99.9%
-- Response time < 15 minutes
-- Recovery milestone achievement ≥ 90%
-
----
-
-## 10. Governance, compliance, and labor constraints
-- Emergency management regulations
-- Data protection compliance
-- Inter-agency coordination protocols
-- Labor regulations for emergency workers
-- International disaster management standards
-
----
-
-## 11. Risks and mitigations
-- **System failures** → Redundant systems, manual fallbacks, regular testing
-- **False alarms** → Multi-layered verification, threshold tuning, public education
-- **Coordination challenges** → Clear protocols, regular drills, unified command
-- **Data quality issues** → Sensor calibration, validation checks, quality monitoring
-- **Resource constraints** → Prioritization frameworks, mutual aid agreements, resource sharing
-
----
-
-## 12. Costs and FinOps
-- Sensor and monitoring equipment
-- Communication infrastructure
-- Platform development and licensing
-- Training and drills
-- Maintenance and support
-
-Unit costs to track:
-- Cost per sensor deployed
-- Cost per alert processed
-- Cost per training session
-- ROI based on damage reduction
-
----
-
-## 13. KPIs
-- Warning accuracy and timeliness
-- Response time effectiveness
-- Casualty and damage reduction
-- Recovery speed and completeness
-- System reliability and availability
-- Citizen satisfaction with response
-
----
-
-## 14. Deliverables and checklists
-
-### 14.1 Deliverables
-- Early warning system
-- Emergency coordination platform
-- Situational awareness dashboard
-- Response protocols and procedures
-- Recovery planning tools
-- Training programs and materials
-- Citizen alert systems
-- Integration with external agencies
-
-### 14.2 Readiness checklist
-- [ ] Sensor network deployed
-- [ ] Warning system operational
-- [ ] Coordination platform active
-- [ ] Response protocols established
-- [ ] Staff trained
-- [ ] Drills conducted
-- [ ] Citizen alerts configured
-- [ ] Integration tested
-
----
-
-## 15. References
-
-### 15.1 Workspace source
+
+In a City Digital Twin portfolio, disaster management is where “decision support” becomes **real operations**. The platform’s job is not to draw nicer maps; it is to reduce time-to-verify, time-to-decide, and time-to-coordinate across agencies—while preventing the most dangerous failure modes: **false alarms**, **misinformation harm**, **unsafe automation**, and **leakage of sensitive locations**.
+
+This document operationalizes disaster management around how incidents are actually run under the Incident Command System (ICS): incident objectives, operational periods, situation status, resource requests/assignments, and public communications through a Joint Information System/PIO function. It provides:
+
+- An **ICS-aligned operating model** and minimal canonical incident data model.
+- **Inter-agency interoperability** patterns and shared operating picture governance (“who owns truth”).
+- **Alert governance under uncertainty** (staged alerts, verification workflows, confidence scoring, two-person rule).
+- **Rumor control / misinformation operations** integrated with auditability and cross-channel messaging.
+- **Privacy and sensitive location protections** (precision tiering, retention/legal hold, vulnerable populations).
+- **Resilience engineering** for the platform itself (offline-first field ops, degraded mode, dependency mapping).
+- **Recovery as a longitudinal program** tied to asset management, procurement/permitting, finance/grants, and equity outcomes.
+
+## 0. Scope and positioning
+
+### 0.1 What this capability is
+
+A city-governed incident management capability that:
+
+- creates and manages incident records (multi-jurisdiction where required)
+- maintains a shared operating picture (situation + resources + impacts)
+- orchestrates alerting and public information with safety governance
+- supports field operations (offline-first data capture and assignments)
+- tracks recovery work as a program integrated with city operations
+
+### 0.2 What it is not (safety boundaries)
+
+- Not an autonomous “response bot.” No automated dispatch or evacuation orders without explicit human authorization.
+- Not a social media sentiment engine. Social content can be a signal but not a “truth source” without verification.
+- Not a public map of sensitive facilities or vulnerable populations.
+
+## 1. Operational model anchored in ICS
+
+### 1.1 ICS workflow mapping (platform capabilities → incident practice)
+
+| ICS/EOC practice | Platform capability |
+|---|---|
+| Incident creation + size-up | incident record + initial situation report (SitRep) + affected area |
+| Incident objectives | objectives list with owners and success criteria |
+| Operational periods (“Planning P”) | operational period objects with plans, assignments, and briefings |
+| Resource requests/assignments | resource ordering, status tracking, mutual aid, demob |
+| Situation status | SitRep cadence, validated observations, confidence scoring |
+| Public information (PIO/JIC) | message drafting, approvals, rumor control, channel publishing log |
+| Damage assessment | field forms, photos, geotagging (precision-tiered), validation |
+| Recovery | work packages linked to assets, contracts, finance, equity tracking |
+
+### 1.2 Minimal canonical incident data model (entities + required fields)
+
+Keep the canonical model small; map agency-specific systems into it.
+
+**Entity: `Incident`**
+
+Required fields:
+
+- `incident_id` (UUID)
+- `name`, `incident_type` (taxonomy)
+- `status` (active/contained/closed)
+- `jurisdictions[]` (city, county, mutual aid)
+- `start_time_utc`, `last_updated_utc`
+- `severity_level` (policy-defined)
+- `ic_uc` (Incident Command / Unified Command)
+- `eoc_activation_level` (if applicable)
+- `affected_area` (geometry + precision tier)
+- `current_objectives[]` (see below)
+- `operational_period_current` (reference)
+- `sitreps[]` (time series)
+- `public_message_state` (active alerts, last public statement)
+
+**Entity: `Objective`**
+
+- `objective_id`, `incident_id`
+- `statement` (plain language)
+- `owner_role` (ICS role)
+- `success_criteria`
+- `status` (planned/in-progress/done)
+
+**Entity: `OperationalPeriod`**
+
+- `op_period_id`, `incident_id`
+- `start_time`, `end_time`
+- `iap_ref` (Incident Action Plan link)
+- `assignments[]`
+
+**Entity: `Resource`**
+
+- `resource_id`
+- `kind`, `type` (per local catalog)
+- `owner_agency`
+- `status` (available/assigned/enroute/onscene/outofservice)
+- `last_known_location` (precision-tiered)
+
+**Entity: `ResourceRequest`**
+
+- `request_id`, `incident_id`
+- `requested_by_role`
+- `resource_kind/type`, `quantity`
+- `priority`
+- `needed_by_time`
+- `status` (open/filled/partial/cancelled)
+
+**Entity: `Observation`** (validated signal)
+
+- `observation_id`, `incident_id`
+- `source` (sensor, CAD, field report, partner agency)
+- `time_observed`, `time_received`
+- `location` (precision-tiered)
+- `claim` (what is asserted)
+- `confidence` (0–1) + `confidence_rationale`
+- `verification_state` (unverified/triangulated/confirmed/false)
+
+**Entity: `PublicMessage`**
+
+- `message_id`, `incident_id`
+- `stage` (watch/advisory/warning/evacuation)
+- `geo_scope`, `audience`
+- `issued_by`, `approved_by`
+- `time_issued`, `expires_at`
+- `channels[]` + per-channel delivery status
+- `corrections[]` (retractions, edits)
+
+## 2. Interoperability & shared operating picture governance
+
+### 2.1 Integration patterns (multi-agency, multi-jurisdiction)
+
+Common sources:
+
+- CAD/911 and dispatch logs
+- CAP alerting systems
+- public works/road closures and work orders
+- utility outage systems
+- GIS layers (critical infrastructure, shelters)
+- hospitals/shelter occupancy (often constrained)
+
+Patterns:
+
+1. **System-of-record + federation**
+   - Each agency keeps its legal/operational system-of-record.
+   - The twin platform ingests into the canonical incident model and serves a governed shared view.
+
+2. **Event-driven integration**
+   - normalize key state transitions (resource status, closure posted, shelter occupancy update) as events.
+
+3. **Role/jurisdiction-tiered access**
+   - mutual aid users get time-boxed access tied to incident activation.
+
+### 2.2 Shared operating picture governance (“who owns truth”)
+
+Define precedence and reconciliation rules:
+
+- **Source precedence by field** (example):
+  - `road_closure_status`: public works is authoritative
+  - `fire_perimeter`: fire agency is authoritative
+  - `utility_outage_extent`: utility is authoritative
+  - `casualty_counts`: public health is authoritative
+
+Conflict handling workflow:
+
+- detect conflicts (two authoritative sources disagree)
+- record both values + provenance
+- assign to “truth steward” (role) for reconciliation
+- publish resolved value with audit trail
+
+All overrides must be logged with:
+
+- who changed, why, when
+- what evidence supported the change
+
+## 3. Alert governance under uncertainty (false-alarm prevention)
+
+### 3.1 Staged alert model
+
+Use explicit stages:
+
+- **Watch**: credible possibility; prepare.
+- **Advisory**: conditions present; take cautionary actions.
+- **Warning**: imminent/occurring; take protective action.
+- **Evacuation**: move now (highest impact).
+
+Each stage must have:
+
+- required verification level
+- authorized roles
+- default message templates
+- minimum/maximum geographic scope rules
+
+### 3.2 Verification workflow and two-person rule
+
+For high-impact alerts (Warning/Evacuation):
+
+- two-person rule: initiator + approver
+- evidence checklist (minimum):
+  - 2 independent sources OR 1 authoritative sensor/system + human confirmation
+  - location scope validated
+  - “what would change our assessment” documented
+
+### 3.3 Confidence scoring
+
+Maintain a `confidence` field for key claims.
+
+Rules:
+
+- confidence must be justified with `confidence_rationale`
+- confidence affects allowed stage:
+  - low confidence → Watch/Advisory only
+  - high confidence → Warning/Evacuation eligible
+
+### 3.4 Trust repair after false positives
+
+False alarms will happen; manage them as safety incidents.
+
+- immediate correction message (retraction) with plain language
+- after-action review (AAR) that includes:
+  - what triggered the alert
+  - why verification failed
+  - controls added (thresholds, training, gating)
+- transparency policy: publish summary at the “balanced” level without exposing sensitive details
+
+## 4. Misinformation and information operations (rumor control)
+
+### 4.1 Trusted source registry
+
+Maintain a registry of:
+
+- official accounts/domains
+- authorized spokespeople (PIO/JIC)
+- partner agency comms contacts
+
+Where feasible, use message signing / strong provenance (at minimum: internal signing of messages and immutable audit logs).
+
+### 4.2 Rumor intake and triage
+
+Intake channels:
+
+- 311/CRM tagged as “rumor/misinformation”
+- social monitoring queue (signals only)
+- partner agency reports
+
+Triage workflow:
+
+- classify rumor type (safety, evacuation, shelter, infrastructure)
+- assign owner (PIO + incident command)
+- verify with authoritative sources
+- publish correction across channels with shared `message_id`
+
+### 4.3 Auditability of communications
+
+Every message must be logged:
+
+- who authored and approved
+- time issued and channels
+- edits/retractions
+- evidence references
+
+## 5. Privacy and sensitive location protections
+
+### 5.1 Location precision tiering
+
+Define tiers:
+
+- **Public**: coarse polygons/areas (neighborhood/zone); no individual addresses for sensitive contexts.
+- **Responder**: higher precision for assigned personnel.
+- **Analyst**: controlled access for damage assessment and recovery planning.
+
+Default to the least precise representation that supports the task.
+
+### 5.2 Sensitive facilities and vulnerable populations
+
+- maintain a protected layer for sensitive sites (shelters, critical facilities)
+- strict role-based access + audit
+- additional redaction for public records responses
+
+### 5.3 Retention, legal discovery, and redaction
+
+- define retention by record type (messages, location traces, field photos)
+- legal hold workflow for incidents
+- redaction workflow for public records requests
+
+## 6. Platform resilience engineering (offline & degraded mode)
+
+### 6.1 Offline-first field operations
+
+Field capabilities that must work offline:
+
+- assignment lists
+- map tiles for assigned area
+- damage assessment forms + photos
+- critical contacts and checklists
+
+Sync semantics:
+
+- local-first writes with conflict resolution
+- prioritize “safety critical” updates (closures, hazards)
+- backlog age metrics
+
+### 6.2 Degraded-mode behaviors
+
+When upstream systems fail:
+
+- ingest: queue and annotate staleness
+- serve: show “last updated” + confidence degradation
+- alerting: require manual confirmation; disable automation
+
+### 6.3 Dependency mapping and fallbacks
+
+Maintain an explicit dependency map:
+
+- telecom/cellular carriers
+- power and backup power sites
+- cloud region dependencies
+- GIS services and tile servers
+
+Plan with PACE (Primary/Alternate/Contingency/Emergency) communications patterns for core workflows.
+
+## 7. Recovery as a longitudinal program
+
+### 7.1 Integrations
+
+Link recovery tracking to:
+
+- asset management work orders and condition assessments
+- permitting and inspections
+- procurement and contractor mobilization
+- finance/grants (eligibility, documentation)
+- benefits realization tracking (what was restored and for whom)
+
+### 7.2 Equity outcomes
+
+Track distribution of:
+
+- shelter access and occupancy vs need
+- restoration times by neighborhood
+- aid delivered and delays
+
+Publish at “balanced” transparency: enough to show fairness and performance without exposing vulnerable individuals.
+
+## 8. Operational runbooks (minimum set)
+
+### 8.1 Major incident activation
+
+- EOC activation checklist
+- access grants for mutual aid (time-boxed)
+- comms posture (staged alerts; rumor control channels active)
+
+### 8.2 False alarm and retraction
+
+- stop further escalation
+- issue correction
+- preserve evidence and logs
+- schedule AAR within 72 hours
+
+### 8.3 Misinformation campaign during incident
+
+- activate rumor control workflow
+- coordinate with partner agencies
+- publish corrections, pin official sources
+
+### 8.4 Platform outage during incident
+
+- failover to alternate region/edge
+- switch field ops to offline mode
+- activate manual comms fallbacks
+
+### 8.5 Post-incident AAR + corrective action tracking
+
+- capture timeline, decisions, and comms
+- assign corrective actions with owners and deadlines
+- track completion and retest in next drill
+
+## 9. Key metrics
+
+### 9.1 Alert governance metrics
+
+- time-to-verify (signal → confirmed)
+- staged alert progression time
+- false positive proxy rate (retractions per incident)
+- override/two-person compliance
+
+### 9.2 Communications metrics
+
+- message delivery latency by channel
+- cross-channel consistency rate (same message core)
+- correction time (rumor detected → correction issued)
+
+### 9.3 Shared operating picture metrics
+
+- freshness/completeness by source
+- conflict rate and time-to-reconcile
+
+### 9.4 Offline resilience metrics
+
+- offline sync success rate
+- backlog age distribution
+- % field operations completed offline without data loss
+
+### 9.5 Recovery program metrics
+
+- restoration throughput (work orders closed/week)
+- time-to-restore by neighborhood
+- equity distribution metrics for aid and restoration
+
+## 10. Implementation roadmap
+
+### 0–3 months
+
+- define ICS-aligned canonical data model and role mappings
+- integrate basic feeds (CAD/911, GIS, CAP)
+- implement staged alert governance + two-person rule for high-impact alerts
+- run tabletop drill using the new workflows
+
+### 3–12 months
+
+- implement offline-first field ops + degraded mode
+- build rumor control workflow + trusted source registry
+- harden cross-agency interoperability and conflict resolution workflows
+
+### 12–24 months
+
+- multi-jurisdiction federation (mutual aid access + governance)
+- resilience engineering maturity (multi-region/edge fallbacks, dependency testing)
+- integrate recovery program end-to-end (asset mgmt, permitting, procurement, finance)
+
+## 11. References
+
+### 11.1 Workspace source
+
 - Item 38 in [`kali-task-research.md`](../kali-task-research.md:1)
 
-### 15.2 External references (retrieved via Firecrawl MCP)
-- "Deciphering technological advancements for efficient disaster management." ScienceDirect. (2024) - Digital intelligence technologies including BDA, IoT, AI, ML, DL and blockchain
-- "Blockchain in Agriculture and Food Supply Chain Market." MarketsandMarkets. (2024) - Supply chain resilience through digital intelligence
+### 11.2 External references (retrieved via Firecrawl MCP)
 
-### 15.3 Suggested further reading (not fetched)
-- CAP (Common Alerting Protocol) specifications
-- Incident Command System (ICS) guidelines
-- Emergency management best practices
-- Disaster resilience frameworks
-- Early warning system standards
+- FEMA. *Incident Action Planning Process* (PDF). https://www.fema.gov/sites/default/files/documents/fema_incident-action-planning-process.pdf — Describes the ICS incident action planning process and operational period planning cycle, anchoring how objectives and plans are iterated.
+- FEMA Training. *ICS Organizational Structure and Elements* (PDF). https://training.fema.gov/emiweb/is/icsresource/assets/ics%20organizational%20structure%20and%20elements.pdf — Defines core ICS roles and responsibilities, useful for mapping platform workflows to real incident roles.
+- FEMA. *IPAWS Best Practices* (PDF). https://www.fema.gov/sites/default/files/documents/fema_ipaws-best-practices-guide.pdf — Provides recommended policies, procedures, training, and operational practices for alerting authorities; supports staged alert governance and false-alarm reduction.
+- FEMA. *NIMS Basic Guidance for Public Information Officers* (PDF). https://www.fema.gov/sites/default/files/documents/fema_nims-basic-guidance-public-information-officers_12-2020.pdf — Operational guidance for PIO/JIC functions including rumor control and public information practices.
+- CISA. *Emergency Communications Guidance Documents and Publications.* https://www.cisa.gov/emergency-communications-guidance-documents-and-publications — Collection of guidance supporting operable/interoperable emergency communications and continuity planning.

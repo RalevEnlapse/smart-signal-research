@@ -1,256 +1,273 @@
 # Incident response rehearsals — Deep research
 
 ## Executive summary
-Incident response rehearsals (tabletop exercises, on-call drills, and simulations) are structured practice sessions that prepare teams to respond effectively to real incidents. In a city digital twin context, rehearsals use the twin’s data and simulation capabilities to create realistic scenarios, test decision-making, and identify gaps in processes, tools, and coordination.
+Incident response rehearsals are **repeatable, measurable exercises** (tabletops, functional drills, and full-scale simulations) that validate whether a City Digital Twin program can respond to incidents without amplifying harm.
 
-The goal is to reduce downtime and improve outcomes during real incidents by:
-- Building muscle memory and shared mental models
-- Validating that tools and data are available when needed
-- Testing communication and coordination across agencies
-- Identifying and fixing process gaps before they matter
+For a digital twin, rehearsals must go beyond generic “IT outage” scenarios. They must test twin-specific failure modes:
+- **model failures** that drive harmful recommendations
+- **data integrity failures** that corrupt dashboards and decision support
+- **policy-as-code / IAM failures** that block legitimate emergency access
+- **privacy incidents** (re-identification from joins/exports)
+- **federation failures** across agencies/partners
+- **vendor remote-access compromise** affecting OT-adjacent domains
 
-Rehearsals should be regular, varied, and tied to specific learning objectives. They require a governance framework to track findings, assign owners, and ensure improvements are implemented.
+“Good” is not “we held a drill.” Good is:
+- reduced time-to-detect/triage/contain/restore
+- improved decision quality under stress
+- verified ability to grant least-privilege emergency access quickly
+- audit evidence sufficient to reconstruct what happened
+- fewer repeat findings across exercises
 
-This document deepens item 14 in [`kali-task-research.md`](../kali-task-research.md:1): *“Incident response rehearsals: Run tabletop exercises and on-call drills to reduce downtime during real incidents.”*
-
----
-
-## 1. Background and context
-City-scale incidents include:
-- Cybersecurity incidents (ransomware, data breaches)
-- Infrastructure failures (power outages, water main breaks)
-- Natural disasters (floods, heatwaves, storms)
-- Public safety emergencies (large fires, mass casualty events)
-- Public health emergencies (disease outbreaks)
-
-Common failure modes during real incidents:
-- Unclear roles and responsibilities
-- Inaccessible or inaccurate data
-- Poor communication across agencies
-- Decision paralysis under time pressure
-- Lack of tested fallback procedures
-
-Rehearsals address these by:
-- Creating safe-to-fail environments
-- Exercising decision-making under stress
-- Validating tooling and data availability
-- Building relationships and trust across teams
+This document deepens item 14 in [`kali-task-research.md`](kali-task-research.md:1): *“Incident response rehearsals: Run tabletop exercises and on-call drills to reduce downtime during real incidents.”*
 
 ---
 
-## 2. Stakeholders
-- **Incident commanders**: decision authority during incidents
-- **On-call teams**: technical responders
-- **Agency leadership**: escalation and resource allocation
-- **Communications/public affairs**: public messaging
-- **Legal/compliance**: regulatory obligations
-- **IT/security**: tooling and infrastructure
-- **External partners**: utilities, vendors, regional coordination
+## 1) Purpose, scope, and what good looks like
+
+### 1.1 Purpose
+Rehearsals are a capability to validate end-to-end:
+- **detect → triage → contain → recover**
+- governance under stress (privacy, access, evidence, comms)
+- cross-agency coordination and partner integration
+
+### 1.2 Scope (default)
+Scope includes **cyber + data + model + governance** incidents that touch:
+- ingestion pipelines and data products
+- analytics/model services
+- policy enforcement (OPA/ABAC), IAM, federation
+- export/egress controls
+- audit logs and evidence handling
+- dashboards and downstream operational integrations
+
+### 1.3 Non-goals
+- Not a blame exercise.
+- Not a compliance theater exercise.
+- Not a full penetration test replacement.
+
+### 1.4 “What good looks like” (acceptance criteria)
+An exercise is “effective” only if it produces evidence that:
+- responders can access the right systems within the time budget
+- containment decisions are timely and proportional
+- privacy controls hold (or fail safely) under pressure
+- comms decisions are controlled (no accidental public alerts)
+- corrective actions are implemented and re-tested
 
 ---
 
-## 3. Threat model / abuse cases
+## 2) Twin-specific scenario library (concrete)
 
-### 3.1 Assets to protect
-- Confidentiality of rehearsal scenarios (especially if based on real vulnerabilities)
-- Integrity of findings and action items
-- Availability of rehearsal infrastructure
+Use a scenario catalog with measurable objectives. Each scenario has a “golden path” plus injects.
 
-### 3.2 Abuse/failure cases
-- **Scenario leakage** revealing sensitive vulnerabilities
-- **Rubber-stamping** rehearsals without meaningful engagement
-- **Findings ignored** leading to repeated failures
-- **Rehearsal fatigue** reducing participation
+| Scenario | Trigger symptoms | Primary risks | Systems involved | Expected decisions + required artifacts |
+|---|---|---|---|---|
+| Harmful recommendation due to incorrect model output | sudden spike in Tier 2/3 recommendations; operator reports “nonsense” | safety, rights, reputational | model service, feature store, HITL workflow, decision logs | decision to disable model (feature flag), downgrade tiers; capture model version/run IDs, validation status, override rationale; open incident ticket and comms plan |
+| Data pipeline corruption/drift misleading dashboards | KPIs shift abruptly; schema changes; data quality alerts | operational harm, misallocation, loss of trust | ingestion pipelines, transformations, SLA monitors, dashboards | decision to freeze dashboards / label degraded; rollback pipeline version; produce lineage evidence, diff report, and affected products list |
+| Policy-as-code/IAM misconfig blocks emergency access | incident roles can’t access dashboards/exports; “permission denied” errors | delayed response, unsafe workarounds | IAM/SSO, ABAC/OPA, break-glass workflow | activate time-bound entitlements; approve break-glass with scope; capture approval chain, policy diff, audit log extracts |
+| Re-identification / privacy incident from joins/exports | unusual export event; small-cell outputs detected; complaint/partner notice | privacy/legal, public trust | catalog, query layer, export service, audit logs | stop dissemination; revoke access; incident classification; notify legal/privacy/partners; produce chain-of-custody and suppression/DP config evidence |
+| Cross-agency federation failure during incident | partner cannot authenticate; token failures; role mapping breaks | coordination collapse | identity federation, partner portals, incident comms | switch to fallback identity path; scope access; document continuity plan and post-incident remediation |
+| Vendor remote access compromise (OT-adjacent impact) | unusual vendor session; anomalous commands; alerts from EDR | safety/infra risk, lateral movement | vendor PAM, jump hosts, OT-adjacent connectors, logs | disable vendor access; rotate creds/keys; isolate connectors; preserve evidence; coordinate vendor incident manager |
 
-### 3.3 Controls
-- Access controls for scenario materials
-- Mandatory post-rehearsal reviews and action tracking
-- Rotating facilitators to avoid groupthink
-- Executive sponsorship and accountability
+Add additional scenarios on a rolling basis based on near-misses and changes in architecture.
 
 ---
 
-## 4. Reference architecture (components + data flows)
+## 3) Exercise types + proportionality
 
-### 4.1 Components
-1. **Scenario library**
-   - Pre-built scenarios (cyber, infrastructure, natural disaster)
-   - Custom scenarios based on recent near-misses
+### 3.1 Exercise types
+- **Tabletop (TTX):** decision-making and coordination; validates runbooks and decision rights.
+- **Functional exercise:** uses real tools (IAM, logging, dashboards) in a safe environment.
+- **Full-scale:** multi-agency + partner; tests comms, paging, and operational continuity end-to-end.
+- **On-call drills:** focused muscle memory (e.g., revoke export token, disable model, rotate keys).
 
-2. **Simulation engine**
-   - Twin-based scenario execution (where applicable)
-   - Injects and timeline management
-
-3. **Rehearsal management**
-   - Scheduling, participant invitations, role assignments
-   - Facilitation tools and chat/communication
-
-4. **Observation and capture**
-   - Note-taking, timeline recording, decision logging
-   - Performance metrics (response times, decision quality)
-
-5. **After-action review (AAR)**
-   - Findings, root causes, action items
-   - Owner assignment and due dates
-
-6. **Tracking and reporting**
-   - Action item status, closure verification
-   - Rehearsal metrics and trends
-
-### 4.2 Data flows
-- Scenario selection → rehearsal setup → execution
-- Observations → AAR → action items
-- Action items → implementation → verification
-- Rehearsal data → metrics and program improvement
+### 3.2 Proportionality rules
+- Tier 0–1 decision products: quarterly tabletop + targeted drill.
+- Tier 2–3 decision products: quarterly functional exercises + at least annual full-scale.
+- When a major system changes (IAM, export controls, model rollout), run a **change-triggered exercise** within 30–60 days.
 
 ---
 
-## 5. Methods / best practices
+## 4) Safe rehearsal infrastructure (replay/sandbox)
 
-### 5.1 Types of rehearsals
-- **Tabletop exercises (TTX)**: discussion-based, low-tech, focus on decision-making
-- **Functional exercises**: operational, use actual tools and systems
-- **Full-scale exercises**: multi-agency, realistic, resource-intensive
-- **On-call drills**: test specific technical skills or procedures
+Goal: realism with **no production impact**.
 
-### 5.2 Scenario design principles
-- Realistic but not overly complex
-- Clear objectives and success criteria
-- Include injects to test decision-making under pressure
-- Vary scenarios to cover different threat types
+### 4.1 Replay environment patterns
+- Maintain a **replayable event/log store** (sanitized) to simulate incidents with time-warp.
+- Support “inject controller” to introduce drift, schema breaks, and delayed data.
 
-### 5.3 Facilitation and observation
-- Neutral facilitator to manage pace and focus
-- Observers to capture decisions and gaps
-- Avoid “gotcha” moments; focus on learning
+### 4.2 Synthetic data for privacy-safe realism
+- Use synthetic datasets that preserve:
+  - distributions (counts, seasonality)
+  - correlations (exposure↔outcome)
+  - edge cases (rare conditions represented safely)
+- Explicitly prohibit using real identifiable health/sensitive records in exercises.
 
-### 5.4 After-action review (AAR)
-- What was expected vs what happened
-- What went well and what didn’t
-- Root causes of gaps
-- Action items with owners and due dates
+### 4.3 Sandboxed integrations
+- Paging, email/SMS, dashboards, and ticketing must have **exercise mode** endpoints.
+- Hard safety interlocks:
+  - cannot publish public alerts from exercise environments
+  - cannot execute actuation commands (or require explicit dual-control test harness)
 
-### 5.5 Continuous improvement
-- Track action item closure rates
-- Measure rehearsal participation and engagement
-- Update scenarios based on real incidents and near-misses
-
-External reference: CISA Tabletop Exercise Packages provide scenario templates and guidance for incident response exercises ([CISA TTEPs](https://www.cisa.gov/resources-tools/services/cisa-tabletop-exercise-packages)).
+### 4.4 Safety officer and guardrails
+- Name a Safety Officer with authority to pause/stop.
+- Pre-run checklist:
+  - environment isolation verified
+  - comms channels clearly labeled
+  - rollback steps tested
 
 ---
 
-## 6. Data requirements
-- Scenario library with objectives and injects
-- Participant roles and contact information
-- Rehearsal schedules and attendance records
-- AAR findings and action items
-- Metrics: response times, decision quality, action closure rates
+## 5) Governance / privacy / access control test plan
+
+Rehearsals must include injects that test governance controls under stress.
+
+### 5.1 Time-bound entitlements
+Inject: responder needs elevated access to a restricted dataset/product.
+- Measure **time-to-grant** least-privilege emergency role.
+- Verify entitlements expire automatically.
+
+### 5.2 Audit log integrity and investigative workflows
+Inject: conflicting timelines between systems.
+- Retrieve audit logs; verify immutability.
+- Establish chain-of-custody for evidence exports.
+
+### 5.3 Export controls and emergency overrides
+Inject: urgent request to export data for partner coordination.
+- Verify approvals, redaction, and logging.
+- Test emergency exception path: time-boxed, compensating controls, post-hoc review.
+
+### 5.4 FOI / public-records vs tactical secrecy
+Inject: media/public request during active incident.
+- Decision point: what can be disclosed now vs later.
+- Required artifact: comms decision record + legal basis.
 
 ---
 
-## 7. Implementation plan (phases)
+## 6) Cross-agency and external partner coordination
 
-### Phase 0 — Program governance
-- Define rehearsal objectives and scope
-- Establish executive sponsorship and accountability
+### 6.1 Participation agreements
+Before joint exercises:
+- define roles, contact points, and minimum commitments
+- define what logs/evidence partners must provide
+- agree information sharing constraints and confidentiality
 
-### Phase 1 — Scenario library and baseline
-- Develop initial scenarios for high-risk areas
-- Conduct first tabletop exercises
+### 6.2 Escalation paths and constraints
+- create a cross-agency escalation matrix (who calls whom)
+- define “need-to-know” evidence sharing rules
+- define vendor escalation and executive notification thresholds
 
-### Phase 2 — Expand and integrate
-- Add functional exercises and on-call drills
-- Integrate twin-based simulations where applicable
-
-### Phase 3 — Mature program
-- Regular cadence (quarterly tabletops, annual functional exercises)
-- Track metrics and demonstrate improvement
-- Share lessons learned across agencies
-
----
-
-## 8. Testing and validation
-- Validate scenarios with subject matter experts
-- Test rehearsal tools and infrastructure before exercises
-- Survey participants for feedback
-- Verify action items are implemented and effective
+### 6.3 Vendor requirements
+Vendors participating must bring:
+- named incident manager + on-call escalation
+- log access and export procedures
+- evidence preservation process
+- commitment to corrective actions and re-test participation
 
 ---
 
-## 9. Observability (SLIs/SLOs)
+## 7) After-action review (AAR) and corrective action system
 
-### 9.1 SLIs
-- % of scheduled rehearsals completed
-- % of action items closed on time
-- Participant satisfaction scores
-- Time to complete AAR and assign action items
+### 7.1 AAR template (exercise output)
+Use an AAR/IP structure:
+- objectives and scenario summary
+- timeline with decision points
+- what we expected vs what happened
+- strengths
+- gaps (root causes + contributing factors)
+- improvement plan (actions, owners, due dates)
+- verification evidence required
+- re-test requirement and date
 
-### 9.2 Example SLOs
-- 100% of high-risk scenarios rehearsed annually
-- 90% of action items closed within 90 days
-
----
-
-## 10. Governance and compliance
-- Executive sponsorship and budget
-- Clear ownership of the rehearsal program
-- Alignment with regulatory requirements (e.g., cybersecurity frameworks)
-- Documentation for audits and reviews
-
----
-
-## 11. Risks and mitigations
-- **Rehearsal fatigue** → vary formats, keep sessions focused
-- **Low participation** → executive mandate, schedule in advance
-- **Findings ignored** → track and report to leadership
-- **Scenarios outdated** → update based on real incidents
+### 7.2 Corrective action tracking
+Rules:
+- every finding has an owner and due date
+- closure requires evidence (runbook update, test result, config diff)
+- repeat findings are escalated to leadership
 
 ---
 
-## 12. Costs and FinOps
-- Staff time for planning, facilitation, and participation
-- Tools for scenario management and AAR tracking
-- External facilitators or consultants (optional)
+## 8) Metrics (effectiveness, not theater)
 
-Track:
-- Cost per rehearsal
-- Cost per action item closed
+### 8.1 Core time metrics
+Track by scenario class:
+- MTTD (mean time to detect)
+- MTTA (mean time to acknowledge/triage)
+- time-to-contain
+- time-to-restore
 
----
+### 8.2 Decision quality metrics
+- false escalations avoided (signal verified before public action)
+- correct escalation timing (stage changes aligned to evidence)
+- % decisions with complete evidence packet
 
-## 13. KPIs
-- Reduction in incident response time (MTTD/MTTR)
-- Reduction in repeat incidents
-- Participant confidence and readiness scores
-- Action item closure rate
+### 8.3 Access readiness
+- time-to-grant emergency role (least privilege)
+- % entitlements expiring on time
+- # of “unsafe workaround” attempts (shared accounts, unmanaged exports)
 
----
+### 8.4 Audit evidence quality
+- can we reconstruct: who did what, when, with what data/model version?
+- % incidents where chain-of-custody is complete
 
-## 14. Deliverables and checklists
-
-### 14.1 Deliverables
-- Scenario library with objectives and injects
-- Rehearsal schedule and facilitation guide
-- AAR templates and action tracking system
-- Metrics dashboard and program reports
-
-### 14.2 Readiness checklist
-- [ ] Executive sponsorship established
-- [ ] Scenario library developed
-- [ ] Facilitators trained
-- [ ] Action tracking system in place
+### 8.5 Program effectiveness trending
+- repeat-finding rate
+- closure quality (findings closed with verification)
+- real incident outcome correlation (MTTR trend over quarters)
 
 ---
 
-## 15. References
-### 15.1 Workspace source
-- Item 14 in [`kali-task-research.md`](../kali-task-research.md:1)
+## 9) Operational runbooks (minimum)
 
-### 15.2 External references (retrieved via Firecrawl MCP)
-- CISA Tabletop Exercise Packages (TTEPs): https://www.cisa.gov/resources-tools/services/cisa-tabletop-exercise-packages
-- Ready.gov — Exercises: https://www.ready.gov/business/training/testing-exercise/exercises
+### 9.1 Plan an exercise
+- define scope, objectives, scenario class
+- identify participants (city + partners)
+- safety plan + comms isolation verification
+- pre-brief materials (rules, no-fault, artifact expectations)
 
-### 15.3 Suggested further reading (not fetched)
-- Incident command system (ICS) training and certification
-- Cybersecurity incident response frameworks (NIST, ISO)
-- After-action review best practices
+### 9.2 Run the exercise
+- facilitator manages pace and injects
+- safety officer enforces guardrails
+- observers capture timeline and decision artifacts
+
+### 9.3 Post-exercise
+- conduct hotwash
+- produce AAR/IP within 3–4 weeks
+- track actions to closure; schedule re-test
+
+---
+
+## 10) Implementation roadmap
+
+### 0–3 months
+- scenario library MVP (include at least one data and one model incident)
+- adopt AAR/IP template and tracking
+- run first tabletop with governance/privacy injects
+
+### 3–12 months
+- build safe replay environment + synthetic data approach
+- run cross-agency functional exercise incl. emergency access grant drill
+- vendor participation agreements and joint drill
+
+### 12–24 months
+- annual full-scale exercise across agencies and key partners
+- mature metrics program and quarterly effectiveness trend reports
+- re-test discipline institutionalized (repeat findings near-zero)
+
+---
+
+## References (retrieved via Firecrawl MCP)
+
+### Exercise program design + AAR practices
+- CISA Tabletop Exercise Packages — https://www.cisa.gov/resources-tools/services/cisa-tabletop-exercise-packages
+  - Takeaway: Provides structured exercise resources aligned to public-sector needs, including planning guidance and templates.
+- After-Action Report / Improvement Plan (AAR/IP) Template (CISA) — https://www.cisa.gov/sites/default/files/publications/8%20-%20CTEP%20AAR-IP%20Template%20%282020%29%20FINAL_508.pdf
+  - Takeaway: Concrete AAR/IP structure to capture objectives, strengths, gaps, and an improvement plan with owners and timelines.
+- Improvement Planning (HSEEP resources) — https://preptoolkit.fema.gov/web/hseep-resources/improvement-planning
+  - Takeaway: Guidance and templates for improvement planning, emphasizing corrective action tracking and re-testing.
+
+### Cyber incident response readiness measurement
+- Computer Security Incident Handling Guide (NIST SP 800-61r2) — https://nvlpubs.nist.gov/nistpubs/specialpublications/nist.sp.800-61r2.pdf
+  - Takeaway: Defines incident handling lifecycle phases that map to measurable times (detect/analyze/contain/eradicate/recover) and evidence handling.
+
+### Role-based access and incident readiness context
+- Zero Trust Architecture (NIST SP 800-207) — https://nvlpubs.nist.gov/nistpubs/specialpublications/NIST.SP.800-207.pdf
+  - Takeaway: Zero trust framing emphasizes least privilege and continuous evaluation; relevant for rehearsing emergency access without over-broad permissions.

@@ -1,497 +1,292 @@
-# Cost and FinOps governance — Deep research
+# Cost and FinOps governance — Deep research (twin-specific, enforceable)
 
 ## Executive summary
-
-Cost and FinOps governance is the practice of managing cloud and technology costs through financial operations, combining financial accountability with engineering agility. For a city digital twin program, FinOps governance ensures optimal resource utilization, cost transparency, budget adherence, and alignment of technology spending with business value. This research outlines a comprehensive FinOps governance framework including cost visibility, budgeting and forecasting, optimization strategies, chargeback and showback, governance policies, and integration with financial and operational processes.
-
-## Why this theme matters for a City Digital Twin (and how it helps you run it)
-
-### Why you need it
-
-City digital twins are “always-on” systems: continuous ingestion, storage, streaming analytics, simulation jobs, GIS serving, dashboards, and integrations with operations tooling. Without explicit FinOps governance, cost becomes a failure mode (runaway spend, inability to forecast, budget shocks), which leads to throttled data retention, paused models, and brittle operations.
-
-FinOps turns cost into an operational control loop: you can scale the twin responsibly while keeping public accountability (what are we spending, why, and what value does it deliver?).
-
-### How it helps you run the twin (practical operational impact)
-
-- **Run-to-budget operations:** define budgets/forecasts for ingestion, storage, simulation, and serving layers; detect variance early; and make deliberate trade-offs (latency vs cost, retention vs cost) instead of reacting after overruns.
-- **Prevents resource sprawl and orphaned spend:** tagging/ownership + policy guardrails make every dataset, pipeline, and environment attributable to a service owner.
-- **Improves reliability and security posture:** cost anomaly detection helps catch misconfiguration or abuse (including “cost-based attacks” where attackers drive spend via resource consumption).
-- **Makes optimization measurable:** right-sizing, lifecycle policies, and reserved/commitment strategies are tracked as implemented changes with savings attribution, supporting continuous improvement.
-
-### Evidence pointers (deep research starting points)
-
-- AWS Well-Architected “Practice Cloud Financial Management” describes cloud financial management as a cross-functional capability (finance, product, technology, business) to manage/optimize/plan costs as usage grows. Source: https://docs.aws.amazon.com/wellarchitected/latest/cost-optimization-pillar/practice-cloud-financial-management.html
-- IBM overview of FinOps describes the FinOps operating model with phases (Inform, Optimize, Operate) and the goal of bringing financial accountability to cloud spend. Source: https://www.ibm.com/think/topics/finops-cloud-cost-management
-
-## 1. Background and context
-
-Cloud and digital infrastructure costs represent a significant and growing portion of technology budgets for city digital twin programs. The shift from capital expenditure (CapEx) to operational expenditure (OpEx) models, combined with the dynamic nature of cloud resources, creates challenges for traditional financial management approaches.
-
-FinOps (Financial Operations) addresses these challenges by:
-- **Bridging finance and technology**: Creating shared understanding and accountability
-- **Enabling real-time cost visibility**: Providing timely and accurate cost information
-- **Optimizing resource utilization**: Ensuring efficient use of cloud resources
-- **Aligning costs with value**: Connecting spending to business outcomes
-- **Enabling data-driven decisions**: Using cost data to inform technology choices
-
-For city digital twin programs, FinOps governance is particularly critical due to:
-- **Scale and complexity**: Large-scale infrastructure with multiple services and components
-- **Variable workloads**: Fluctuating demand based on city events and conditions
-- **Multi-stakeholder environment**: Costs distributed across multiple departments and initiatives
-- **Public accountability**: Need for transparent and responsible use of public funds
-- **Budget constraints**: Limited public sector budgets requiring efficient spending
-
-The implementation of FinOps governance transforms cost management from a reactive, finance-only activity to a proactive, cross-functional discipline.
-
-## 2. Stakeholders
-
-### Financial stakeholders
-- **Finance teams**: Manage budgets, forecasting, and financial reporting
-- **Budget owners**: Accountable for spending within their allocated budgets
-- **Procurement**: Manage vendor relationships and contracts
-- **Audit teams**: Validate financial controls and compliance
-
-### Technical stakeholders
-- **Cloud architects**: Design cost-optimized architectures
-- **DevOps engineers**: Implement and manage cloud resources
-- **Platform engineers**: Maintain infrastructure platforms
-- **Data engineers**: Manage data storage and processing costs
-
-### Business stakeholders
-- **Product managers**: Responsible for product costs and ROI
-- **Service owners**: Accountable for service costs and value
-- **Program managers**: Manage program-level costs and budgets
-- **Executive sponsors**: Provide oversight and strategic direction
-
-### Governance stakeholders
-- **FinOps Council**: Cross-functional team overseeing FinOps practices
-- **Cloud Center of Excellence**: Provides guidance on cloud best practices
-- **Cost optimization team**: Identifies and implements cost savings
-- **Compliance officers**: Ensure cost-related compliance requirements
-
-## 3. Threat model / abuse cases
-
-### Cost control threats
-- **Resource sprawl**: Uncontrolled growth of cloud resources
-- **Over-provisioning**: Resources sized larger than needed
-- **Idle resources**: Resources running but not being used
-- **Orphaned resources**: Resources without clear ownership
-
-### Process threats
-- **Budget overruns**: Spending exceeding allocated budgets
-- **Unexpected costs**: Surprise charges from usage spikes or pricing changes
-- **Allocation errors**: Costs charged to wrong cost centers or projects
-- **Forecasting errors**: Inaccurate predictions of future costs
-
-### Governance threats
-- **Lack of accountability**: No clear ownership of costs
-- **Insufficient visibility**: Limited understanding of cost drivers
-- **Policy violations**: Resources deployed outside approved configurations
-- **Shadow IT**: Resources deployed outside approved processes
-
-### Security threats
-- **Cost-based attacks**: Attackers consuming resources to drive up costs
-- **Credential compromise**: Unauthorized access leading to cost escalation
-- **Resource hijacking**: Malicious use of computing resources
-- **Data exfiltration costs**: Costs associated with data breaches
-
-### Mitigation strategies
-- Automated cost monitoring and alerting
-- Clear cost ownership and accountability
-- Regular cost reviews and optimization
-- Governance policies and guardrails
-- Security controls to prevent unauthorized resource usage
-
-## 4. Reference architecture (components + data flows)
-
-### Core components
-
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                      FinOps Governance Platform                              │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                              │
-│  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐                  │
-│  │  Cost        │    │  Budget      │    │  Forecast    │                  │
-│  │  Collection  │◄──►│  Management  │◄──►│  Engine      │                  │
-│  └──────────────┘    └──────────────┘    └──────────────┘                  │
-│         │                   │                   │                           │
-│         └───────────────────┼───────────────────┘                           │
-│                             ▼                                               │
-│  ┌──────────────────────────────────────────────────────────────────────┐  │
-│  │                      Analysis & Optimization                         │  │
-│  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌───────────┐ │  │
-│  │  │  Cost        │  │  Anomaly     │  │  Optimization│  │  Right     │ │  │
-│  │  │  Analysis    │  │  Detection   │  │  Recommender │  │  Sizing    │ │  │
-│  │  └──────────────┘  └──────────────┘  └──────────────┘  └───────────┘ │  │
-│  └──────────────────────────────────────────────────────────────────────┘  │
-│                             │                                               │
-│                             ▼                                               │
-│  ┌──────────────────────────────────────────────────────────────────────┐  │
-│  │                      Governance & Allocation                          │  │
-│  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌───────────┐ │  │
-│  │  │  Policy      │  │  Chargeback  │  │  Showback    │  │  Budget    │ │  │
-│  │  │  Engine      │  │  & Showback  │  │  Reports     │  │  Alerts    │ │  │
-│  │  └──────────────┘  └──────────────┘  └──────────────┘  └───────────┘ │  │
-│  └──────────────────────────────────────────────────────────────────────┘  │
-│                             │                                               │
-│                             ▼                                               │
-│  ┌──────────────────────────────────────────────────────────────────────┐  │
-│  │                      Reporting & Integration                          │  │
-│  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌───────────┐ │  │
-│  │  │  Cost        │  │  Financial   │  │  Executive   │  │  API       │ │  │
-│  │  │  Dashboards  │  │  Integration │  │  Reports     │  │  Export    │ │  │
-│  │  └──────────────┘  └──────────────┘  └──────────────┘  └───────────┘ │  │
-│  └──────────────────────────────────────────────────────────────────────┘  │
-│                                                                              │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
-
-### Data flows
-
-1. **Cost collection flow**: Cloud providers → Cost data → Normalization → Allocation → Storage
-2. **Budgeting flow**: Budget allocation → Budget setup → Budget tracking → Variance analysis → Alerts
-3. **Optimization flow**: Cost analysis → Anomaly detection → Optimization recommendations → Implementation → Savings tracking
-4. **Reporting flow**: Cost data → Aggregation → Report generation → Distribution → Review
-
-### Integration points
-- **Cloud providers**: Cost and usage data from AWS, Azure, GCP, etc.
-- **Financial systems**: Integration with ERP and budgeting systems
-- **CMDB**: Asset and configuration data for cost allocation
-- **Monitoring systems**: Resource utilization data for optimization
-- **Project management**: Cost tracking against projects and initiatives
-
-## 5. Methods / algorithms / standards
-
-### FinOps phases
-- **Inform**: Gain visibility and understanding of cloud costs
-- **Optimize**: Implement cost optimization measures
-- **Operate**: Maintain efficient cloud operations
-
-### Cost optimization strategies
-- **Right-sizing**: Match resources to actual workload requirements
-- **Reserved instances**: Commit to usage for discounted rates
-- **Spot instances**: Use spare capacity at lower prices
-- **Auto-scaling**: Automatically adjust resources based on demand
-- **Serverless**: Pay only for actual compute time
-- **Storage optimization**: Use appropriate storage tiers and lifecycle policies
-
-### Budgeting and forecasting methods
-- **Zero-based budgeting**: Build budgets from scratch each period
-- **Incremental budgeting**: Adjust previous budgets based on changes
-- **Activity-based budgeting**: Budget based on planned activities
-- **Rolling forecasts**: Continuously update forecasts based on actuals
-- **Scenario planning**: Model different cost scenarios
-
-### Allocation methods
-- **Direct allocation**: Assign costs directly to cost centers
-- **Tag-based allocation**: Use resource tags for cost allocation
-- **Usage-based allocation**: Allocate based on resource usage
-- **Proportional allocation**: Distribute costs based on defined proportions
-- **Activity-based allocation**: Allocate based on activities consuming resources
-
-### Standards and frameworks
-- **FinOps Foundation**: Industry framework for cloud financial operations
-- **Cloud Financial Management (CFM)**: AWS framework for cost optimization
-- **ITIL Financial Management**: IT service management financial practices
-- **COBIT**: Framework for IT governance and management
-- **ISO/IEC 38500**: IT governance standard
-
-### Anomaly detection algorithms
-- **Statistical analysis**: Identify outliers using statistical methods
-- **Machine learning**: Use ML models to detect unusual patterns
-- **Threshold-based alerts**: Alert when costs exceed defined thresholds
-- **Trend analysis**: Identify deviations from expected trends
-- **Peer comparison**: Compare costs with similar organizations
-
-## 6. Data requirements
-
-### Cost data
-- Cloud provider cost and usage data
-- Resource-level cost breakdowns
-- Time-series cost data
-- Cost allocation tags and metadata
-- Discount and commitment information
-
-### Budget data
-- Budget allocations and periods
-- Budget owners and approvers
-- Budget categories and hierarchies
-- Budget variance thresholds
-- Budget change history
-
-### Resource data
-- Resource inventory and configurations
-- Resource utilization metrics
-- Resource ownership and tags
-- Resource relationships and dependencies
-- Resource lifecycle information
-
-### Financial data
-- Chart of accounts and cost centers
-- Financial periods and calendars
-- Exchange rates and multi-currency data
-- Procurement and contract data
-- Financial policies and constraints
-
-### Data quality requirements
-- Accuracy: Cost data must accurately reflect actual spending
-- Completeness: All cost-relevant data must be captured
-- Timeliness: Cost data must be available for timely decision-making
-- Consistency: Standardized cost definitions and calculations
-- Retention: Appropriate retention for historical analysis and auditing
-
-## 7. Implementation plan (phases)
-
-### Phase 1: Foundation (Months 1-3)
-- Assess current cost management practices
-- Define FinOps governance framework
-- Select FinOps platform and tools
-- Establish cost allocation strategy
-- Create initial cost visibility
-
-### Phase 2: Visibility (Months 3-6)
-- Implement cost collection and normalization
-- Set up cost dashboards and reports
-- Establish tagging standards and enforcement
-- Create budget tracking capabilities
-- Implement initial cost alerts
-
-### Phase 3: Optimization (Months 6-9)
-- Implement cost optimization recommendations
-- Set up reserved instance management
-- Implement auto-scaling and right-sizing
-- Establish optimization workflows
-- Track and report savings
-
-### Phase 4: Governance (Months 9-12)
-- Implement governance policies and guardrails
-- Set up chargeback and showback
-- Establish budget approval workflows
-- Integrate with financial systems
-- Create FinOps training and awareness
-
-### Phase 5: Maturity (Months 12-18)
-- Implement predictive cost analytics
-- Establish FinOps culture and practices
-- Integrate with procurement and vendor management
-- Create FinOps best practices library
-- Establish continuous improvement processes
-
-## 8. Testing and validation
-
-### Cost data validation
-- Verify cost data accuracy against provider invoices
-- Validate cost allocation calculations
-- Test cost data completeness and timeliness
-- Confirm cost data integration with financial systems
-
-### Budget validation
-- Test budget tracking and variance calculations
-- Validate budget alert thresholds and notifications
-- Verify budget approval workflows
-- Test budget forecasting accuracy
-
-### Optimization validation
-- Validate optimization recommendation accuracy
-- Test optimization implementation and rollback
-- Verify savings calculations and tracking
-- Confirm optimization impact on performance
-
-### Integration validation
-- Test integration with cloud provider APIs
-- Validate integration with financial systems
-- Verify integration with monitoring systems
-- Test API exports and data feeds
-
-## 9. Observability (SLIs/SLOs)
-
-### Service Level Indicators (SLIs)
-- **Cost data freshness**: Time from cost event to data availability
-- **Budget alert timeliness**: Time from budget threshold breach to alert
-- **Optimization recommendation accuracy**: Percentage of recommendations implemented successfully
-- **Cost allocation accuracy**: Percentage of costs correctly allocated
-- **Report availability**: Uptime of cost reporting systems
-
-### Service Level Objectives (SLOs)
-- **Cost data freshness**: Cost data available within 24 hours
-- **Budget alert timeliness**: Alerts generated within 1 hour of threshold breach
-- **Optimization recommendation accuracy**: 80% of recommendations successfully implemented
-- **Cost allocation accuracy**: 95% of costs correctly allocated
-- **Report availability**: 99.5% reporting system uptime
-
-### Monitoring and alerting
-- Dashboard tracking of cost metrics and trends
-- Automated alerts for budget overruns and anomalies
-- Regular reporting on SLI performance
-- Cost optimization dashboards for stakeholders
-
-## 10. Governance and compliance
-
-### Governance structure
-- **FinOps Council**: Cross-functional oversight of FinOps practices
-- **Cost Center Owners**: Accountable for costs within their areas
-- **Cloud Governance Board**: Approves cloud policies and standards
-- **Procurement Committee**: Manages vendor relationships and contracts
-
-### Decision rights
-- Budget allocation: Finance with input from business units
-- Cost optimization: Technical teams with finance oversight
-- Policy exceptions: Cloud Governance Board based on business justification
-- Chargeback methodology: FinOps Council with stakeholder input
-
-### Compliance requirements
-- Financial regulations and reporting requirements
-- Public sector procurement rules and regulations
-- Audit trail requirements for cost transactions
-- Data protection regulations for cost data
-- Accessibility requirements for cost reporting
-
-### Documentation requirements
-- FinOps policies and procedures
-- Cost allocation methodology documentation
-- Budget management guidelines
-- Optimization playbooks and best practices
-- Regular cost reports and assessments
-
-## 11. Risks and mitigations
-
-### Risk: Cost overruns
-- **Impact**: Budgets exceeded, financial impact
-- **Mitigation**: Budget tracking and alerts, proactive optimization, governance controls
-
-### Risk: Resource sprawl
-- **Impact**: Uncontrolled cost growth
-- **Mitigation**: Resource tagging, ownership requirements, regular reviews
-
-### Risk: Optimization conflicts
-- **Impact**: Cost savings negatively impacting performance
-- **Mitigation**: Performance monitoring, balanced optimization approach, rollback capabilities
-
-### Risk: Cultural resistance
-- **Impact**: Low adoption of FinOps practices
-- **Mitigation**: Executive sponsorship, demonstrated value, training and support
-
-### Risk: Tool complexity
-- **Impact**: Difficulty using FinOps tools
-- **Mitigation**: Simplified interfaces, training, vendor support
-
-### Risk: Data accuracy issues
-- **Impact**: Incorrect cost information leading to poor decisions
-- **Mitigation**: Data validation, regular reconciliation, audit processes
-
-## 12. Costs and FinOps
-
-### Implementation costs
-- FinOps platform licensing: $75K-$200K
-- Implementation and integration: $100K-$250K
-- Training and change management: $40K-$100K
-- Initial optimization projects: $50K-$150K
-
-### Operating costs
-- Platform licensing and maintenance: $40K-$100K annually
-- FinOps team: $300K-$600K annually
-- Storage and infrastructure: $20K-$50K annually
-- Training and onboarding: $15K-$35K annually
-
-### Cost-benefit considerations
-- FinOps typically costs 1-3% of cloud spend
-- ROI through cost optimization: 5:1 to 20:1
-- Avoided costs from better cost management
-- Improved budget accuracy and forecasting
-
-### FinOps practices
-- Regular review of FinOps tool costs vs. savings
-- Optimization of FinOps processes to reduce overhead
-- Leveraging cloud-native cost management services
-- Continuous improvement of cost optimization strategies
-
-## 13. KPIs
-
-### Effectiveness KPIs
-- **Cost savings**: Total savings from optimization initiatives
-- **Budget adherence**: Percentage of spending within budget
-- **Cost avoidance**: Savings from prevented cost increases
-- **ROI**: Return on FinOps investment
-
-### Efficiency KPIs
-- **Cost per unit**: Cost per transaction, user, or output
-- **Resource utilization**: Percentage of resources actively used
-- **Optimization rate**: Percentage of recommendations implemented
-- **Automation rate**: Percentage of FinOps tasks automated
-
-### Quality KPIs
-- **Cost allocation accuracy**: Percentage of costs correctly allocated
-- **Forecast accuracy**: Variance between forecasted and actual costs
-- **Alert effectiveness**: Percentage of alerts leading to action
-- **Stakeholder satisfaction**: Survey results on FinOps effectiveness
-
-### Strategic KPIs
-- **Cloud spend growth rate**: Rate of cloud cost increase
-- **Cost efficiency improvement**: Reduction in cost per unit over time
-- **Budget predictability**: Reduction in forecast variance
-- **Financial transparency**: Visibility into cost drivers and allocation
-
-## 14. Deliverables and checklists
-
-### Phase 1 deliverables
-- [ ] Current state assessment report
-- [ ] FinOps governance framework document
-- [ ] Platform selection and procurement
-- [ ] Cost allocation strategy
-- [ ] Initial cost visibility dashboard
-
-### Phase 2 deliverables
-- [ ] Cost collection and normalization implementation
-- [ ] Cost dashboards and reports
-- [ ] Tagging standards and enforcement
-- [ ] Budget tracking capabilities
-- [ ] Cost alert configuration
-
-### Phase 3 deliverables
-- [ ] Cost optimization recommendations
-- [ ] Reserved instance management
-- [ ] Auto-scaling and right-sizing implementation
-- [ ] Optimization workflows
-- [ ] Savings tracking and reporting
-
-### Phase 4 deliverables
-- [ ] Governance policies and guardrails
-- [ ] Chargeback and showback implementation
-- [ ] Budget approval workflows
-- [ ] Financial system integration
-- [ ] Training and awareness materials
-
-### Phase 5 deliverables
-- [ ] Predictive cost analytics
-- [ ] FinOps culture program
-- [ ] Procurement integration
-- [ ] Best practices library
-- [ ] Continuous improvement processes
-
-### Ongoing deliverables
-- [ ] Monthly cost reports
-- [ ] Budget variance reports
-- [ ] Optimization recommendations
-- [ ] Savings tracking reports
-- [ ] FinOps governance reviews
-
-## 15. References
-
-### 15.1 Workspace source
-- [`kali-task-research.md`](../kali-task-research.md:1) — Item 24: Cost and FinOps governance
-
-### 15.2 External references (retrieved via Firecrawl MCP)
-- Oracle. *FinOps, Cloud Cost Management, and Governance*. Retrieved from https://www.oracle.com/cloud/finops-cost-management-and-governance/ — Describes how OCI FinOps, cloud cost management, and governance services help customers track and budget cloud costs, optimize and reduce expenses.
-
-- AWS. *Practice Cloud Financial Management - Cost Optimization Pillar*. Retrieved from https://docs.aws.amazon.com/wellarchitected/latest/cost-optimization-pillar/practice-cloud-financial-management.html — Explains that Cloud Financial Management (CFM) allows finance, product, technology, and business organizations to manage, optimize, and plan costs as they grow their usage.
-
-- IBM. *Finops for Cloud Cost Management*. Retrieved from https://www.ibm.com/think/topics/finops-cloud-cost-management — Describes the FinOps framework with three phases to help organizations create efficient and disciplined efforts toward cloud optimization: Inform, Optimize, and Operate.
-
-### 15.3 Suggested further reading (not fetched)
-- *Cloud FinOps* — Book by J.R. Storment and Mike Fuller
-- *FinOps for AWS* — Book by O'Reilly on AWS cost management
-- *The FinOps Foundation* — Industry organization and resources
-- *AWS Cost Optimization* — AWS documentation and best practices
-- *Azure Cost Management* — Microsoft Azure cost management guide
+A City Digital Twin program has cost drivers that don’t look like a typical SaaS app: **continuous sensor ingestion**, **geospatial ETL/tiling**, **bursty scenario runs**, **high-egress public dashboards**, and **shared multi-agency platforms**.
+
+This document defines an **actionable FinOps operating system** for a municipal digital twin with:
+- **Twin-specific unit economics** (sensor-day, tile-km² pipeline run, scenario run, API call, dashboard active user-day, GB-month by storage/compute tier).
+- **Governance tied to benefits evidence** so scaling decisions are gated by demonstrated value (not just spend tolerance).
+- **Practical tagging/ownership enforcement** (admission controls, exception workflows, shared-cost allocation, vendor/contract allocation).
+- **Egress and cross-agency sharing controls** (CDN/caching, rate limiting, budgeting by consumer type).
+- **Public-sector budgeting/procurement integration** (appropriation cycles, restricted funds, lead times, contract transparency).
+- A **FinOps + Security joint operating model** for spend spikes (attack vs legitimate surge) with runbooks and thresholds.
+
+This document deepens item 24 in [`kali-task-research.md`](kali-task-research.md:1): “Cost and FinOps governance: Manage cloud and platform costs with transparency, optimization, and budget controls.”
+
+---
+
+## Defaults (unless overridden)
+- `deployment_context`: hybrid (cloud + on-prem) + vendors/partners
+- `showback_mode`: showback-first
+- `budget_constraints`: public-sector-annual
+- `cost_transparency_level`: high
+- `risk_posture`: guardrails-first
+
+---
+
+## 1) Twin-specific unit economics catalog (concrete)
+### 1.1 Unit-cost catalog (recommended)
+These are the “right” cost units for a city twin. Each unit must be computable from tags + run identifiers.
+
+| Unit cost | Definition | Typical levers | Required metadata to compute |
+|---|---|---|---|
+| **Cost per ingested sensor-day** | Total ingest+store+basic queries for one sensor for one day (by sensor class/frequency) | sampling rate, retention tier, compression, edge filtering | `sensor_id`, `sensor_class`, `freq_hz`, `dataset_id`, `retention_tier`, `pipeline_run_id`, `env`, `funding_source` |
+| **Cost per GB-month by tier** | Storage + indexing + typical query overhead per GB-month for hot/warm/cold/archive | lifecycle rules, partitioning, query caching | `dataset_id`, `storage_tier`, `index_type`, `query_class`, `env`, `owner` |
+| **Cost per tile-km² pipeline run** | ETL/retiling/indexing cost per km² (or tile count) per run | tiling scheme, parallelism, incremental updates | `pipeline_id`, `pipeline_run_id`, `tile_scheme`, `area_km2`, `source_dataset_id`, `output_dataset_id` |
+| **Cost per scenario run** | Compute+data IO per model run (by model class/horizon/resolution) | model complexity, ensemble size, caching, spot/queue | `scenario_id`, `scenario_version`, `model_class`, `horizon`, `resolution`, `run_id`, `owner` |
+| **Cost per API call** | Marginal cost per request (compute + cache hits + DB read) | caching, payload size, auth, throttling | `api_name`, `api_version`, `consumer_type`, `client_id`, `request_bytes`, `response_bytes` |
+| **Cost per dashboard active user-day** | Serving + queries + egress for one active user-day | caching/CDN, pre-aggregation, render strategy | `dashboard_id`, `tenant/agency`, `user_type`, `public/private`, `egress_bytes` |
+| **Cost per GB egress** | Outbound transfer cost by consumer type (internal/partner/public) | CDN, cache TTL, data format | `consumer_type`, `dataset_id`, `api_name`, `egress_bytes`, `funding_source` |
+
+### 1.2 “Unit economics first” rule
+- No workload is allowed to scale (retention, frequency, resolution, public availability) without declaring:
+  - its unit-cost metric(s)
+  - its benefit KPI(s)
+  - its guardrails (budget caps, rate limits)
+
+---
+
+## 2) Governance tied to value/benefits (anti “optimize spend, ignore outcomes”)
+### 2.1 Benefit-evidence gating model
+Adopt a lightweight gate aligned to benefits tracking tiers (conceptual alignment to your benefits realization discipline):
+
+- **Gate A (Pilot / Tier 0–1 evidence)**
+  - Allowed spend posture: capped pilot budgets, short retention, low frequency.
+  - Requirement: define hypothesis + baseline KPIs + cost units.
+
+- **Gate B (Scale / Tier 2 evidence)**
+  - Allowed: expand to more agencies/buildings/sensors; longer retention.
+  - Requirement: supported contribution evidence; reproducible metrics; showback of cost+outcomes.
+
+- **Gate C (Institutionalize / Tier 3 evidence)**
+  - Allowed: long-term commitments, reserved/committed spend, large public dashboards.
+  - Requirement: high-confidence impact OR statutory mandate; independent review.
+
+### 2.2 Portfolio view: cost + outcomes side-by-side
+Every monthly portfolio review must show:
+- unit costs (from §1) trend lines
+- outcome KPIs (service quality, resilience, etc.)
+- benefit evidence tier status
+- “continue / change / stop” decision
+
+### 2.3 Sunset / downshift rules
+Trigger review when:
+- <X% active usage for Y days (e.g., dashboard active user-days)
+- high unit cost with low benefit evidence tier
+- egress spend grows without corresponding public value
+
+Actions:
+- reduce retention tier
+- downsample
+- pause scenario ensembles
+- archive datasets
+
+---
+
+## 3) Tagging, ownership, and enforcement (make it real)
+### 3.1 Mandatory tagging standard (minimum)
+These tags/labels are mandatory across cloud resources, pipelines, datasets, and Kubernetes workloads.
+
+| Tag | Purpose |
+|---|---|
+| `owner` | accountable person/team |
+| `service` | product/service identifier |
+| `environment` | prod/stage/dev |
+| `data_classification` | public/internal/sensitive |
+| `funding_source` | appropriation/grant/cost center |
+| `agency` | owning/benefiting agency |
+| `vendor` | vendor/partner if applicable |
+| `workload_type` | ingest/etl/api/dashboard/scenario |
+
+### 3.2 Enforcement mechanisms (guardrails-first)
+- **Admission controls** (block untagged where feasible):
+  - Kubernetes: validating admission (require labels) before deploy.
+  - IaC pipelines: fail builds if mandatory tags missing.
+  - Cloud accounts/projects: SCP/policy equivalents to deny creation without tags (where supported).
+
+- **Exception workflow**
+  - time-boxed exceptions (e.g., 7–14 days)
+  - compensating controls (manual allocation and monitoring)
+  - track **tag debt**: $ spend under exception + days outstanding
+
+### 3.3 Shared resource allocation strategy
+Shared costs include data lake, network egress, observability, CI/CD.
+
+Allocation model:
+- baseline allocation by usage drivers:
+  - storage GB-month by dataset
+  - query CPU-seconds by workload
+  - egress bytes by consumer type
+- disputes resolved by FinOps Council using:
+  - run manifests
+  - measured usage
+  - documented exceptions
+
+### 3.4 Vendor/contract cost allocation
+Contract costs are often not taggable at resource level. Require:
+- vendor invoices provide line items mapped to `service` / `agency` / `funding_source`
+- unit pricing where feasible (per sensor, per GB, per API)
+- audit rights and usage reporting requirements
+
+---
+
+## 4) Egress, sharing, and public dashboard cost controls
+### 4.1 Egress policy tiers
+| Tier | Consumer | Defaults |
+|---|---|---|
+| Internal | city agencies | high cache, generous limits but monitored |
+| Partner | universities/vendors | contract-defined quotas, token auth |
+| Public | open dashboards/APIs | strict rate limits, CDN required |
+
+### 4.2 CDN/caching strategy (public by default)
+- public dashboards must be served behind CDN
+- define cache TTL by data type:
+  - static basemaps: long TTL
+  - near-real-time: short TTL with pre-aggregation
+- prefer precomputed tiles and aggregates over per-request heavy queries
+
+### 4.3 API abuse and cost controls
+- rate limiting per API key / IP / consumer type
+- request budgeting (max response size, pagination)
+- anomaly detection for:
+  - egress spikes
+  - high-error storms (retries)
+  - scraping patterns
+
+### 4.4 Who pays for external sharing?
+- default: the benefiting program funds the egress budget line
+- partner contracts must specify:
+  - quota levels
+  - overage handling
+  - caching responsibilities
+
+---
+
+## 5) Public-sector budgeting and procurement integration
+### 5.1 Annual appropriation mapping
+- map services to annual budget lines:
+  - ingestion
+  - storage tiers
+  - scenario compute
+  - public serving/egress
+- track restricted funds/grants via `funding_source` tag and reporting.
+
+### 5.2 Forecasting under procurement lead times
+- include procurement lead times in forecasting:
+  - reserved/commitment purchases
+  - vendor contract renewals
+- maintain a “runway” report:
+  - forecasted spend vs remaining appropriation
+  - commitments and termination windows
+
+### 5.3 Contract structures for transparency
+Require contracts to include:
+- usage and cost reporting cadence
+- unit price schedules
+- change-order mechanics
+- audit rights
+
+Public-sector oversight can reference GAO guidance on cost management and cloud requirements (see Sources).
+
+---
+
+## 6) FinOps + Security joint ops (cost-based attack posture)
+### 6.1 Joint operating model
+- Shared queue for cost anomalies with classification:
+  1) misconfiguration
+  2) product launch / legitimate surge
+  3) compromised credentials / attack
+
+### 6.2 Thresholds and paging rules (example)
+- page FinOps on:
+  - >20% week-over-week spend spike in prod
+  - egress spike beyond public budget threshold
+- page Security on:
+  - spend spike + auth anomalies (new regions, unusual API keys)
+  - repeated high-rate requests from few sources
+
+### 6.3 Two-person rule (high-risk actions)
+Require dual approval (FinOps + Security or Service Owner + Security) for:
+- raising quotas/limits materially
+- disabling rate limits
+- bypassing tag enforcement
+- enabling expensive regions/services
+
+### 6.4 Evidence and audit logging
+- every emergency override must produce:
+  - incident ticket
+  - decision record (who/why)
+  - time-boxed expiry
+  - postmortem with cost impact
+
+AWS Cost Anomaly Detection is an example of anomaly tooling patterning (see Sources).
+
+---
+
+## 7) Operational runbooks (minimum set)
+### 7.1 Runaway spend incident
+1. Confirm scope (service/agency/env) via tags.
+2. Identify driver (compute, storage, egress).
+3. Triage: misconfig vs surge vs compromise.
+4. Apply guardrails: pause jobs, reduce concurrency, tighten rate limits.
+5. Document and postmortem; update unit economics.
+
+### 7.2 Public dashboard traffic surge
+1. Check CDN cache hit ratio.
+2. Increase caching TTL where safe.
+3. Enforce rate limits and pagination.
+4. Enable “degraded mode” (coarser tiles, slower refresh).
+
+### 7.3 Untagged resource outbreak
+1. Block new untagged deploys.
+2. Inventory untagged resources.
+3. Assign owner and backfill tags.
+4. Measure tag debt and close exceptions.
+
+### 7.4 Budget reforecast after scope change
+1. Update unit assumptions (sensor-days, scenario runs, user-days).
+2. Recompute forecast and runway.
+3. Decide scale gate (A/B/C) based on benefit evidence.
+
+### 7.5 Vendor bill dispute / audit
+1. Reconcile invoice line items to usage reports.
+2. Validate allocation rules.
+3. Escalate with audit rights; document outcome.
+
+---
+
+## 8) Key metrics (decision-grade)
+- % spend allocated to an `owner` (coverage)
+- unit costs and trends (sensor-day, GB-month by tier, scenario run, API call)
+- cost anomaly MTTR and false positive rate
+- egress spend by consumer type (internal/partner/public)
+- tag debt ($ and days) and exception debt
+- cost per benefit unit (where feasible): e.g., $ per avoided outage-minute, $ per verified energy-savings unit
+
+---
+
+## 9) Implementation roadmap
+### 0–3 months
+- publish tagging standard + owners
+- showback dashboard MVP (cost + unit costs)
+- anomaly alerts MVP (spend + egress)
+
+### 3–12 months
+- enforcement gates (IaC + Kubernetes admission)
+- unit cost catalog operationalized and measured
+- budget integration with appropriation cycles
+- egress controls (CDN/rate limiting) for public products
+
+### 12–24 months
+- mature chargeback (optional)
+- scale gates tied to benefit evidence
+- automated optimization playbooks (right-sizing, retention downshift, caching)
+
+---
+
+## Sources (high-signal anchors)
+- FinOps Foundation — FinOps Framework Overview. https://www.finops.org/framework/ — Defines FinOps as an operational framework and cultural practice for maximizing business value of cloud/technology with timely decision making.
+- FinOps Foundation — FinOps Phases (Inform/Optimize/Operate). https://www.finops.org/framework/phases/ — Describes iterative phases used to execute FinOps capabilities.
+- Kubernetes Blog — A Guide to Kubernetes Admission Controllers. https://kubernetes.io/blog/2019/03/21/a-guide-to-kubernetes-admission-controllers/ — Explains admission controllers as a mechanism to enforce policy (useful for label/tag enforcement).
+- AWS Documentation — Getting started with AWS Cost Anomaly Detection. https://docs.aws.amazon.com/cost-management/latest/userguide/getting-started-ad.html — Shows how anomaly monitors and alerts are configured for spend anomalies.
+- U.S. GAO — Cloud Computing: Agencies Need to Address Key OMB Requirements. https://www.gao.gov/products/gao-24-106137 — Highlights government requirements for procuring and managing cloud services, reinforcing public-sector constraints on cost management.

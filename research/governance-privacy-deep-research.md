@@ -1,321 +1,352 @@
 # Governance & privacy — Deep research
 
 ## Executive summary
-Governance and privacy for a city digital twin define the rules, roles, controls, and accountability mechanisms that determine who can access which urban data (including sensitive and personal data), for what purposes, under what safeguards, and with what oversight. In practice, “governance” is the operating system that makes multi-agency data sharing possible without creating unacceptable security, privacy, or reputational risk.
 
-A twin platform tends to aggregate and correlate datasets (CCTV-derived signals, mobility traces, citizen reports, utility data). Correlation increases privacy risk even when individual datasets are “non-identifying”. Therefore, the governance program must treat *linkability* and *inference risk* as first-class concerns.
+Governance and privacy are the **operating system** for a City Digital Twin: the enforceable rules, controls, and decision rights that determine who can access which data, for what purposes, under what safeguards, and with what accountability.
 
-The actionable outcome is a set of enforceable policies embedded in architecture: data classification, consent/purpose limitation, access controls, auditability, retention, data quality responsibilities, and incident response. Without these, the twin becomes fragile: either overly locked down (no value) or overly permissive (high risk).
+A city twin is uniquely risky because it **joins** datasets across domains (mobility + incidents + assets + citizen reports). Even when individual datasets are “non-identifying,” joins create **linkage/inference risk**. Therefore, this playbook is built around:
 
-This document deepens item 13 in [`kali-task-research.md`](../kali-task-research.md:1): *“Governance & privacy: Define stewardship, consent, access controls, and accountability for sensitive urban data.”*
+- explicit **classification tiers** and a **control baseline matrix**
+- operational **inference/join risk scoring** and a **join review workflow** (with safe-join libraries)
+- practical integration of **records law / FOI** with privacy controls (“publishable vs releasable vs restricted”)
+- enforceable **vendor/subprocessor governance** (contract clauses + technical enforcement)
+- **federated, multi-agency governance** with dispute resolution and shared taxonomy change control
+- community engagement mechanisms with **real decision rights**, transparency reporting, and recourse
 
----
+The goal is to be auditable: every access, export, join approval, FOI release, and vendor exception should be provable from logs and records.
 
-## Why this theme matters for a City Digital Twin (and how it helps you run it)
+## 0. Scope assumptions
 
-### Why you need it
+Defaults assumed (overrideable):
 
-A City Digital Twin concentrates power: it aggregates operational data, correlates signals across domains, and can influence decisions that affect people’s lives. That makes privacy and governance a prerequisite for *operating* the twin, not a legal afterthought. Without strong governance, teams either (a) block access until the twin becomes unusable, or (b) ship fast and eventually trigger a privacy/security incident that shuts the program down.
+- federation mode: multi-agency
+- records law context: applies
+- publication mode: balanced
+- vendor access posture: least-privilege
+- policy-as-code preference: yes
 
-### How it helps you run the twin (practical operational impact)
+## 1. Classification tiers and control baseline matrix (explicit)
 
-- **Enables safe multi-agency data sharing:** classification + purpose limitation + tiered access let you move faster without turning every access request into a bespoke legal negotiation.
-- **Reduces inference/linkability risk:** governance forces you to design aggregation thresholds, de-identification, and restricted zones so correlated datasets don’t become re-identification engines.
-- **Provides auditability and accountability:** consistent logging, access reviews, and incident playbooks make the twin operable under scrutiny (auditors, oversight bodies, public).
-- **Makes policy enforceable in architecture:** policy-as-code and enforcement points ensure rules are consistently applied across APIs, queries, and exports.
+### 1.1 Classification tiers (recommended)
 
-### Evidence pointers (deep research starting points)
+Use 4 tiers that match city-twin reality:
 
-- NIST describes the **Privacy Framework** as a voluntary tool intended to help organizations identify and manage privacy risk, supporting innovation while protecting individuals’ privacy. Source: https://www.nist.gov/privacy-framework
+1. **Public (P0)**: safe for proactive publication.
+2. **Internal (P1)**: routine operational data; not public; low linkage risk.
+3. **Restricted (P2)**: could harm individuals/operations if misused; includes quasi-identifiers and sensitive operational detail.
+4. **Sensitive/Critical (P3)**: high-risk personal/safety or critical infrastructure; high linkage risk; special handling required.
 
-## 1. Background and context
-City data ecosystems typically involve:
-- Multiple agencies and external partners (utilities, vendors, universities)
-- Mixed data types: operational, personal, commercial, critical infrastructure
-- Different legal bases and obligations (public records, sectoral regs)
+### 1.2 Control baseline matrix
 
-Common failure patterns:
-- “Data lake dumping” without stewardship → low quality and unclear ownership
-- Inconsistent access decisions and manual approvals → slow delivery
-- Lack of auditability → inability to investigate misuse
-- Privacy incidents from linkage/inference across datasets
+Minimum controls by tier. If you cannot meet the baseline, the dataset cannot be onboarded (or must be downgraded/transformed).
 
-Governance must cover both:
-- **Data management** (quality, metadata, lifecycle)
-- **Risk management** (privacy, security, compliance)
+| Control area | P0 Public | P1 Internal | P2 Restricted | P3 Sensitive/Critical |
+|---|---|---|---|---|
+| Encryption in transit | TLS required | TLS required | TLS + mTLS for service-to-service | TLS + mTLS; strong cipher policy |
+| Encryption at rest | required for platform stores | required | required + customer-managed keys (preferred) | required + customer-managed keys + key rotation |
+| IAM | SSO recommended | SSO + MFA for admins | SSO + MFA for all; ABAC/RBAC | SSO + MFA + ABAC + JIT access |
+| Least privilege | basic roles | role-based | role + attribute + row/column security | strict ABAC + row/column + purpose scoping |
+| Export controls | open download ok | controlled export roles | export allowlist + justification | exports rare; two-person approval; watermarking |
+| Egress monitoring | basic | required for bulk | required + anomaly alerts | required + hard egress limits + DLP signals |
+| Logging | access logs | access + admin logs | access + query + export logs | immutable access/query/export logs + alerting |
+| Log retention | 90d+ | 180d+ | 1y+ | 2y+ (or per legal/audit) |
+| Aggregation / min cell size | required for sensitive metrics | recommended | mandatory (k-min) + suppression | mandatory + stronger disclosure controls |
+| Geospatial precision | coarse by default | coarse/medium | precision tiering by role | strict precision tiering; “need-to-know” |
+| Review cadence | annual | semi-annual | quarterly access reviews | monthly access reviews + join review audits |
+| Retention | publishable schedule | defined + enforced | short raw / longer aggregates | shortest feasible; legal hold workflow |
+| DPIA triggers | if new risky publication | if new join/surveillance | mandatory for onboarding + joins | mandatory + exec sign-off for residual risk |
+| Vendor access | none or public CDN | tightly scoped | scoped + monitored + time-bound | clean room only; no raw export; audit rights |
 
----
+Notes:
 
-## 2. Stakeholders and accountability
-- **Data owners (agency heads/program owners)**: accountable for lawful use and risk
-- **Data stewards**: day-to-day metadata, quality, and access policy maintenance
-- **Privacy officer / legal**: lawful basis, DPIAs, retention, public records
-- **CISO/security**: controls, incident response, threat model
-- **Platform/data engineering**: enforcement mechanisms, monitoring
-- **Product owners**: translate policy to user workflows
-- **Oversight bodies**: ethics boards, city council committees, auditors
-- **Communities**: impacted by surveillance and data-driven policies
-
-RACI pattern example:
-- Access policy: Privacy (A), Steward (R), Security (C), Product (C)
-- Dataset onboarding: Steward (A/R), Engineering (R), Security (C), Legal (C)
-
----
-
-## 3. Threat model / abuse cases
-
-### 3.1 Assets to protect
-- Personal data (citizen reports, mobility traces)
-- Sensitive operational data (SCADA/OT tags, critical infrastructure maps)
-- Surveillance-derived data (camera detections, face/body attributes if any)
-- Trust: public legitimacy and “social license”
-
-### 3.2 Abuse cases
-- **Unauthorized access** to sensitive incidents or camera-derived datasets
-- **Function creep**: data used beyond original purpose (e.g., enforcement)
-- **Re-identification** from joined datasets (trajectory + time + location)
-- **Insider misuse**: staff browsing for non-work reasons
-- **Vendor misuse**: subcontractor access not tightly scoped
-
-### 3.3 Controls
-- Data classification and tiered access
-- Purpose limitation enforced via policy + technical controls
-- Strong IAM (RBAC/ABAC), row/column-level security
-- Mandatory audit logging and periodic access reviews
-- Privacy-preserving transformations (aggregation, k-anonymity thresholds)
-
----
-
-## 4. Reference architecture (components + data flows)
-
-### 4.1 Components
-1. **Policy layer**
-   - Data classification scheme
-   - Purpose catalog and allowed uses
-   - Retention and sharing policies
-
-2. **Identity and access management (IAM)**
-   - Roles by agency/function
-   - Attribute-based controls (project, clearance, incident type)
-
-3. **Data catalog and metadata**
-   - Dataset descriptions, owners, sensitivity, lawful basis, retention
-   - Data lineage and quality SLAs
-
-4. **Privacy services**
-   - De-identification/aggregation pipelines
-   - Tokenization/pseudonymization where needed
-   - Differential privacy (optional, for published aggregates)
-
-5. **Secure data stores and serving**
-   - Separate zones: public, internal, restricted, highly restricted
-   - Query APIs with policy enforcement points
-
-6. **Audit and monitoring**
-   - Immutable logs of access and exports
-   - Anomaly detection on access patterns
-
-7. **Governance workflows**
-   - Dataset onboarding, DPIA/TRA approvals
-   - Access request and time-bound grants
-   - Incident response playbooks
-
-### 4.2 Data flows
-- Dataset onboarding → classification + metadata + controls configured
-- Access request → approval workflow → time-bound entitlements
-- Query/export → policy enforcement → audit log entry
-- Periodic review → entitlement cleanup and policy updates
-
----
-
-## 5. Methods / standards / operating practices
-
-### 5.1 Data classification model (example)
-- **Public**: safe to publish
-- **Internal**: routine ops; low risk
-- **Restricted**: could harm individuals/orgs if misused
-- **Highly restricted**: critical infrastructure, tactical, sensitive personal data
-
-### 5.2 Consent and lawful basis
-- Map each dataset to lawful basis and permitted purposes
-- Explicitly list prohibited uses
-- For citizen-reported data: terms, retention, and sharing constraints
-- Verifiable credentials for consent management
-
-### 5.3 Privacy impact assessments
-- DPIA triggers: new surveillance, new linkage, new sharing partner
-- Document:
-  - Data elements and sensitivity
-  - Intended uses and alternatives
-  - Risk analysis and mitigations
-  - Residual risk and sign-off
-
-### 5.4 Data minimization and retention
-- Collect only what's needed for defined outcomes
-- Default to short retention for raw sensitive data; keep aggregates longer
-- Implement automated deletion and legal hold workflows
-- Crypto-shredding (key destruction) for expired data
-
-### 5.5 Privacy-preserving technologies
-- Differential privacy with calibrated noise and ϵ budget tracking
-- Federated learning with secure aggregation
-- Homomorphic encryption for encrypted analytics
-- Zero-trust architecture with mTLS and policy enforcement
-- Blockchain-based provenance and audit trails
-
-### 5.6 Transparency and oversight
-- Publish data use policies and program reports
-- Provide internal and external audit mechanisms
-- Immutable audit logs with cryptographic timestamps
-- Permissioned ledger for consent and data lineage
-
-External reference example: Government Accountability Office (GAO) accountability framework for data/AI governance contexts ([GAO-21-519SP](https://www.gao.gov/products/gao-21-519sp)).
-
-### 5.7 Standards and protocols
-- GDPR compliance framework
-- ISO 27001 for information security
-- NIST Privacy Framework
-- ODRL (Open Digital Rights Language) for policy expression
-- NGSI-LD context models for data governance
-- SPIFFE-style identities for service authentication
-- OPA (Open Policy Agent) for policy enforcement
-
----
-
-## 6. Data requirements (for governance itself)
-Governance needs data about data:
-- Dataset inventory and ownership
-- Sensitivity/classification labels
-- Data flow maps (sources, sinks, exports)
-- Access logs and entitlement records
-- Quality metrics and incidents
-
----
-
-## 7. Implementation plan (phases)
-
-### Phase 0 — Establish governance authority
-- Appoint data owners and stewards
-- Define classification scheme and minimum controls
-
-### Phase 1 — Catalog and access control baseline
-- Build data catalog with mandatory metadata
-- Implement IAM integration and basic RBAC
-- Enable audit logging and access review cadence
-
-### Phase 2 — Privacy engineering and restricted zones
-- Create restricted data zones and enforcement points
-- Deploy de-identification/aggregation services
-- Implement time-bound access and just-in-time approvals
-
-### Phase 3 — Automation and compliance-as-code
-- Automated checks for dataset onboarding requirements
-- Policy-as-code for access decisions and export rules
-- Continuous monitoring and anomaly detection
-
-### Phase 4 — Maturity and public transparency
-- Independent audits and public reporting
-- Community engagement and policy updates
-
----
-
-## 8. Testing and validation
-- Access control tests: role/attribute matrix coverage
-- Privacy tests: re-identification risk assessments for published aggregates
-- Audit log integrity tests and incident investigation drills
-- Data deletion verification (retention enforcement)
-
----
-
-## 9. Observability (SLIs/SLOs)
-
-### 9.1 SLIs
-- % datasets with complete mandatory metadata
-- Time to approve/deny access requests
-- % access events logged with required fields
-- Number of policy violations detected per month
-- ϵ consumption tracking for differential privacy
-- Re-identification risk scores on sampled outputs
-- Federation health (participating clients, update staleness)
-
-### 9.2 Example SLOs
-- 100% of restricted datasets have an assigned owner and steward
-- 99.9% of access events logged within 1 minute
-- Quarterly access reviews completed for all restricted zones
-- System uptime ≥ 99.9%
-- End-to-end latency < 5 seconds for access decisions
-
----
-
-## 10. Governance, compliance, and ethics
-- Align governance with applicable privacy and records laws
-- Establish ethical guardrails for surveillance-derived data
-- Document and enforce acceptable uses and prohibitions
-- Ensure third-party contracts include audit rights and subprocessor controls
-
----
-
-## 11. Risks and mitigations
-- **Over-restricting data** → use tiered access and privacy transforms
-- **Under-enforcement** → policy-as-code and audit-based enforcement
-- **Function creep** → purpose catalog and oversight reviews
-- **Vendor lock-in** → standardized metadata and portable policy models
-
----
-
-## 12. Costs and FinOps
-- Staff time for stewardship and reviews
-- Tooling for IAM, catalog, and audit retention
-- Secure compute/storage for restricted zones
-
-Unit costs:
-- Cost per dataset onboarded (including review)
-- Cost per 1,000 access requests processed
-
----
-
-## 13. KPIs
-- Reduction in time-to-access for approved users (without increasing incidents)
-- % of datasets governed (owned, classified, with SLAs)
-- Audit findings closure rate
-- Number and severity of privacy/security incidents
-
----
-
-## 14. Deliverables and checklists
-
-### 14.1 Deliverables
-- Governance charter and roles
-- Data classification and access policy documents
-- Data catalog with mandatory metadata and ownership
-- Audit logging and access review program
-- DPIA templates and workflow
-
-### 14.2 Readiness checklist
-- [ ] Classification scheme implemented across core datasets
-- [ ] Restricted zone access controls tested
-- [ ] Audit logs enabled and monitored
-- [ ] Retention policies enforced automatically
-
----
-
-## 15. References
-
-### 15.1 Workspace source
+- “Aggregation/min cell size” is necessary but not sufficient; apply disclosure controls in Section 2.
+- “Geospatial precision tiering” is a primary safety control for city twins.
+
+## 2. Inference/linkage risk operationalization
+
+### 2.1 Dataset privacy risk scoring (semi-quantitative)
+
+Score each dataset and each proposed join on dimensions; produce a risk class: Low/Med/High/Critical.
+
+**Dataset risk factors (example 0–3 each):**
+
+- identifiers present (direct identifiers)
+- quasi-identifiers present (time + location + device IDs)
+- sensitive attributes (health, safety incidents, protected sites)
+- granularity (fine spatiotemporal resolution)
+- population size (small-n risk)
+- external linkability (data can be linked to public datasets)
+
+Compute:
+
+- `risk_score = sum(factors)`
+- `risk_class` thresholds are local policy.
+
+### 2.2 Join risk scoring (the core city-twin problem)
+
+A join can escalate risk even if both inputs are “safe.” Score:
+
+- join keys (stable identifiers, location/time proximity)
+- output granularity
+- whether join enables trajectory reconstruction
+- whether join increases uniqueness
+
+Hard rule examples:
+
+- any join that produces **fine time + fine location + stable identifier** is **High/Critical**.
+- any join involving P3 inputs requires review.
+
+### 2.3 Join review workflow (enforceable)
+
+When review is required:
+
+- any join involving P2/P3 datasets
+- any join that lowers aggregation thresholds or increases geospatial precision
+- any join that introduces new linkage keys (device ids, household proxies)
+
+Approval roles:
+
+- **Data Steward** (Responsible)
+- **Privacy Officer** (Accountable for P2/P3)
+- **Security** (Consulted)
+- **Product Owner** (Consulted)
+
+Required evidence:
+
+- purpose and allowed use mapping
+- risk score and risk class
+- mitigations chosen
+- disclosure controls and output classification
+- retention and export posture
+
+Mitigation options:
+
+- aggregation (time buckets, spatial bins)
+- suppression/top-coding
+- sampling
+- tokenization/pseudonymization
+- differential privacy for published aggregates (where appropriate)
+- access tiering (restrict outputs)
+
+### 2.4 Safe-join library (approved patterns) + prohibited list
+
+**Safe-join library**: versioned, approved join “recipes” that teams can reuse without re-litigating each time.
+
+Examples of safe joins:
+
+- join by coarse geography (neighborhood) + weekly bins
+- join by asset id when the asset is non-sensitive and does not imply individuals
+
+Prohibited joins (examples):
+
+- joining citizen reports with mobility trajectories at fine resolution
+- joining enforcement/incident locations with identifiable household-level data
+
+## 3. Records law / FOI integration (publishable vs releasable vs restricted)
+
+### 3.1 Three-way classification for disclosure
+
+Separate classification for **data security** vs **disclosure posture**.
+
+- **Publishable**: proactively published (after disclosure controls).
+- **Releasable**: can be released on request after review/redaction.
+- **Restricted**: not releasable except under defined exemptions; requires legal rationale.
+
+Every dataset must have:
+
+- `disclosure_posture` (publishable/releasable/restricted)
+- `foi_exemptions_basis` (if restricted)
+- `default_redaction_profile`
+
+### 3.2 FOI processing playbook (integrated with catalog and logs)
+
+Workflow:
+
+1. intake FOI request → create case id
+2. identify candidate datasets via catalog search
+3. run “sensitive join detection” checks:
+   - does the requested extract combine datasets?
+   - does it include fine time/location?
+4. apply redaction profile and disclosure controls
+5. legal/privacy review and sign-off
+6. release artifact with immutable release log:
+   - what was released
+   - what was withheld and why
+   - transformation steps
+
+### 3.3 Redaction and review steps
+
+- automated redaction for direct identifiers
+- aggregation/suppression thresholds
+- manual spot checks on high-risk extracts
+- require two-person review for P3-derived releases
+
+## 4. Vendor and ecosystem governance (technical + contractual)
+
+### 4.1 Standard contract clauses checklist
+
+Minimum clauses for any vendor/subprocessor touching P2/P3 data:
+
+- audit rights (including subprocessor audits)
+- subprocessor disclosure and approval
+- breach notification timelines
+- data return/destruction on termination
+- egress/export limits and logging requirements
+- restrictions on model training and secondary use
+- security baseline (MFA, encryption, patching)
+- incident cooperation and forensics support
+
+### 4.2 Technical enforcement patterns
+
+- scoped credentials; no shared accounts
+- just-in-time, time-boxed vendor access
+- clean-room patterns for vendor analytics:
+  - vendor brings code to data; outputs reviewed before export
+- egress monitoring and rate limits
+- watermarking for sensitive exports
+
+### 4.3 Vendor exception lifecycle
+
+- exceptions must be time-boxed
+- compensating controls required
+- P3 exceptions require executive sign-off
+- track **exception debt** and repeat offenders
+
+## 5. Federated governance across agencies
+
+### 5.1 Governance bodies and composition
+
+- **Cross-Agency Data Governance Council**: agency data owners + city platform lead + legal/privacy + security + procurement.
+- **Privacy Review Board**: privacy officer, legal, community representative (where applicable), security.
+- **Security Board**: CISO team + agency security leads.
+
+### 5.2 Dispute resolution and escalation
+
+- disputes resolved in 10 business days at working-group level
+- escalate to Governance Council if:
+  - cross-agency conflict, or
+  - P3 risk, or
+  - public publication requested
+- escalate to executive sponsors for:
+  - repeated policy violations
+  - high residual risk decisions
+
+### 5.3 Shared taxonomy alignment and change control
+
+Shared taxonomies are “infrastructure.” Assign owners:
+
+- geographies (boundaries, neighborhood definitions)
+- incident types and severity
+- asset identifiers and registries
+
+Changes:
+
+- require an ADR-like change record
+- migration plan and backward compatibility
+
+## 6. Community engagement mechanisms (with real influence)
+
+### 6.1 Community oversight structure
+
+Establish a **Community Data Oversight Panel** with:
+
+- membership representing impacted communities
+- defined decision rights:
+  - review high-risk P3 uses
+  - recommend prohibitions or additional controls
+  - require transparency disclosures
+
+### 6.2 Transparency report cadence + template
+
+Publish quarterly (balanced mode) with:
+
+- datasets onboarded by tier
+- access request stats and join reviews
+- privacy incidents summary and remediation
+- FOI releases summary (counts and categories)
+- vendor exceptions and audits summary
+
+### 6.3 Complaint/recourse channels
+
+- intake: web form + hotline + in-person option
+- response SLA: acknowledge within days; resolve within weeks
+- outcomes tracked and reported
+
+### 6.4 How feedback changes policy
+
+- every report cycle includes a “policy changes since last report” section
+- maintained backlog of community-requested changes with status
+
+## 7. Operational runbooks (minimum set)
+
+### 7.1 Suspected privacy incident
+
+- triage: scope, dataset tier, affected individuals
+- contain: revoke access, stop exports, rotate keys
+- investigate: review logs, identify joins/exports
+- notify: legal/privacy process, affected parties as required
+- remediate: controls added, training, postmortem
+
+### 7.2 FOI request for sensitive datasets/joins
+
+- identify datasets and requested joins
+- run sensitive-join detection
+- apply redaction profiles
+- two-person review for P3 risk
+- release with audit record
+
+### 7.3 Vendor/subprocessor change and review
+
+- require updated subprocessor list
+- security and privacy review
+- update contracts and access scopes
+
+### 7.4 Emergency access grant during incident response
+
+- time-bound access
+- least privilege
+- mandatory post-incident review and revocation
+
+## 8. Key metrics
+
+- tier coverage (% datasets classified; % meeting baseline controls)
+- join-review throughput and rejected join rate
+- privacy incident MTTR and recurrence
+- FOI timeliness and redaction error rate
+- vendor exceptions and exception debt
+- transparency report delivery and community recourse outcomes
+
+## 9. Implementation roadmap
+
+### 0–3 months
+
+- define tiers and baseline matrix; add required catalog fields
+- implement minimal join review workflow
+- draft FOI playbook and redaction profiles
+
+### 3–12 months
+
+- policy-as-code enforcement at key control points (query/export)
+- build safe-join library and prohibited list
+- implement vendor clean-room patterns and egress monitoring
+- start transparency reporting cadence
+
+### 12–24 months
+
+- cross-agency federation maturity (taxonomy governance, dispute operations)
+- automated inference-risk checks in pipelines
+- continuous audits and external review
+
+## 10. References
+
+### 10.1 Workspace source
+
 - Item 13 in [`kali-task-research.md`](../kali-task-research.md:1)
 
-### 15.2 External references (retrieved via Firecrawl MCP)
-- GAO — An Accountability Framework for Federal Agencies and Other Entities (GAO-21-519SP): https://www.gao.gov/products/gao-21-519sp
-- Yessef et al. (2025). "Digital twin technology in smart cities: A step toward intelligent urban management." Energy Reports, 14, 5539-5557. DOI: 10.1016/j.egyr.2025.11.097
-- Murala et al. (2025). "A service-oriented microservice framework for differential privacy-based protection in industrial IoT smart applications." Scientific Reports, 15, 29230.
-- Jerkovic et al. (2025). "Smart grid IoT framework for predicting energy consumption using federated learning homomorphic encryption." Sensors.
-- Nie et al. (2025). "Zero-trust access control mechanism based on blockchain and inner-product encryption in the internet of things in a 6G environment." Sensors.
+### 10.2 External references (retrieved via Firecrawl MCP)
 
-### 15.3 Suggested further reading (not fetched)
-- Privacy-by-design and threat modeling for data platforms
-- Differential privacy and disclosure control methods
-- Data catalog/lineage best practices and policy-as-code
-- Zero-trust architecture for smart city systems
-- Federated learning for privacy-preserving analytics
-- Blockchain-based digital twins for governance
-- Confidential computing (Intel SGX, AMD SEV, ARM TrustZone)
+- NIST. *Privacy Framework.* https://www.nist.gov/privacy-framework — NIST’s privacy risk management framework intended to help organizations identify and manage privacy risk.
+- NIST. *NIST Privacy Framework CORE* (PDF). https://www.nist.gov/document/nist-privacy-framework-version-1-core-pdf — Defines the core functions (Identify-P, Govern-P, Control-P, Communicate-P, Protect-P) used to structure privacy risk management.
+- NIST. *SP 800-188 — De-Identifying Government Datasets: Techniques and Governance.* https://csrc.nist.gov/pubs/sp/800/188/final — Government-oriented guidance for de-identification, disclosure risk, and governance beyond simple k-anonymity.
+- DOJ OIP. *FOIA Guide: Exemption 6.* https://www.justice.gov/archives/oip/foia-guide-2004-edition-exemption-6 — Explains FOIA Exemption 6 personal privacy protections and balancing tests, relevant to release/redaction decisions.
+- NIST. *SP 800-161 — Supply Chain Risk Management Practices.* https://nvlpubs.nist.gov/nistpubs/specialpublications/nist.sp.800-161.pdf — Guidance on supply chain risk management practices relevant to vendor/subprocessor governance and auditability.

@@ -1,326 +1,311 @@
 # EV charging infrastructure — Deep research
 
 ## Executive summary
-EV charging infrastructure systems manage charging station networks, integrate with grid systems, and optimize placement to support electric vehicle adoption. These platforms enable efficient charging operations, grid load balancing, dynamic pricing, and seamless user experiences while accelerating the transition to sustainable transportation.
-
-The critical technical outputs are: (1) charging station management and monitoring, (2) grid integration and load balancing, (3) user-facing booking and payment systems, and (4) analytics for network optimization. Achieving these requires charging hardware, communication networks, grid integration systems, and mobile applications.
-
-This document deepens item 35 in [`kali-task-research.md`](../kali-task-research.md:1): *"EV charging infrastructure: Manage charging station networks, integrate with grid systems, and optimize placement to support electric vehicle adoption."*
-
----
-
-## Why this theme matters for a City Digital Twin (and how it helps you run it)
-
-### Why you need it
-
-EV charging is a fast-growing, spiky, location-specific load that sits at the intersection of mobility and energy. Without a charging infrastructure view, a City Digital Twin can’t plan the “physical-digital” rollout (where chargers go, what power they need, who uses them, and when) or manage second-order effects like transformer overloads, curb management conflicts, and inequitable access.
-
-### How it helps you run the twin (practical operational impact)
-
-- **Operational situational awareness:** real-time station status/availability and utilization become live twin state, improving routing, user experience, and incident response (faults/outages).
-- **Grid-aware planning and control:** managed charging / load management integrates into twin scenarios so you can test peak impacts, identify constrained nodes, and evaluate mitigation (storage, DR, pricing).
-- **Supports standards-based interoperability:** choosing open protocols for charge-point ↔ central-system communications reduces vendor lock-in and makes it easier to integrate charging networks into the twin’s data/controls fabric.
-- **Enables performance and equity governance:** KPIs like uptime, wait time, and coverage by neighborhood can be tracked continuously, informing expansion priorities.
-
-### Evidence pointers (deep research starting points)
-
-- Open Charge Alliance overview of **OCPP** states the goal is a uniform method of communication between charge points and central systems, enabling any central system to connect with any charge point regardless of vendor (reducing coordination problems / improving interoperability). Source: https://openchargealliance.org/protocols/open-charge-point-protocol/
-
-## 1. Background and context
-EV charging infrastructure faces significant challenges:
-- Range anxiety limiting EV adoption
-- Uneven charging station distribution
-- Grid capacity constraints
-- Lack of real-time availability information
-- Fragmented payment and access systems
-
-A smart charging infrastructure approach supports:
-- Widespread EV adoption
-- Optimized grid integration
-- Seamless user experience
-- Data-driven network planning
-- Sustainable transportation transition
-
----
-
-## 2. Stakeholders
-- **Utility companies**: grid integration and power supply
-- **Charging station operators**: network management
-- **Municipal governments**: planning and permitting
-- **EV owners and drivers**: primary users
-- **Property owners**: hosting locations
-- **Automotive manufacturers**: vehicle integration
-- **Technology providers**: hardware and software
-
----
-
-## 3. Threat model / abuse cases
-
-### 3.1 Assets to protect
-- Integrity of charging and payment systems
-- Availability of charging infrastructure
-- Privacy of user location and usage data
-- Security of grid integration systems
-
-### 3.2 Abuse/failure cases
-- **Payment fraud** and unauthorized charging
-- **Denial of service** against charging network
-- **Grid manipulation** causing instability
-- **Data breaches** exposing user information
-- **Physical vandalism** of charging equipment
-
-### 3.3 Controls
-- Secure payment processing (PCI DSS)
-- Encrypted communication channels
-- Grid protection protocols
-- Physical security measures
-- Regular security audits
-
----
-
-## 4. Reference architecture (components + data flows)
-
-### 4.1 Components
-1. **Charging hardware layer**
-   - Level 1, 2, and DC fast chargers
-   - Charging connectors (CCS, CHAdeMO, Tesla)
-   - Payment terminals
-   - User interface displays
-
-2. **Communication layer**
-   - OCPP (Open Charge Point Protocol)
-   - Cellular connectivity
-   - Wi-Fi for local management
-   - Backend communication systems
-
-3. **Management platform layer**
-   - Charging station management system (CSMS)
-   - User management and authentication
-   - Billing and payment processing
-   - Network monitoring
-
-4. **Grid integration layer**
-   - Load management systems
-   - Demand response integration
-   - Renewable energy integration
-   - Grid stability monitoring
-
-5. **User application layer**
-   - Mobile apps for drivers
-   - Station finder and booking
-   - Payment and authentication
-   - Charging session management
-
-6. **Analytics layer**
-   - Usage analytics
-   - Network optimization
-   - Predictive maintenance
-   - Planning and expansion tools
-
-### 4.2 Data flows
-- Charging session → Usage data → Billing → Analytics
-- Grid demand → Load management → Charging optimization → Grid stability
-- User request → Station availability → Booking → Charging
-- Network data → Analytics → Planning → Expansion
-
----
-
-## 5. Methods / algorithms / standards
-
-### 5.1 Charging management
-- OCPP protocol implementation
-- Dynamic load balancing
-- Smart charging algorithms
-- Vehicle-to-grid (V2G) integration
-
-### 5.2 Grid integration
-- Demand response optimization
-- Peak load management
-- Renewable energy integration
-- Grid stability protection
-
-### 5.3 Network optimization
-- Station placement algorithms
-- Capacity planning models
-- Usage prediction
-- Maintenance scheduling
-
-### 5.4 User experience
-- Real-time availability
-- Dynamic pricing
-- Reservation systems
-- Multi-network roaming
-
-### 5.5 Standards and protocols
-- OCPP 1.6/2.0 for charging communication
-- ISO 15118 for vehicle-grid communication
-- Payment card industry standards (PCI DSS)
-- Grid interconnection standards
-
----
-
-## 6. Data requirements
-
-### 6.1 Minimum datasets
-- Charging station location and status
-- Charging session data
-- User authentication and billing
-- Basic grid load information
-
-### 6.2 High-value datasets
-- Historical usage patterns
-- EV adoption trends
-- Grid capacity and constraints
-- Traffic and location data
-
-### 6.3 Data quality requirements
-- Station status accuracy ≥ 99%
-- Data freshness < 1 minute
-- Payment processing accuracy 100%
-- System uptime ≥ 99.5%
-
----
-
-## 7. Implementation plan (phases)
-
-### Phase 0 — Baseline and governance
-- Define charging network goals
-- Establish technical standards
-- Select pilot locations
-- Conduct stakeholder consultations
-
-### Phase 1 — Basic deployment
-- Install charging stations
-- Implement management platform
-- Set up payment systems
-- Launch mobile app
-
-### Phase 2 — Grid integration
-- Implement load management
-- Add demand response
-- Integrate with utility systems
-- Optimize charging schedules
-
-### Phase 3 — Full network
-- Expand station coverage
-- Implement dynamic pricing
-- Add reservation systems
-- Enable multi-network roaming
-
-### Phase 4 — Innovation and optimization
-- Deploy V2G capabilities
-- Implement AI optimization
-- Create innovation partnerships
-- Establish continuous improvement
-
----
-
-## 8. Testing and validation
-- Charging functionality testing
-- Grid integration validation
-- Payment system security testing
-- User experience testing
-- Load management simulation
-
----
-
-## 9. Observability (SLIs/SLOs)
-
-### 9.1 SLIs
-- Station uptime and availability
-- Charging session success rate
-- Payment processing accuracy
-- User satisfaction scores
-- Grid integration stability
-
-### 9.2 Example SLOs
-- Station uptime ≥ 99%
-- Session success rate ≥ 98%
-- Payment accuracy 100%
-- User satisfaction ≥ 4.5/5
-- Grid stability maintained
-
----
-
-## 10. Governance, compliance, and labor constraints
-- Electrical code compliance
-- Payment industry standards (PCI DSS)
-- Grid interconnection regulations
-- Accessibility requirements
-- Labor regulations for installation and maintenance
-
----
-
-## 11. Risks and mitigations
-- **Grid capacity issues** → Load management, demand response, infrastructure upgrades
-- **Low utilization** → Strategic placement, dynamic pricing, user incentives
-- **Cybersecurity threats** → Encryption, access controls, regular audits
-- **Technology obsolescence** → Modular design, upgrade paths, standards compliance
-- **Funding challenges** → Public-private partnerships, grants, innovative financing
-
----
-
-## 12. Costs and FinOps
-- Charging station hardware
-- Installation and electrical work
-- Network infrastructure
-- Software platform licensing
-- Maintenance and support
-
-Unit costs to track:
-- Cost per charging station
-- Cost per charging session
-- Cost per kWh delivered
-- ROI based on utilization and revenue
-
----
-
-## 13. KPIs
-- Station utilization rates
-- EV adoption acceleration
-- Grid load optimization
-- User satisfaction
-- Revenue per station
-- Environmental impact (CO2 reduction)
-
----
-
-## 14. Deliverables and checklists
-
-### 14.1 Deliverables
-- Charging station deployment plan
-- Management platform (CSMS)
-- Mobile driver application
-- Grid integration system
-- Analytics dashboard
-- Payment processing system
-- Installation and maintenance procedures
-- User documentation
-
-### 14.2 Readiness checklist
-- [ ] Charging stations procured and installed
-- [ ] Management platform deployed
-- [ ] Payment system integrated
-- [ ] Grid connection approved
-- [ ] Mobile app developed
-- [ ] Staff trained
-- [ ] Safety inspections completed
-- [ ] User testing conducted
-
----
-
-## 15. References
-
-### 15.1 Workspace source
+
+EV charging is a city-scale, cyber-physical service spanning **curb/land use**, **grid constraints**, **payments/identity**, and **equitable mobility outcomes**. A City Digital Twin can make this decision-grade by turning scattered operator and utility signals into governed decisions:
+
+- where to invest/regulate (siting portfolios, curb policy, concession terms)
+- how to coordinate with utilities under limited topology visibility
+- how to measure equity and reliability transparently
+- how to enforce interoperability and safe data sharing
+
+This revision upgrades the document from a generic reference architecture into an operational playbook:
+
+- Siting optimization objectives/constraints and publishable rationales.
+- Grid constraint integration patterns by visibility level (limited/partial/high) including hosting capacity linkage and uncertainty labeling.
+- Reliability operations: fault taxonomy, uptime/MTTR SLOs by charger class, remote diagnostics and spares logistics.
+- Interoperability + roaming governance with contract patterns and dispute resolution.
+- Privacy rules for usage/location data (minimize-by-default; aggregated public reporting).
+- Pricing/policy levers with equity guardrails and auditing.
+
+## 0. Scope, decisions, and governance boundaries
+
+### 0.1 City roles under a mixed ownership model
+
+Typical city roles (often simultaneously):
+
+- **Planner/regulator**: sets siting rules, curb/parking policy, accessibility requirements, reporting requirements.
+- **Procurer/partner**: funds or co-funds sites; sets concession terms.
+- **Data governor**: defines what is reported, how it is aggregated, and what is publishable.
+- **Operator (sometimes)**: runs city-owned chargers or manages a contracted operator.
+
+### 0.2 What the twin can recommend vs what utilities/operators control
+
+- City/twin can recommend: portfolio siting, curb policy, incentives, reporting, performance enforcement, equity guardrails.
+- Utilities control: interconnection approvals, feeder/transformer upgrades, protection settings, OT operations.
+- Operators control: uptime operations, field maintenance, customer support, payment processing.
+
+Rule: the twin is **advisory-by-default** and must label grid-derived outputs as screening/planning vs engineering-grade.
+
+## 1. Siting optimization: objectives, constraints, and transparency
+
+### 1.1 Objective function menu (what you optimize)
+
+Use multi-objective optimization; publish weights internally.
+
+Common objectives:
+
+- **Coverage**: maximize population/jobs within X minutes of a charger.
+- **Queueing delay**: minimize expected wait time (peak + events).
+- **Utilization**: avoid stranded assets while ensuring redundancy.
+- **Grid upgrade cost/lead time**: minimize long-lead interconnection blockers.
+- **Equity**: reduce access gaps for underserved neighborhoods.
+- **Emissions**: encourage off-peak charging or near low-carbon supply windows.
+- **Accessibility**: maximize ADA-compliant access and safe pedestrian approach.
+
+### 1.2 Hard constraints (what you cannot violate)
+
+- curb availability and competing uses (loading zones, transit, emergency access)
+- ADA accessibility (stall design, access aisle, route, reach ranges)
+- permitting and right-of-way constraints
+- safety/security (lighting, sightlines)
+- zoning/land use restrictions
+- minimum power availability and interconnection feasibility window
+- procurement constraints (labor, vendor qualification)
+
+### 1.3 Decision templates
+
+**A) Annual deployment plan (portfolio)**
+
+- target coverage metrics by neighborhood
+- charger mix (L2 vs DCFC) and redundancy policy
+- candidate sites list with grid feasibility class
+- equity impact statement
+- budget and procurement plan
+
+**B) Corridor retrofit (DCFC)**
+
+- travel demand + heavy vehicle considerations
+- queueing model and redundancy
+- interconnection pathway and lead time
+- operations plan and uptime SLOs
+
+### 1.4 Transparency requirement
+
+For each site considered, maintain an internal “decision card”:
+
+- objectives and weights used
+- constraints triggered
+- why selected/declined
+- grid feasibility class and uncertainty
+- equity/accessibility score impacts
+
+Public transparency (dual internal+public): publish aggregated rationale without exposing sensitive grid details.
+
+## 2. Equity metrics and safeguards (high focus)
+
+### 2.1 Recommended equity metric set
+
+Compute by neighborhood (and for key populations when possible):
+
+- **time-to-access**: % households within 5/10/15 minutes walk/drive of public charging
+- **charger density**: ports per 10,000 residents and per km²
+- **reliability-adjusted access**: access weighted by uptime (a broken charger doesn’t count)
+- **affordability**: effective price per kWh vs income proxies; availability of discounts
+- **ADA accessibility coverage**: % sites meeting accessibility checklist
+- **housing type proxy**: multi-unit dwellings share vs charging availability
+
+### 2.2 Bias pitfalls and mitigations
+
+Pitfall: forecasting demand from current EV ownership reinforces inequity.
+
+Mitigations:
+
+- scenario weighting to reflect policy adoption goals
+- incorporate outreach inputs and planned housing/land-use changes
+- set minimum service floors (coverage targets) independent of current demand
+
+### 2.3 Equity safeguards in decisions
+
+- minimum allocation of investments to underserved zones
+- require ADA compliance as a gate
+- require pricing guardrails and discount programs where affordability is a barrier
+
+## 3. Grid constraints integration depth (grid_visibility_level = limited)
+
+### 3.1 Concepts to include even with limited visibility
+
+- distribution constraints are often **transformer/feeder** bound, not just “city peak.”
+- hosting capacity is location-specific and time-varying.
+
+### 3.2 Patterns by visibility level
+
+**Limited visibility (default)**
+
+- use proxy constraints (historical peak by zone, substation capacity signals)
+- apply conservative buffers
+- utility approval gate before commitment
+- label outputs as **screening** (not engineering truth)
+
+**Partial visibility**
+
+- incorporate feeder/transformer constraints where available
+- integrate hosting capacity zones from utility
+- enable managed charging program pilots
+
+**High visibility**
+
+- transformer/feeder hosting capacity and upgrade triggers
+- evaluate managed charging and storage as non-wires alternatives
+
+### 3.3 Uncertainty communication
+
+Every grid-feasibility output must include:
+
+- what data was available
+- confidence level
+- what would change the assessment (e.g., transformer ratings, protection constraints)
+
+## 4. Operational reliability and maintenance
+
+### 4.1 Fault taxonomy (minimum)
+
+Classify failures consistently across vendors:
+
+- power supply / breaker trip
+- comms loss (cellular, backhaul)
+- payment/authorization failure
+- connector failure / latch
+- thermal derate
+- software/firmware crash
+- vandalism/physical damage
+
+### 4.2 SLOs by charger class
+
+Example targets (calibrate to policy and contracts):
+
+- DCFC: uptime ≥ 97% per port (annual average); MTTR targets in hours–days
+- L2: uptime ≥ 95–97%; MTTR targets days
+- first-time-fix rate target and spare parts availability metrics
+
+### 4.3 Remote diagnostics and escalation flow
+
+- operator NOC detects fault → remote reset/diagnostic
+- if unresolved → dispatch field tech with correct parts
+- if upstream grid issue → coordinate with utility
+
+### 4.4 Multi-vendor maintenance realities
+
+- require common telemetry schema from all operators
+- maintain a shared spare-part catalog and lead times
+- standardize ticket severities and escalation
+
+## 5. Interoperability + roaming governance
+
+### 5.1 Interoperability requirements
+
+- OCPP version expectations and upgrade policy (prefer modern versions where feasible)
+- ISO 15118 considerations for Plug & Charge where supported
+- backward compatibility and migration windows
+
+### 5.2 Roaming policy (multi-network required)
+
+Define minimums:
+
+- roaming support via an open roaming interface (e.g., OCPI)
+- settlement and dispute process
+- customer support handoff rules
+- minimum data sharing for authorization/session records (privacy-safe)
+
+### 5.3 Dispute resolution
+
+- tier 1: operator-to-operator settlement
+- tier 2: city arbitration for concession-funded assets
+- tier 3: regulator/legal if systemic
+
+## 6. Data governance, privacy, and publication (minimize-by-default)
+
+### 6.1 What the city collects vs what operators retain
+
+City collects (default):
+
+- station metadata (location, connector types, power)
+- availability/uptime by port
+- aggregated session counts and energy delivered by time bucket
+- fault events (taxonomy) without user identifiers
+
+Operators retain:
+
+- customer identity/payment data
+- detailed session-level traces unless explicitly contracted
+
+### 6.2 Retention and aggregation rules
+
+- city retains raw operational aggregates for limited windows, then rolls up
+- public reporting uses aggregation + anonymization; suppress small counts
+- consider geospatial coarsening for low-volume sites
+
+### 6.3 Prohibitions
+
+- no re-identification attempts
+- no secondary use of charging traces for enforcement/profiling
+
+## 7. Pricing and policy levers with guardrails
+
+### 7.1 Policy-aligned pricing goals
+
+- encourage off-peak charging
+- manage curb congestion and turnover
+- reduce queueing at hotspots
+
+### 7.2 Equity guardrails
+
+- price caps or discounts for low-income programs
+- prohibit discriminatory outcomes; audit disparate impacts
+- transparency: publish pricing rules and discount eligibility
+
+### 7.3 Managed charging linkage
+
+- integrate managed charging via partners (aggregators/utility programs)
+- opt-in controls and override for drivers
+
+## 8. Operational runbooks (minimum set)
+
+- charger outage surge and communications
+- suspected payment fraud / cyber incident
+- roaming dispute escalation
+- utility constraint conflict (site desirable but upgrade long-lead)
+- public reporting cycle and privacy review
+
+## 9. Key metrics
+
+- access/coverage (time-to-access, reliability-adjusted access)
+- utilization and queueing (wait time proxies)
+- reliability (uptime, MTTR, derate time, first-time-fix)
+- grid impact (peak coincidence, managed charging participation)
+- equity and affordability
+- privacy/compliance (publishability checks passed)
+
+## 10. Implementation roadmap
+
+### 0–3 months
+
+- inventory chargers and data-sharing agreements
+- baseline reliability dashboard
+- siting rubric and decision card template
+
+### 3–12 months
+
+- reliability ops model + fault taxonomy enforcement
+- interoperability and roaming requirements for procurements
+- pilot siting optimization with equity reporting
+
+### 12–24 months
+
+- grid integration maturity and managed charging partnerships
+- portfolio optimization (siting + pricing + reliability) with governance
+
+## 11. References
+
+### 11.1 Workspace source
+
 - Item 35 in [`kali-task-research.md`](../kali-task-research.md:1)
 
-### 15.2 External references (retrieved via Firecrawl MCP)
-- "Navigating the Smart City Domains: A Comprehensive Guide." VVDN Tech. (2024) - EV Charging Infrastructure section
-- "Increasing electric vehicles infrastructure in urban areas for efficiently employing renewable energy." Almatar, K.M. (2024)
+### 11.2 External references (retrieved via Firecrawl MCP)
 
-### 15.3 Suggested further reading (not fetched)
-- OCPP protocol specifications
-- ISO 15118 vehicle-grid communication
-- EV charging infrastructure standards
-- Grid integration best practices
-- Smart charging algorithms
+- Open Charge Alliance. *OCPP (Open Charge Point Protocol).* https://openchargealliance.org/protocols/open-charge-point-protocol/ — OCPP aims to standardize communication between charge points and central systems to improve interoperability.
+- Open Charge Alliance. *OCPP 2.0.1 (overview).* https://openchargealliance.org/protocols/ocpp-protocols/ocpp-2-0-1/ — OCPP 2.0.1 is positioned as the successor to OCPP 1.6 and supports modern CSMS–charger capabilities.
+- FHWA. *23 CFR Part 680 — National Electric Vehicle Infrastructure (NEVI) Formula Program.* https://www.ecfr.gov/current/title-23/chapter-I/subchapter-G/part-680 — Establishes minimum standards including a >97% average annual uptime requirement per charging port and public data aggregation/anonymization expectations.
+- Federal Register. *National Electric Vehicle Infrastructure Standards and Requirements (Final Rule).* https://www.federalregister.gov/documents/2023/02/28/2023-03500/national-electric-vehicle-infrastructure-standards-and-requirements — Final rule describing minimum standards for NEVI-funded infrastructure including uptime requirements.
+- NREL. *Embedding Equity into Electric Vehicle Charging Station Design* (PDF). https://docs.nrel.gov/docs/fy24osti/90147.pdf — Discusses design and program choices that affect equitable access and affordability of charging.
+- EV Roaming Foundation. *OCPI.* https://evroaming.org/ocpi/ — Describes OCPI as an interface supporting scalable roaming connections between eMobility service providers and charge point operators.

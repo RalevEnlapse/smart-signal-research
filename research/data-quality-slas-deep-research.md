@@ -2,511 +2,408 @@
 
 ## Executive summary
 
-Data Quality Service Level Agreements (SLAs) are formal contracts that define expected levels of data quality, including metrics for accuracy, completeness, timeliness, consistency, and validity. For a city digital twin program, data quality SLAs provide measurable standards for data reliability, enable proactive quality management, support data-driven decision-making, and establish accountability for data stewardship. This research outlines a comprehensive data quality SLA framework including quality dimensions, metric definitions, monitoring and alerting, remediation workflows, governance structures, and integration with data pipelines and business processes.
+A City Digital Twin is a **decision-support system**. If the underlying data products degrade silently (missingness, latency, schema drift, sensor bias, geometry invalidity, clock drift), the twin becomes operationally risky: alerts misfire, models drift, dashboards mislead, and confidence collapses.
+
+**Data quality SLAs** (and their operational counterpart, SLOs/SLIs) convert “trust” into enforceable, measurable commitments for each **data product** (streams, registries, event logs, external feeds). This document turns generic SLA concepts into a city-twin-ready playbook with:
+
+- Dataset **tiering (T0–T3)** with enforcement posture and default targets by data type.
+- **Accuracy under weak/partial ground truth** (audits, cross-source triangulation, uncertainty).
+- **Geospatial and temporal semantics** as first-class SLA dimensions (CRS consistency, geometry validity/topology, event-time vs processing-time, clock sync/drift).
+- **Exception lifecycle governance** (time-boxed waivers, compensating controls, “quality debt”).
+- **Remediation playbooks + cross-vendor/cross-agency RACI**, plus downstream coupling (error budgets, gating, safe degradation).
+
+Standards anchoring the dimension taxonomy include ISO/IEC 25012 (data quality model) and ISO 19157 (geographic data quality). Time synchronization considerations reference NTP (RFC 5905) and IEEE 1588 PTP; geospatial validity references OGC Simple Features / ISO 19125 and practical validity checks such as PostGIS `ST_IsValid`.
 
 ## Why this theme matters for a City Digital Twin (and how it helps you run it)
 
 ### Why you need it
 
-A City Digital Twin is only as trustworthy as its inputs. If data latency, missingness, or drift varies silently by source, the twin becomes operationally dangerous: alerts misfire, simulations calibrate against bad baselines, and teams lose confidence and stop using outputs.
+A city twin integrates heterogeneous producers (IoT vendors, utilities, enterprise systems, third-party APIs) into shared products used for:
 
-Data quality SLAs convert “data trust” into an **operational contract**: explicit, measurable promises about the data services the twin depends on.
+- operational response (minutes)
+- field work planning (hours–days)
+- budgeting and capital planning (months–years)
+- public transparency dashboards
+
+Without explicit quality contracts, failures default to **blame games** (“the data is wrong”) and expensive rework.
 
 ### How it helps you run the twin (practical operational impact)
 
-- **Defines fitness-for-use by workflow:** different twin use-cases (real-time incident response vs long-horizon planning) get different SLAs (freshness, completeness, accuracy), preventing one-size-fits-none quality targets.
-- **Enables automated guardrails:** monitoring and alerting against SLA thresholds turns quality failures into actionable incidents (with owners, escalation paths, and remediation workflows) instead of hidden degradation.
-- **Improves model stability:** consistent, versioned quality metrics help you detect upstream changes (schema shifts, sensor bias, API changes) early so you can retrain/recalibrate models and avoid “silent drift.”
-- **Supports governance and accountability:** a published “data SLA promise” aligns producers and consumers and reduces disputes about whether an operational miss was a data issue or a decision issue.
-
-### Evidence pointers (deep research starting points)
-
-- IBM overview of a data SLA frames it as a public promise to deliver a quantifiable level of service (analogous to infrastructure uptime commitments). Source: https://www.ibm.com/think/topics/data-sla
-- Gable.ai discussion of data SLAs highlights common quality dimensions (reliability/accuracy/timeliness/consistency) and tailoring SLAs to stakeholder needs. Source: https://www.gable.ai/blog/data-sla
-
-## 1. Background and context
-
-Data quality is a critical success factor for city digital twin programs. Digital twins rely on accurate, timely, and complete data from multiple sources including sensors, IoT devices, enterprise systems, and external APIs. Poor data quality can lead to incorrect insights, flawed decisions, operational inefficiencies, and loss of stakeholder trust.
-
-Traditional approaches to data quality often rely on ad-hoc checks, manual validation, and reactive problem resolution. Data quality SLAs represent a shift toward proactive, measurable, and accountable data quality management by:
-- **Defining explicit quality standards**: Clear, measurable criteria for data quality
-- **Establishing accountability**: Clear ownership of data quality outcomes
-- **Enabling continuous monitoring**: Real-time assessment of quality metrics
-- **Supporting rapid remediation**: Quick identification and resolution of quality issues
-- **Providing transparency**: Visibility into data quality for all stakeholders
-
-For city digital twin programs, data quality SLAs are particularly important due to:
-- **Multi-source integration**: Data from numerous sources with varying quality characteristics
-- **Real-time requirements**: Many digital twin applications require timely data updates
-- **High-stakes decisions**: Digital twin insights inform critical city operations
-- **Regulatory requirements**: Data quality may be required for compliance
-- **Public trust**: Citizens expect accurate and reliable city data
-
-The implementation of data quality SLAs transforms data quality from an abstract concept to a measurable, manageable aspect of digital twin operations.
-
-## 2. Stakeholders
-
-### Data producers
-- **Sensor network operators**: Responsible for IoT device data quality
-- **Data engineers**: Maintain data pipelines and ETL processes
-- **System administrators**: Manage data source systems
-- **External data providers**: Supply third-party data feeds
-
-### Data consumers
-- **Data scientists**: Use data for analytics and modeling
-- **Application developers**: Build applications consuming digital twin data
-- **Business analysts**: Generate insights and reports from data
-- **City officials**: Make decisions based on digital twin insights
-
-### Quality stakeholders
-- **Data stewards**: Accountable for data quality in specific domains
-- **Data quality analysts**: Monitor and analyze quality metrics
-- **Data governance team**: Oversees data quality policies and standards
-- **Quality assurance teams**: Validate data quality processes
-
-### Governance stakeholders
-- **Data governance council**: Sets data quality strategy and policies
-- **Executive sponsors**: Provide resources and oversight for quality programs
-- **Compliance officers**: Ensure data quality meets regulatory requirements
-- **Audit teams**: Validate data quality controls and processes
-
-## 3. Threat model / abuse cases
-
-### Quality manipulation threats
-- **SLA gaming**: Manipulating metrics to meet SLA targets without improving quality
-- **Selective reporting**: Reporting only high-quality data subsets
-- **Threshold manipulation**: Adjusting SLA thresholds to avoid violations
-- **Data masking**: Hiding poor quality data from quality checks
-
-### Process threats
-- **Check gaps**: Quality checks not covering all critical data attributes
-- **False negatives**: Quality issues not detected by monitoring
-- **Remediation delays**: Slow response to quality violations
-- **Exception abuse**: Overuse of quality exceptions
-
-### Data integrity threats
-- **Data tampering**: Modifying data to improve quality metrics
-- **Backfilling**: Replacing poor quality data with fabricated values
-- **Sampling bias**: Quality checks not representative of full dataset
-- **Version manipulation**: Using older data versions to avoid quality issues
-
-### Governance threats
-- **Lack of accountability**: No clear ownership of quality outcomes
-- **Insufficient resources**: Inadequate capacity for quality monitoring
-- **Political pressure**: Pressure to accept poor quality data
-- **Vendor lock-in**: Dependence on proprietary quality tools
-
-### Mitigation strategies
-- Independent validation of quality metrics
-- Comprehensive quality check coverage
-- Clear escalation paths for quality violations
-- Regular audit of quality processes
-- Transparent reporting of quality issues
-
-## 4. Reference architecture (components + data flows)
-
-### Core components
-
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                      Data Quality SLA Platform                              │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                              │
-│  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐                  │
-│  │  SLA         │    │  Quality     │    │  Threshold   │                  │
-│  │  Definition  │◄──►│  Metric      │◄──►│  Management  │                  │
-│  │  Repository  │    │  Library     │    │              │                  │
-│  └──────────────┘    └──────────────┘    └──────────────┘                  │
-│         │                   │                   │                           │
-│         └───────────────────┼───────────────────┘                           │
-│                             ▼                                               │
-│  ┌──────────────────────────────────────────────────────────────────────┐  │
-│  │                      Quality Monitoring                             │  │
-│  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌───────────┐ │  │
-│  │  │  Data        │  │  Quality     │  │  Metric      │  │  SLA       │ │  │
-│  │  │  Ingestion   │  │  Checks      │  │  Calculation │  │  Evaluation│ │  │
-│  │  └──────────────┘  └──────────────┘  └──────────────┘  └───────────┘ │  │
-│  └──────────────────────────────────────────────────────────────────────┘  │
-│                             │                                               │
-│                             ▼                                               │
-│  ┌──────────────────────────────────────────────────────────────────────┐  │
-│  │                      Analysis & Alerting                             │  │
-│  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌───────────┐ │  │
-│  │  │  Violation   │  │  Trend       │  │  Root Cause  │  │  Alert     │ │  │
-│  │  │  Detection   │  │  Analysis    │  │  Analysis    │  │  Engine    │ │  │
-│  │  └──────────────┘  └──────────────┘  └──────────────┘  └───────────┘ │  │
-│  └──────────────────────────────────────────────────────────────────────┘  │
-│                             │                                               │
-│                             ▼                                               │
-│  ┌──────────────────────────────────────────────────────────────────────┐  │
-│  │                      Remediation & Reporting                          │  │
-│  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌───────────┐ │  │
-│  │  │  Auto        │  │  Manual      │  │  SLA         │  │  Quality   │ │  │
-│  │  │  Remediation │  │  Workflow    │  │  Reports     │  │  Dashboards│ │  │
-│  │  └──────────────┘  └──────────────┘  └──────────────┘  └───────────┘ │  │
-│  └──────────────────────────────────────────────────────────────────────┘  │
-│                                                                              │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
-
-### Data flows
-
-1. **SLA definition flow**: Business requirements → Quality dimensions → Metric definitions → Threshold setting → SLA approval
-2. **Monitoring flow**: Data ingestion → Quality checks → Metric calculation → SLA evaluation → Violation detection
-3. **Alerting flow**: Violation detection → Root cause analysis → Alert generation → Notification → Escalation
-4. **Remediation flow**: Issue identification → Remediation assignment → Execution → Verification → SLA status update
-
-### Integration points
-- **Data pipelines**: Quality checks integrated into ETL processes
-- **Data catalogs**: SLA metadata linked to data assets
-- **Data lakes/warehouses**: Quality metrics stored alongside data
-- **Business intelligence**: Quality data available for analysis
-- **Incident management**: Quality violations integrated with incident workflows
-
-## 5. Methods / algorithms / standards
-
-### Data quality dimensions
-
-#### Accuracy
-- **Definition**: Degree to which data correctly represents the real-world construct
-- **Metrics**: Error rate, validation pass rate, comparison with trusted sources
-- **Measurement**: Sample validation, cross-reference checks, rule-based validation
-
-#### Completeness
-- **Definition**: Degree to which all required data is present
-- **Metrics**: Null value percentage, missing field rate, record completeness
-- **Measurement**: Field presence checks, mandatory field validation
-
-#### Timeliness
-- **Definition**: Degree to which data is available when needed
-- **Metrics**: Data freshness, latency, update frequency
-- **Measurement**: Timestamp analysis, arrival time tracking
-
-#### Consistency
-- **Definition**: Degree to which data is uniform and compatible across sources
-- **Metrics**: Cross-source consistency, format consistency, value consistency
-- **Measurement**: Cross-reference checks, format validation, duplicate detection
-
-#### Validity
-- **Definition**: Degree to which data conforms to defined rules and constraints
-- **Metrics**: Validation pass rate, constraint violation rate
-- **Measurement**: Rule-based validation, schema validation, range checks
-
-### Quality check types
-- **Schema validation**: Verify data structure and types
-- **Business rule validation**: Apply domain-specific rules
-- **Referential integrity**: Validate relationships between data entities
-- **Statistical validation**: Identify statistical anomalies
-- **Pattern matching**: Detect format and pattern violations
-
-### SLA calculation methods
-- **Simple threshold**: Metric above/below defined threshold
-- **Weighted score**: Multiple metrics combined with weights
-- **Percentile-based**: Metric compared to historical percentiles
-- **Trend-based**: Metric compared to expected trend
-- **Composite SLA**: Multiple SLAs combined with logic
-
-### Standards and frameworks
-- **ISO 25012**: Data quality model
-- **DAMA-DMBOK**: Data Management Body of Knowledge
-- **DCAM**: Data Management Capability Assessment Model
-- **TDWI Data Quality Framework**: Comprehensive quality management approach
-- **Industry-specific standards**: Domain-specific quality requirements
-
-### Alerting algorithms
-- **Threshold alerts**: Simple threshold violations
-- **Trend alerts**: Deviations from expected trends
-- **Anomaly detection**: Statistical anomaly identification
-- **Composite alerts**: Multiple condition combinations
-- **Predictive alerts**: Anticipated quality issues
-
-## 6. Data requirements
-
-### SLA definition data
-- SLA agreements and contracts
-- Quality metric definitions
-- Threshold values and tolerances
-- Data source and domain mappings
-- Exception policies and procedures
-
-### Quality monitoring data
-- Raw data from data sources
-- Quality check results
-- Metric calculations and aggregations
-- Violation details and context
-- Remediation actions and status
-
-### Historical data
-- Historical quality metrics
-- Trend analysis data
-- Baseline measurements
-- Seasonal patterns
-- Anomaly history
-
-### Metadata
-- Data source metadata
-- Data schema and structure
-- Data lineage information
-- Quality check definitions
-- SLA ownership and accountability
-
-### Data quality requirements
-- Accuracy: Quality metrics must accurately reflect data quality
-- Completeness: All quality-relevant data must be captured
-- Timeliness: Quality data must be available for timely decision-making
-- Consistency: Standardized quality definitions and calculations
-- Retention: Appropriate retention for quality history and analysis
-
-## 7. Implementation plan (phases)
-
-### Phase 1: Foundation (Months 1-3)
-- Identify critical data assets and quality requirements
-- Define data quality dimensions and metrics
-- Establish SLA framework and governance
-- Select quality monitoring platform
-- Create initial SLA definitions
-
-### Phase 2: Pilot implementation (Months 3-6)
-- Implement quality checks for pilot data sources
-- Set up quality monitoring and alerting
-- Define SLA thresholds and targets
-- Establish remediation workflows
-- Conduct initial quality assessments
-
-### Phase 3: Expansion (Months 6-9)
-- Expand quality checks to all data sources
-- Implement advanced quality analytics
-- Integrate with data pipelines
-- Create quality dashboards and reports
-- Establish quality governance processes
-
-### Phase 4: Optimization (Months 9-12)
-- Refine quality metrics based on experience
-- Implement predictive quality capabilities
-- Enhance automated remediation
-- Integrate with data governance
-- Establish continuous improvement processes
-
-### Phase 5: Maturity (Months 12-18)
-- Implement AI-powered quality monitoring
-- Establish quality as code practices
-- Integrate with business processes
-- Create quality best practices library
-- Establish quality culture
-
-## 8. Testing and validation
-
-### Quality check validation
-- Test quality checks against known good and bad data
-- Validate check accuracy and false positive rates
-- Verify check performance and resource impact
-- Test check integration with data pipelines
-
-### SLA validation
-- Review SLA definitions with data consumers
-- Validate SLA thresholds and targets
-- Test SLA calculation and evaluation
-- Verify SLA reporting and alerting
-
-### Integration validation
-- Test integration with data pipelines
-- Validate alerting and notification workflows
-- Verify remediation automation
-- Test dashboard and reporting functionality
-
-### Continuous validation
-- Regular audit of quality check effectiveness
-- Independent validation of quality metrics
-- Analysis of SLA performance and trends
-- Stakeholder feedback collection and improvement
-
-## 9. Observability (SLIs/SLOs)
-
-### Service Level Indicators (SLIs)
-- **Quality check coverage**: Percentage of data assets with quality checks
-- **Check execution rate**: Percentage of scheduled checks executed
-- **Alert response time**: Time from violation to alert
-- **Remediation time**: Time from violation to resolution
-- **SLA compliance rate**: Percentage of SLAs meeting targets
-
-### Service Level Objectives (SLOs)
-- **Quality check coverage**: 100% of critical data assets covered
-- **Check execution rate**: 99.9% of checks executed on schedule
-- **Alert response time**: Alerts acknowledged within 1 hour
-- **Remediation time**: Critical violations resolved within 24 hours
-- **SLA compliance rate**: 95% of SLAs meeting targets
-
-### Monitoring and alerting
-- Dashboard tracking of quality metrics and SLA performance
-- Automated alerts for SLA violations
-- Regular reporting on SLI performance
-- Quality scorecards for stakeholders
-
-## 10. Governance and compliance
-
-### Governance structure
-- **Data Governance Council**: Oversight of data quality strategy
-- **Data Quality Board**: Manages data quality SLAs and processes
-- **Data Stewards**: Accountable for quality in specific domains
-- **Quality Analysts**: Execute quality monitoring and analysis
-
-### Decision rights
-- SLA definition: Data Quality Board with stakeholder input
-- Quality check implementation: Data stewards with technical support
-- Exception approval: Data Quality Board based on impact assessment
-- Remediation prioritization: Data stewards with business input
-
-### Compliance requirements
-- Data protection regulations for quality data
-- Audit trail requirements for quality issues
-- Data retention and deletion policies
-- Regulatory reporting requirements
-- Public sector accountability requirements
-
-### Documentation requirements
-- SLA agreements and contracts
-- Quality metric definitions and procedures
-- Quality check documentation
-- Exception request and approval records
-- Regular quality reports and assessments
-
-## 11. Risks and mitigations
-
-### Risk: Incomplete quality coverage
-- **Impact**: Quality issues in unchecked data
-- **Mitigation**: Comprehensive asset inventory, risk-based prioritization, regular coverage reviews
-
-### Risk: False positives
-- **Impact**: Alert fatigue, wasted remediation effort
-- **Mitigation**: Tuned thresholds, exception management, continuous refinement
-
-### Risk: Performance impact
-- **Impact**: Data pipeline degradation from quality checks
-- **Mitigation**: Optimized check implementation, sampling strategies, performance monitoring
-
-### Risk: SLA complexity
-- **Impact**: Difficulty understanding and managing SLAs
-- **Mitigation**: Simplified SLA structure, clear documentation, training
-
-### Risk: Resource constraints
-- **Impact**: Insufficient capacity for quality monitoring
-- **Mitigation**: Prioritization based on risk, automation, cloud-native solutions
-
-### Risk: Cultural resistance
-- **Impact**: Low adoption of quality practices
-- **Mitigation**: Executive sponsorship, demonstrated value, training and support
-
-## 12. Costs and FinOps
-
-### Implementation costs
-- Quality platform licensing: $75K-$200K
-- Quality check development: $100K-$250K
-- Integration and configuration: $50K-$125K
-- Training and change management: $30K-$75K
-
-### Operating costs
-- Platform licensing and maintenance: $40K-$100K annually
-- Quality operations staff: $250K-$500K annually
-- Storage and infrastructure: $25K-$60K annually
-- Training and onboarding: $15K-$35K annually
-
-### Cost-benefit considerations
-- Data quality SLAs typically cost 2-4% of data management budget
-- ROI through improved decision quality: 5:1 to 15:1
-- Avoided costs from poor quality decisions
-- Improved operational efficiency and trust
-
-### FinOps practices
-- Regular review of quality tool costs vs. value
-- Optimization of quality check execution
-- Leveraging cloud-native quality services
-- Right-sizing infrastructure based on actual usage
-
-## 13. KPIs
-
-### Effectiveness KPIs
-- **SLA compliance rate**: Percentage of SLAs meeting targets
-- **Quality improvement rate**: Reduction in quality issues over time
-- **Remediation success rate**: Percentage of issues successfully resolved
-- **Data consumer satisfaction**: Survey results on data quality
-
-### Efficiency KPIs
-- **Check execution time**: Average time to run quality checks
-- **Alert response time**: Time from violation to acknowledgment
-- **Remediation time**: Time from violation to resolution
-- **Automation rate**: Percentage of remediation actions automated
-
-### Quality KPIs
-- **Data accuracy score**: Composite measure of data accuracy
-- **Data completeness score**: Composite measure of data completeness
-- **Data timeliness score**: Composite measure of data freshness
-- **False positive rate**: Percentage of alerts that are false positives
-
-### Strategic KPIs
-- **Decision quality**: Improvement in decision outcomes
-- **Trust score**: Stakeholder confidence in data
-- **Cost avoidance**: Savings from avoided quality issues
-- **Innovation enablement**: Number of new capabilities enabled by quality data
-
-## 14. Deliverables and checklists
-
-### Phase 1 deliverables
-- [ ] Critical data asset inventory
-- [ ] Data quality dimensions and metrics document
-- [ ] SLA framework and governance documentation
-- [ ] Platform selection and procurement
-- [ ] Initial SLA definitions
-
-### Phase 2 deliverables
-- [ ] Pilot data source quality checks
-- [ ] Quality monitoring and alerting setup
-- [ ] SLA thresholds and targets
-- [ ] Remediation workflow documentation
-- [ ] Initial quality assessment report
-
-### Phase 3 deliverables
-- [ ] Expanded quality check coverage
-- [ ] Advanced quality analytics implementation
-- [ ] Data pipeline integration
-- [ ] Quality dashboards and reports
-- [ ] Quality governance processes
-
-### Phase 4 deliverables
-- [ ] Refined quality metrics documentation
-- [ ] Predictive quality capabilities
-- [ ] Enhanced remediation automation
-- [ ] Data governance integration
-- [ ] Continuous improvement processes
-
-### Phase 5 deliverables
-- [ ] AI-powered quality monitoring
-- [ ] Quality as code practices
-- [ ] Business process integration
-- [ ] Best practices library
-- [ ] Quality culture program
-
-### Ongoing deliverables
-- [ ] Daily quality dashboards
-- [ ] Weekly quality summaries
-- [ ] Monthly SLA compliance reports
-- [ ] Quarterly quality assessments
-- [ ] Annual quality strategy review
-
-## 15. References
-
-### 15.1 Workspace source
+- **Fitness-for-purpose by tier:** different use cases get different promises (freshness vs completeness vs accuracy).
+- **Incident-ready quality operations:** violations become incidents with owners, escalation, and runbooks.
+- **Model stability:** schema/behavior drift is detected early and coupled to retraining/recalibration gates.
+- **Vendor accountability:** contracts tie payment, credits, and acceptance testing to measurable outcomes.
+- **Safe degradation:** systems fall back to safe defaults when quality drops (rather than quietly producing wrong answers).
+
+## 1. Definitions and scope boundaries
+
+### 1.1 Data product (unit of accountability)
+
+A **data product** is a named, versioned interface with explicit contracts:
+
+- identifier: `domain.product.vX` (e.g., `transport.signals.phase_state.v1`)
+- owner + on-call
+- consumers (systems/use cases)
+- schemas + semantics
+- SLIs/SLOs + reporting window
+- exception policy and change policy
+
+SLA scope is per product, not per pipeline component.
+
+### 1.2 SLI / SLO / SLA
+
+- **SLI**: measured indicator (e.g., p95 event-time lateness ≤ 30s).
+- **SLO**: target for an SLI over a window (e.g., 99% of 5-minute windows per month meet lateness target).
+- **SLA**: contractual agreement including remedies, exclusions, and governance.
+
+### 1.3 Data quality dimensions (anchor taxonomy)
+
+Use ISO/IEC 25012 as a baseline for data quality characteristics, then extend with city-twin-specific space/time semantics.
+
+For geospatial products, align quality reporting to ISO 19157 categories (completeness, logical consistency, positional accuracy, temporal quality, thematic accuracy, usability) where applicable.
+
+## 2. Dataset tiering (T0–T3) and enforcement posture
+
+Tiering prevents a single “gold standard” from blocking useful work while ensuring operational safety.
+
+### 2.1 Tier definitions
+
+| Tier | Name | Typical use | Failure impact | Default enforcement posture |
+|---:|---|---|---|---|
+| T0 | Safety / control-adjacent | incident response, safety alerts, actuation-adjacent decisioning | can cause harm or major disruption | **Hard gate** at ingress + serve; paging; no long-lived exceptions |
+| T1 | Operational | work orders, dispatch, near-real-time ops dashboards | material operational cost | **Gate for critical consumers**, degrade non-critical; paging during hours |
+| T2 | Planning / analytics | weekly/monthly planning, performance reporting | bad decisions over time | soft gates; issue tickets; weekly review |
+| T3 | Exploratory / research | prototypes, experimentation | limited | best-effort; annotate quality; no paging |
+
+### 2.2 Tier assignment rules
+
+Assign tier using the strictest downstream consumer.
+
+- If a product feeds automated alerting that triggers field dispatch → at least **T1**.
+- If a product influences safety-critical decisions (e.g., evacuation routing, structural hazard alerts) → **T0**.
+
+Tier changes require a lightweight ADR and consumer sign-off.
+
+## 3. SLA dimensions and city-twin-specific SLIs
+
+### 3.1 Core dimensions (generic)
+
+| Dimension | What it means operationally | Example SLIs |
+|---|---|---|
+| Availability | can consumers access the product | API uptime; successful query ratio |
+| Freshness / timeliness | data arrives in time for the use case | p95 ingest latency; max staleness |
+| Completeness | expected fields/records/coverage exist | % missing required fields; spatial coverage % |
+| Validity | conforms to schema and rules | schema-pass rate; range-check pass rate |
+| Consistency | no contradictions across systems/time | cross-source mismatch rate; referential integrity |
+| Accuracy (when measurable) | closeness to ground truth | audited error rate; calibration drift |
+| Lineage/traceability | can we explain provenance | % records with source + processing version |
+
+### 3.2 Geospatial semantics (mandatory for spatial products)
+
+Add explicit SLIs for:
+
+- **CRS correctness and consistency** (e.g., EPSG codes recorded; no mixed CRS in a layer).
+- **Geometry validity** (e.g., OGC validity rules; no self-intersections).
+- **Topology constraints** (domain-dependent):
+  - parcels must not overlap
+  - road centerlines must not self-cross incorrectly
+  - address points must fall within jurisdiction boundary
+- **Positional accuracy** (tier-dependent): audit against higher-trust sources.
+
+Practical checks:
+
+- validate geometries using database-native checks (e.g., PostGIS `ST_IsValid`) before publishing.
+- measure drift: % features moving > X meters without a corresponding work order / authoritative update.
+
+### 3.3 Temporal semantics (mandatory for event/stream products)
+
+Specify:
+
+- **event_time** vs **processing_time** and which is authoritative for consumers.
+- **lateness budget** (event-time lateness distribution, not just ingestion latency).
+- **clock synchronization posture** for producers:
+  - systems that can: NTP aligned (RFC 5905)
+  - high-precision networks (OT/industrial): PTP (IEEE 1588) where justified
+
+Temporal SLIs:
+
+- p95 event-time lateness ≤ X
+- % events with event_time in the future (beyond drift tolerance) ≤ Y
+- monotonicity violations per device/day ≤ Z
+
+## 4. SLA templates by common city-twin data types
+
+These templates are starting points; calibrate to local reality.
+
+### 4.1 Streaming sensor time series (IoT)
+
+| Dimension | T0 target (example) | T1 target | T2/T3 |
+|---|---:|---:|---:|
+| Freshness | p95 ≤ 15s | p95 ≤ 60s | best-effort |
+| Completeness | ≥ 99.5% points/interval | ≥ 99% | ≥ 95% |
+| Validity | ≥ 99.9% schema+range | ≥ 99.5% | ≥ 98% |
+| Temporal | p95 lateness ≤ 10s; clock drift ≤ 1s | p95 lateness ≤ 30s; drift ≤ 5s | define but don’t page |
+| Accuracy | audited drift ≤ threshold | audited drift ≤ threshold | periodic sampling |
+
+Mandatory product metadata:
+
+- sampling interval, jitter tolerance
+- units and calibration date
+- device health signals (battery, RSSI, firmware)
+
+### 4.2 Geospatial registries (assets, networks, parcels)
+
+| Dimension | T0/T1 target (example) | T2 target | Notes |
+|---|---:|---:|---|
+| Geometry validity | ≥ 99.99% valid | ≥ 99.9% | invalid geometries must be quarantined |
+| CRS | 100% labeled, consistent | 100% | reject unknown CRS |
+| Completeness | ≥ 99% required attrs | ≥ 98% | include attribute completeness by class |
+| Topology rules | ≥ 99.9% pass | ≥ 99% | define per layer |
+| Freshness | updates published ≤ 24h | ≤ 7d | depends on workflow |
+
+### 4.3 Operational event logs (311, CAD, work orders)
+
+| Dimension | T1 target (example) | T2 target | Notes |
+|---|---:|---:|---|
+| Freshness | p95 ≤ 5m | p95 ≤ 60m | include end-to-end not just ETL |
+| Completeness | ≥ 99% required fields | ≥ 98% | require reason codes for nulls |
+| Validity | ≥ 99.5% | ≥ 99% | controlled vocabularies |
+| Consistency | mismatch ≤ 0.5% | mismatch ≤ 1% | e.g., status transitions |
+| Privacy constraints | 0 critical violations | 0 critical violations | treat privacy as hard gate |
+
+### 4.4 Third-party/external feeds (weather, mobility, imagery)
+
+Treat as **best-effort** unless contractually strengthened.
+
+- publish explicit provider exclusions
+- add drift monitors (schema, volume, distribution)
+- maintain fallback sources and cache policies
+
+## 5. Measuring accuracy under weak ground truth
+
+Many city contexts lack a single trusted truth (crowdsourcing, inferred occupancy, ML outputs). The SLA must shift from “absolute accuracy” to a **measurable, auditable accuracy program**.
+
+### 5.1 Accepted accuracy measurement strategies
+
+1. **Cross-source triangulation**
+   - compare independent sources (e.g., loop detectors vs probe data vs signal controller logs)
+   - report disagreement distributions, not just averages
+
+2. **Periodic audits / field sampling**
+   - stratified sampling by neighborhood, asset class, time-of-day
+   - publish audit protocol, sample size, confidence intervals
+
+3. **Gold subset + holdout**
+   - maintain a small curated “high-trust” subset for calibration
+
+4. **Instrumented change events**
+   - require work orders / authoritative events to justify large changes
+
+5. **Uncertainty as a first-class output**
+   - provide per-record confidence (where feasible)
+   - set SLIs for calibration (e.g., confidence reliability curves)
+
+### 5.2 Accuracy SLIs when ground truth is limited
+
+- disagreement rate between independent sources (within tolerance)
+- audit pass rate (field checks)
+- stability: unexpected step changes per period
+- bias signals: systematic errors by geography/demographics (equity lens)
+
+## 6. Exception lifecycle governance (“quality debt” discipline)
+
+Exceptions are sometimes necessary (e.g., sensor outage, vendor API changes), but unmanaged exceptions destroy trust.
+
+### 6.1 Exception types
+
+- **Temporary waiver**: allow serving data that violates a threshold.
+- **Compensating-control exception**: allow violation only if a fallback control is enabled.
+- **Measurement exception**: SLI is temporarily invalid due to monitoring failure.
+
+### 6.2 Mandatory exception fields
+
+- product, tier, violated SLI/SLO
+- start time, expiry time (hard)
+- impact assessment (which consumers, what risk)
+- compensating controls (required for T0/T1)
+- owner and approver
+- remediation plan and ETA
+
+### 6.3 Expiry and escalation rules
+
+- T0: max 24–72h waivers, daily executive visibility
+- T1: max 7–14 days, weekly governance review
+- T2/T3: time-boxed but can be longer with annotated outputs
+
+Track:
+
+- **quality debt balance**: active exceptions weighted by tier and consumer criticality
+- **repeat offender** sources/vendors
+
+## 7. Remediation playbooks (standard incidents)
+
+### 7.1 Sensor stream playbooks
+
+**A) Missingness spike**
+
+- Triage: device health (power/comms), gateway, ingestion service, downstream storage
+- Mitigations: switch to cached/last-known-good for non-safety consumers; suppress alerts; open maintenance ticket
+- Verification: completeness back to baseline; no “backfilled fiction” unless explicitly marked
+
+**B) Sensor drift / calibration issue**
+
+- Detect: shift vs peer sensors; distribution drift; audit failures
+- Mitigations: quarantine device; apply correction only with documented calibration; retrain models if needed
+- Verification: post-fix audit sample
+
+**C) Pipeline lag**
+
+- Detect: lateness budget breach
+- Mitigations: scale consumers; reduce noncritical transforms; activate degraded mode
+- Verification: end-to-end lag p95 back within target
+
+### 7.2 Geospatial registry playbooks
+
+**A) Geometry validity failure**
+
+- Detect: invalid geometries (self-intersections, rings)
+- Mitigations: quarantine features; attempt automated fix only if deterministic and logged; request authoritative correction
+- Verification: 100% invalid quarantined; fix rate tracked
+
+**B) CRS mismatch / transform errors**
+
+- Detect: coordinates out-of-bounds; mixed EPSG
+- Mitigations: block publish; reproject with controlled pipeline; add contract tests
+
+**C) Topology rule violations**
+
+- Detect: overlaps, gaps, dangling nodes
+- Mitigations: rule-specific fixes; coordinate with authoritative editor; publish “known issues” layer if needed
+
+### 7.3 Event log playbooks
+
+**A) Schema change from source system**
+
+- Detect: schema contract test fail; new enum values
+- Mitigations: stop-the-line for T0/T1 consumers; map new values; backfill with explicit versioning
+
+**B) Status transition inconsistencies**
+
+- Detect: invalid transitions, duplicates
+- Mitigations: dedupe rules; enforce append-only; reconcile with system-of-record
+
+## 8. Ownership, RACI, and cross-boundary operations
+
+### 8.1 Minimum roles
+
+- **Data Product Owner (DPO)**: accountable for SLAs and prioritization.
+- **Platform/Data Engineering**: pipelines, checks, monitors.
+- **Domain Steward**: semantics, business rules, topology rules.
+- **Vendor Operator** (if applicable): device/network/source system support.
+- **Incident Commander**: coordinates major incidents.
+
+### 8.2 RACI (template)
+
+| Activity | DPO | Data Eng | Domain Steward | Vendor | Gov Council |
+|---|---|---|---|---|---|
+| Define SLIs/SLOs | A | R | R | C | C |
+| Approve Tier | A | C | C | C | I |
+| Monitor + alert | C | A/R | C | C | I |
+| T0/T1 exception approval | A | R | C | C | C |
+| Remediation execution | C | R | R | R | I |
+| Post-incident review | A | R | R | C | I |
+
+## 9. Downstream coupling: error budgets, gating, and safe degradation
+
+### 9.1 Error budgets for data products
+
+Translate SLIs into “allowed badness” over a window, per tier.
+
+Examples:
+
+- T0 sensor stream: ≤ 0.5% missing intervals per month; if exceeded → stop enabling new consumers; trigger hardening work.
+- T1 geospatial registry: ≤ 0.01% invalid geometries; if exceeded → block publish and require fix.
+
+### 9.2 Gating rules
+
+- **Ingress gate**: quarantine records that violate hard constraints (schema, privacy, CRS unknown).
+- **Serve gate**: consumers can request `quality>=T1` views that exclude quarantined/low-quality partitions.
+- **Model gate**: block retraining or release if training data quality falls below thresholds.
+
+### 9.3 Safe degradation patterns
+
+- degrade dashboards: show “data stale/partial” banners with last-good timestamp
+- degrade analytics: widen uncertainty bands; suppress fine-grained claims
+- degrade automation: require human confirmation; disable auto-dispatch
+
+## 10. Implementation guidance (operating model)
+
+### 10.1 Quality as code
+
+- contract tests in CI/CD for schemas and critical semantics
+- versioned rulesets and thresholds
+- reproducible metric definitions (no “dashboard math”)
+
+### 10.2 Monitoring
+
+- publish SLI dashboards per product and tier
+- alerting based on **user-impacting windows** (avoid paging on benign noise)
+- track false positives/negatives explicitly
+
+### 10.3 Continuous improvement loop
+
+- monthly SLA review: retire useless metrics, tighten targets where stable
+- quarterly audits for T0/T1
+- annual re-tiering and consumer review
+
+## 11. Costs and FinOps considerations
+
+Quality work has compute/storage cost (profiling, anomaly detection, retention) and human cost (on-call, audits). Manage it as a product investment:
+
+- tier-based monitoring intensity (T0 highest)
+- sampling where full checks are expensive
+- cost attribution: charge quality compute to products/owners
+
+## 12. KPIs
+
+- % T0/T1 products with complete SLI coverage
+- mean time to detect (MTTD) and mean time to remediate (MTTR) for quality incidents
+- active exception count and weighted quality debt
+- repeat incidents by source/vendor
+- consumer trust: adoption + complaint rate
+
+## 13. Deliverables and checklists
+
+### 13.1 One-time deliverables
+
+- data product inventory + tier assignments
+- SLI/SLO catalog (by product)
+- exception policy + workflow + tooling
+- runbook library (playbooks above)
+- contract test suite integrated into CI/CD
+
+### 13.2 Recurring deliverables
+
+- weekly quality ops review (T0/T1)
+- monthly SLA performance report + exception debt ledger
+- quarterly audit report (sampling protocol + results)
+
+## 14. References
+
+### 14.1 Workspace source
+
 - [`kali-task-research.md`](../kali-task-research.md:1) — Item 21: Data quality SLAs
 
-### 15.2 External references (retrieved via Firecrawl MCP)
-- Decube. *Defining Data Quality with SLA: Metrics, Monitoring, and Remediation*. Retrieved from https://www.decube.io/post/define-data-quality-sla — Explains how defining data quality with SLA metrics enhances accuracy, completeness, and validity, boosting decision-making and stakeholder confidence.
+### 14.2 External references (retrieved via Firecrawl MCP)
 
-- IBM. *What's a data Service Level Agreement (SLA)?* Retrieved from https://www.ibm.com/think/topics/data-sla — Defines a data SLA as a public promise to deliver a quantifiable level of service, similar to how infrastructure providers commit to 99.99% uptime.
+- ISO/IEC 25012 (overview). Retrieved from https://iso25000.com/index.php/en/iso-25000-standards/iso-25012 — Data quality model characteristics for structured data products.
+- ISO. *ISO/IEC 25012:2008 — Data quality model* (catalog entry). Retrieved from https://www.iso.org/standard/35736.html
+- ISO. *ISO 19157:2013 — Geographic information — Data quality* (Online Browsing Platform). Retrieved from https://www.iso.org/obp/ui/#iso:std:iso:19157:ed-1:v1:en
+- IETF. *RFC 5905 — Network Time Protocol Version 4* (NTPv4). Retrieved from https://datatracker.ietf.org/doc/html/rfc5905
+- OGC. *Simple Feature Access — Part 1: Common Architecture* (ISO 19125). Retrieved from https://www.ogc.org/standards/sfa/
+- PostGIS. *ST_IsValid*. Retrieved from https://postgis.net/docs/ST_IsValid.html — Validity checks for geometries according to OGC rules.
 
-- Gable.ai. *Data SLAs: Importance, Challenges, and Best Practices*. Retrieved from https://www.gable.ai/blog/data-sla — States that data SLAs cover universal data quality metrics including data reliability, accuracy, timeliness, and consistency, with stakeholders tailoring data SLAs to their specific needs.
+### 14.3 Suggested further reading (not fetched)
 
-### 15.3 Suggested further reading (not fetched)
-- *Data Quality: The Accuracy Dimension* — Book by Jack E. Olson
-- *Executing Data Quality Projects* — Book by Danette McGilvray
-- *DAMA-DMBOK: Data Management Body of Knowledge* — Comprehensive data management guide
-- *Data Quality Assessment* — Book by Laura Sebastian-Coleman
-- *The Data Quality Toolkit* — Practical guide to data quality management
+- DAMA-DMBOK — data management practices and governance
+- Great Expectations / Soda / Deequ — “quality as code” tooling patterns

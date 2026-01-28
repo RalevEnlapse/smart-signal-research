@@ -1,317 +1,389 @@
-# Buildings — Deep research
+# Buildings — Deep Research (City Portfolio)
 
 ## Executive summary
-A buildings “twin” connects building information models (BIM), asset registers, and operational data (BMS/IoT, work orders, energy use, occupancy proxies) to optimize comfort, efficiency, maintenance, and retrofit prioritization at portfolio scale. The core challenge is not creating a photorealistic model; it is building a reliable semantic representation of systems (HVAC, lighting, envelopes), their control points, and performance metrics that supports repeatable analytics and interventions.
+A “buildings twin” for a municipal portfolio is a **portfolio operations system**: a governed, semantically consistent layer that connects **building identity + assets + meters + BMS/OT telemetry + work** to produce **repeatable decisions and safe actions**.
 
-A pragmatic approach starts with a canonical building registry and a small number of high-value use cases (fault detection, energy baseline and anomalies, retrofit scoring), then scales by standardizing schemas and onboarding processes. Governance and privacy are essential because operational building data can reveal occupant behavior and sensitive facility details.
+**No-photorealism stance (sharpened):** 3D/BIM visualization is optional. The primary value comes from:
+- a canonical identity model (building → system → equipment → point/meter)
+- reliable semantic tagging (Haystack/Brick) with validation and drift control
+- safe OT/IT integration that defaults to read-only, with tightly governed actuation
+- measurement & verification (M&V) methods that make energy/savings claims defensible
 
-This document deepens item 6 in [`kali-task-research.md`](../kali-task-research.md:1): *“Buildings: Connect BIM and operations data to optimize comfort, efficiency, and retrofit prioritization at scale.”*
-
----
-
-## Why this theme matters for a City Digital Twin (and how it helps you run it)
-Buildings are one of the highest-leverage “systems” in a city: they drive energy demand, emissions, comfort/health outcomes, and large O&M budgets. A buildings twin makes the digital twin program operational at portfolio scale by linking building identity (registry/BIM) with live operations (BMS/metering/work orders) so you can detect issues early, prioritize retrofits, and verify savings.
-
-### Why you need it
-- **Portfolio-scale performance management:** Without a normalized building layer (metadata, tagging, baselines), you can’t compare buildings or prioritize interventions beyond anecdote.
-- **Turns BMS data into decisions:** Semantic tagging + FDD converts noisy point telemetry into actionable fault queues and maintenance work.
-- **Enables defensible retrofit prioritization:** Baselines + scenario scoring produce a repeatable way to rank retrofit candidates and estimate impact.
-- **Supports safety, comfort, and IAQ:** Operational building data is essential to keep critical public buildings healthy and comfortable.
-
-### How it helps you run the twin (practical operational impact)
-- **Fault-to-work loop:** FDD findings become tickets/work orders with evidence; outcomes feed back into model calibration.
-- **Savings persistence monitoring:** The twin can continuously validate whether energy/comfort improvements persist after commissioning or retrofits.
-- **Standardized onboarding:** Tagging standards and registry governance become a reusable onboarding playbook for more buildings.
-
-### Evidence pointers (deep research starting points)
-- NREL’s report “Metrics and Methods to Assess Building Fault Detection and Diagnosis Tools” frames how to evaluate FDD tools and discusses methodologies/metrics for detection and diagnosis—useful for making your buildings twin operational and measurable ([`docs.nrel.gov` FDD metrics report (PDF)](https://docs.nrel.gov/docs/fy19osti/72801.pdf)).
-
-## 1. Background and context
-Buildings are often the largest share of urban energy use and emissions. Cities and large owners manage portfolios across:
-- Public buildings (schools, hospitals, offices)
-- Social housing
-- Commercial buildings (in partnerships)
-
-Key problems:
-- Inconsistent building metadata (floor area, system types, retrofit history)
-- Limited visibility into operational performance
-- Fragmented BMS vendors and point naming conventions
-- Difficulty comparing buildings (“apples to oranges”)
-
-A buildings twin provides:
-- A normalized building/system data layer
-- Benchmarks and baselines
-- Fault detection and diagnostics (FDD)
-- Retrofit pipeline prioritization with quantified impacts
+This document deepens item 6 in [`kali-task-research.md`](kali-task-research.md:1): “Buildings: Connect BIM and operations data to optimize comfort, efficiency, and retrofit prioritization at scale.”
 
 ---
 
-## 2. Stakeholders
-- **Facilities management (FM)**: comfort, complaints, maintenance
-- **Energy/sustainability teams**: emissions reductions and reporting
-- **Building occupants**: comfort and indoor air quality
-- **Capital planning**: retrofit programs and investment planning
-- **BMS vendors/integrators**: point mapping, control changes
-- **IT/security**: OT/IT segmentation, identity management
-- **Finance**: budgets, incentives, energy procurement
-- **Regulators**: building performance standards, safety compliance
+## 1) Scope and non-goals
+### In scope
+- City-owned/operated buildings: schools, municipal offices, libraries, community centers, depots (and optionally housing where the city is operator)
+- Portfolio analytics: benchmarking, baselining, anomaly detection, FDD, commissioning/retro-commissioning support, retrofit prioritization
+- Operational workflows: fault-to-work, investigation, evidence packs, change control
+- Safety boundaries for analytics that influence controls
+
+### Non-goals (explicit)
+- Building-by-building bespoke “digital twin art projects”
+- Mandatory BIM/3D: use BIM/as-builts where they exist, but do not block value delivery on 3D completeness
+- Closed-loop autonomous control unless a formal safety case exists (see §4)
 
 ---
 
-## 3. Threat model / abuse cases
+## 2) Stakeholders and decision rights
+- Facilities / building operations (site staff)
+- Energy & sustainability office
+- OT/BMS engineers and integrators
+- IT/network/security
+- Capital planning / retrofit program
+- Privacy / legal (especially for schools/health facilities)
+- Procurement/vendor management
 
-### 3.1 Assets to protect
-- Integrity and safety of building control systems
-- Confidentiality of building layout and critical systems (especially public facilities)
-- Privacy of occupancy-related signals
-
-### 3.2 Abuse/failure cases
-- **Unauthorized control changes** causing unsafe HVAC operation
-- **Sensor spoofing** leading to comfort/air quality harms
-- **Over-collection of occupancy data** enabling privacy violations
-- **Misleading baselines** causing incorrect savings claims
-
-### 3.3 Controls
-- OT network segmentation; limited remote access
-- Change management and approval workflows for control updates
-- Data minimization and aggregation for occupancy
-- Audit logs for control setpoint changes and model outputs
+**Decision rights (summary):**
+- Facilities owns comfort/safety outcomes and approves actuation.
+- Security owns remote access controls and network boundaries.
+- Energy team owns savings claims, baselines, and M&V governance.
+- Platform/data team owns data contracts, lineage, and semantic QA tooling.
 
 ---
 
-## 4. Reference architecture (components + data flows)
+## 3) Canonical entity model (required)
+Implement a canonical model that supports reconciliation across CMMS, BMS exports, meters, and drawings.
 
-### 4.1 Components
-1. **Canonical building registry**
-   - Address, geometry, floor area, usage type, ownership, criticality
+### 3.1 Entity hierarchy
+**Building → System → Equipment → Point (+ Meter)**
 
-2. **BIM/document repository**
-   - BIM models where available; as-builts; equipment schedules
+### 3.2 Required identifiers (minimum)
+| Entity | Required IDs | Notes |
+|---|---|---|
+| Building | `building_id` (stable UUID), address, site name | Link to GIS parcel/site if available |
+| System | `system_id`, `building_id`, `system_type` | HVAC, lighting, DHW, envelope, etc. |
+| Equipment | `equipment_id`, `system_id`, manufacturer/model/serial (if known) | Align with CMMS assets |
+| Point | `point_id`, `equipment_id`, `point_type`, units, `source_ref` | BMS point name/path is a `source_ref` |
+| Meter | `meter_id`, `building_id` or `system_id`, utility, channel | Utility meters + submeters |
 
-3. **Operational data ingestion**
-   - BMS points (temperatures, flows, setpoints), meters, alarms
-   - Maintenance work orders and asset inventories
-
-4. **Semantic layer / ontology mapping**
-   - Standardized naming and tagging of points and equipment
-   - Zone/equipment relationships (AHU → VAV → zone)
-
-5. **Analytics and optimization**
-   - Baselines and benchmarking
-   - FDD and anomaly detection
-   - Retrofit prioritization scoring
-
-6. **Action layer**
-   - Work order creation, recommendations, control tuning proposals
-
-7. **Serving and visualization**
-   - Portfolio dashboards, building drill-down, alerts
-
-8. **Governance/observability**
-   - Data quality, access control, audit logs
-
-### 4.2 Data flows
-- Building metadata + BIM → registry/semantic store
-- BMS/meter streams → normalization → time-series store
-- Work orders → join with equipment/points → failure patterns
-- Analytics → recommendations → FM review → work orders / control changes
+**Rule:** IDs above must be **platform-owned** (not vendor-owned) so they survive vendor swaps.
 
 ---
 
-## 5. Methods / algorithms / standards
+## 4) OT/IT integration architecture and safety boundaries
+### 4.1 Reference architecture (trust boundaries)
+- **OT/BMS network**: controllers, supervisory server, fieldbus; safety-critical.
+- **OT DMZ / Edge gateway**: protocol translation, buffering, allow-listed flows.
+- **IT analytics platform**: data lake/time-series store, semantic store, analytics, dashboards.
 
-### 5.1 Point normalization and semantic tagging
-- Mapping vendor-specific point names to standardized tags
-- Use equipment templates and automated tagging where feasible
-- AI/ML models for automated point classification and tagging
-- Digital twin-based building analytics
+**Data flow default:** OT → DMZ/edge → IT (one-way where feasible). Any IT → OT path must be explicitly governed.
 
-### 5.2 Energy baselines and benchmarking
-- Weather-normalized baselines
-- Change-point models for heating/cooling dependence
-- Portfolio benchmarking by building type and size
-- AI-driven smart building systems with deep learning model analysis
-- Predictive maintenance for building systems
+### 4.2 Actuation postures (policy)
+Your override: `actuation_posture = read-only-by-default`.
 
-### 5.3 Fault detection and diagnostics (FDD)
-- Rule-based diagnostics (simultaneous heating/cooling, stuck dampers)
-- Model-based diagnostics (expected vs observed performance)
-- Alarm rationalization (reduce noise; prioritize actionable alarms)
-- Time-series autoencoders for anomaly detection
-- LSTM/GRU forecasters for performance prediction
+#### A) Read-only-by-default (default)
+Allowed:
+- dashboards, diagnostics, FDD, anomaly alerts
+- **setpoint proposals** as recommendations only
+Not allowed:
+- automated write-back to controllers
 
-### 5.4 Comfort and indoor air quality
-- Comfort KPIs: temperature/humidity excursions, variability
-- IAQ proxies: CO2, ventilation rates where measured
-- Real-time monitoring and optimization
-- Smart home digital twin for comfort optimization
+#### B) Limited-writeback (tightly governed)
+Allowed only when:
+- specific buildings are approved as “writeback-enabled”
+- commands are restricted to a **small allow-list** (e.g., schedule changes, setpoint bounds)
+- changes are **time-boxed** to approved windows
+Required controls:
+- approval workflow (two-person rule for high-risk changes)
+- automatic rollback plan (see below)
+- session logging and command audit trail
 
-### 5.5 Retrofit prioritization
-- Scoring models combining:
-  - Savings potential (baseline vs target)
-  - Cost and feasibility
-  - Asset condition and lifecycle timing
-  - Equity/criticality factors
-- Digital twin-based retrofit planning and simulation
+#### C) Closed-loop optimized (exceptional)
+Only with:
+- formal safety case and hazard analysis
+- canary deployment (one building/system first)
+- continuous monitoring of guardrails (comfort/IAQ/safety)
+- immediate rollback on anomaly
 
-### 5.6 Standards and protocols
-- BIM standards (IFC, Industry Foundation Classes)
-- Building Automation and Control Networks (BACnet)
-- Haystack tagging for semantic data
-- MQTT/AMQP for real-time building data
-- NGSI-LD context models for interoperability
-- Brick schema for building metadata
+### 4.3 “Propose → approve → execute” workflow
+1. Analytics produces a **tuning proposal** (what/why/expected effect/risk).
+2. Proposal reviewed by site ops + OT engineer; security checks scope.
+3. If approved, proposal becomes a **change request** with:
+   - command allow-list validation
+   - time window
+   - rollback procedure
+   - monitoring plan
+4. Execution performed by authorized operator (or automated executor in limited-writeback mode).
+5. Post-change verification and evidence pack stored.
 
----
+### 4.4 Rollback and safety constraints (minimum)
+- Store pre-change configuration snapshot (or equivalent export) where possible.
+- Define **safe defaults** for comms outage (e.g., revert to local schedules; controller autonomy; conservative setpoints).
+- Enforce hard bounds:
+  - temperature setpoints within policy-defined min/max
+  - ventilation minimums (where applicable)
+  - rate limits for changes (no rapid oscillations)
 
-## 6. Data requirements
+### 4.5 Vendor remote access governance
+Minimum requirements (audit-ready):
+- MFA + device posture checks
+- jump host/bastion in OT DMZ (no direct inbound to OT)
+- time-bound access approvals with ticket numbers
+- session recording/logging and periodic review
+- least-privilege accounts; no shared vendor accounts
 
-### 6.1 Minimum viable
-- Building registry fields (type, area, age, systems)
-- Utility meter data (electricity, heat/gas if applicable)
-- Basic BMS data (zone temps, setpoints, runtimes) for priority buildings
-- Work order history and equipment inventory
-
-### 6.2 High-value
-- Submetering for end uses
-- Occupancy proxies (aggregated)
-- Equipment performance data (flows, valve positions)
-- Retrofit project tracking and measured savings
-
-### 6.3 Data quality
-- Time synchronization across meters and BMS
-- Point completeness and tagging accuracy
-- Handling missing data and sensor drift
-
----
-
-## 7. Implementation plan (phases)
-
-### Phase 0 — Portfolio scope and governance
-- Define building tiers (critical, high energy use, public-facing)
-- Establish privacy and OT security constraints
-
-### Phase 1 — Registry and energy baselines
-- Build canonical building registry
-- Ingest meter data, compute weather-normalized baselines
-- Identify top outliers and quick wins
-
-### Phase 2 — Semantic layer and FDD pilots
-- Onboard a small set of buildings with deep BMS integration
-- Create tagging standards and templates
-- Deploy FDD and alert workflows to FM
-
-### Phase 3 — Scale onboarding and retrofit pipeline
-- Standardize onboarding playbooks for new buildings
-- Build retrofit scoring and portfolio planning tools
-- Integrate with capital planning and procurement
-
-### Phase 4 — Continuous optimization
-- Commissioning/retro-commissioning cycles
-- Measure persistence of savings and comfort outcomes
-- Iterate models and control strategies
+Implementation anchor sources include NIST ICS security guidance and CISA remote access practice guides (see Sources).
 
 ---
 
-## 8. Testing and validation
-- Data validation: point mapping correctness, unit consistency
-- Baseline validation: backtesting against historical periods
-- FDD validation: sample of diagnosed faults verified by technicians
-- M&V: verify retrofit savings with appropriate methods and uncertainty
+## 5) Semantic layer implementation playbook (Haystack/Brick)
+### 5.1 Pragmatic adoption patterns (options-not-prescriptions)
+- **Project Haystack**: strong tagging conventions for points/equipment; widely used in operational tagging and integration.
+- **Brick**: ontology with explicit classes/relationships; supports richer reasoning and formal validation.
+
+Practical city approach:
+- Start with **Haystack-like tags** for fast onboarding and operator usability.
+- Introduce **Brick relationships** for the subset of buildings where system topology is needed (AHU→VAV→zone, heat plant→loops).
+
+### 5.2 Identity reconciliation rules
+Reconciliation is a deterministic pipeline with human review:
+1. **Building match**: address/site ID → `building_id`.
+2. **Equipment match**:
+   - primary: CMMS asset IDs / serials
+   - secondary: naming patterns + location + network IDs
+3. **Point match**:
+   - map BMS point path/name to `point_id`
+   - store vendor source string in `source_ref`
+4. **Meter match**:
+   - utility account/meter ID → `meter_id`
+   - align to building/system using known metering topology
+
+**Rule:** keep a crosswalk table `{source_system, source_identifier} → {canonical_id}` and never overwrite history; add new mappings as systems evolve.
+
+### 5.3 Minimum semantic coverage matrix (targets)
+Define coverage by building tier/use case. Example minimums (tune to your portfolio):
+
+| Tier | Intended use cases | Minimum data | Minimum semantic coverage target |
+|---|---|---|---|
+| **Tier A (FDD + optimization)** | FDD, diagnostics, tuning proposals | key HVAC equipment points + schedules + key meters | ≥ **85%** of required points tagged; topology for major airside/waterside |
+| **Tier B (benchmarking + anomaly)** | portfolio benchmarking, baselines, major anomalies | whole-building meters + limited key equipment run/status | ≥ **60%** tagging for key equipment + meters |
+| **Tier C (basic visibility)** | utility tracking, basic dashboards | whole-building meters + operating hours/schedules | ≥ **30%** (mostly registry + meters + schedules) |
+
+### 5.4 Tagging QA, validation, and drift control
+Minimum controls:
+- **Automated validators** run on every onboarding and nightly:
+  - required tags present for Tier targets
+  - units compatibility (°C vs °F, kW vs W)
+  - point-type sanity checks (a valve position is 0–100%)
+- **Drift detection**:
+  - detect new/removed/renamed points from BMS exports
+  - compare semantic coverage delta (% change)
+- **Human review workflow**:
+  - changes above threshold (e.g., >5% point churn) require review
+  - maintain a review log (who approved semantic updates)
 
 ---
 
-## 9. Observability (SLIs/SLOs)
+## 6) Measurement & Verification (M&V) and savings governance
+### 6.1 Recognized M&V approaches (when to use which)
+Use M&V options aligned to intervention type.
 
-### 9.1 SLIs
-- Data availability: % time-series points present per day
-- Tagging coverage: % points mapped to semantic tags
-- Alert quality: actionable rate, false positive rate
-- Comfort: % time within comfort band
-- End-to-end latency (ms)
-- Synchronicity error between physical and virtual states
-- Update rate (Hz)
-- Service availability (%)
-- Mean time to detect/recover (MTTD/MTTR)
+| Intervention type | Typical M&V approach | Notes |
+|---|---|---|
+| Controls tuning / scheduling | Option C (whole-building) or Option B (system-level) | Often feasible with metered data + regression |
+| Equipment retrofit (single system) | Option A or B | Isolation with measured key parameters vs full measurement |
+| Multi-measure retrofit bundle | Option C | Needs baseline adjustments for weather/operations |
+| Major remodel / new equipment + interactions | Option D | Calibrated simulation where necessary |
 
-### 9.2 Example SLOs
-- 99% of meter reads ingested within 2 hours
-- 95% of tier-1 buildings have complete baseline KPIs monthly
-- System uptime ≥ 99.9%
-- Update rate ≥ 1 Hz for critical building monitoring
-- End-to-end latency < 5 seconds for real-time state updates
+The U.S. DOE FEMP summary of the four options provides a practical public-sector anchor (see Sources).
 
----
+### 6.2 Baseline normalization
+- Weather normalization: degree days or change-point models for heating/cooling sensitivity.
+- Operational normalization: schedules, known occupancy proxies (aggregated), exceptional events.
+- Document adjustments and keep them reproducible.
 
-## 10. Governance, privacy, compliance
-- Privacy: avoid granular occupancy; aggregate and apply access controls
-- OT security: segmentation, least privilege, patching policies
-- Compliance: building performance standards reporting; safety regulations
-- Change control: documented approvals for control tuning
+### 6.3 Uncertainty reporting (minimum)
+For each savings claim:
+- report savings as a range (e.g., ± uncertainty band) or confidence interval where feasible
+- document meter accuracy assumptions and model error metrics
+- state what was **not measured** and where engineering estimates were used
 
----
+### 6.4 Baseline reset governance
+Baseline reset is an explicit governance action.
+Reset triggers (examples):
+- major retrofit affecting load shape
+- significant schedule/operational policy change (e.g., extended hours)
+- meter replacement or major sensor topology change
 
-## 11. Risks and mitigations
-- **Vendor heterogeneity** → semantic tagging standards and onboarding templates
-- **Alarm fatigue** → prioritize and tune thresholds; measure alert quality
-- **Privacy concerns** → minimization and transparency
-- **Savings non-persistence** → ongoing monitoring and commissioning cycles
+Policy:
+- preserve prior baseline for historical comparability
+- start new baseline period with documented rationale and sign-off (energy lead + facilities)
 
----
-
-## 12. Costs and FinOps
-- Integration cost per building (BMS mapping is labor-heavy)
-- Storage for time-series data
-- Analytics compute (FDD, baselines)
-
-Unit economics to track:
-- Cost per onboarded building
-- Savings per dollar invested
+### 6.5 Evidence artifacts and audit trail
+Required artifacts for Tier A/B/C buildings when claiming savings:
+- intervention record (what/where/when)
+- pre/post data snapshots (meters + relevant points)
+- analysis method description + parameters
+- QA checks and reviewer sign-off
 
 ---
 
-## 13. KPIs
-- Energy use intensity (EUI) reduction (weather-normalized)
-- Comfort compliance (% time in band)
-- Maintenance efficiency (MTTR, planned vs reactive)
-- Retrofit pipeline throughput and realized savings
-- Emissions reductions from electrification and efficiency
+## 7) Occupancy / IAQ privacy model (portfolio-ready)
+### 7.1 Data minimization rules
+- Prefer **aggregated counts/indices** over raw identifiers.
+- Avoid persistent tracking of individuals (no device-level surveillance).
+- Store only what is necessary for comfort/IAQ and energy outcomes.
+
+### 7.2 Access tiers
+| Tier | Audience | Example access |
+|---|---|---|
+| A | Building operators | building-level and zone-level aggregates needed for operations |
+| B | Analysts | anonymized/aggregated datasets; no raw identifiers |
+| C | Public | building-level summaries only; suppression rules applied |
+
+### 7.3 Aggregation thresholds (minimum policy)
+- Spatial: no reporting below a minimum zone size / minimum group size threshold.
+- Temporal: publish at coarse granularity (e.g., hourly/daily) unless operational need.
+
+### 7.4 Sensitive facilities (schools, hospitals)
+- stricter default: only building-level or coarse zone-level aggregates
+- tighter access controls and auditing
+- explicit notice/consent patterns aligned to local law and facility policy
+
+### 7.5 Prohibited uses and enforcement
+Prohibited:
+- employee/student surveillance
+- disciplinary decisions based on occupancy analytics
+
+Enforcement:
+- mandatory logging and periodic access reviews
+- policy checks in data access layer (role-based + purpose limitation where feasible)
+
+NIST privacy risk management framing can be used as a governance anchor (see Sources).
 
 ---
 
-## 14. Deliverables and checklists
+## 8) Portfolio scaling economics and onboarding strategy
+### 8.1 Onboarding effort drivers
+Break down work per building:
+1. **Connectivity** (network paths, protocol gateways, security uplift)
+2. **Semantic mapping** (tagging, equipment templates, topology)
+3. **Field verification** (spot checks, sensor/unit validation)
+4. **Cybersecurity uplift** (segmentation, remote access hardening)
+5. **Operations integration** (work order linkage, training)
 
-### 14.1 Deliverables
-- Canonical building registry and metadata governance
-- Meter ingestion and baseline dashboards
-- Semantic tagging standard and point library
-- FDD service with alert workflows
-- Retrofit prioritization model and portfolio plan
+Typical cost drivers (qualitative, tune with your data):
+- Tier C is dominated by connectivity + metering alignment.
+- Tier B adds moderate semantic mapping.
+- Tier A is dominated by semantic mapping + field verification + FDD tuning.
 
-### 14.2 Readiness checklist
-- [ ] Building tiers and priorities agreed
-- [ ] OT security constraints documented and enforced
-- [ ] Tagging standard approved and adopted
-- [ ] Baselines validated and used in decisions
+### 8.2 Prioritization rubric
+Score buildings on:
+- ROI potential (EUI high, known issues, large floor area)
+- data readiness (meter availability, BMS access, point list quality)
+- criticality (sensitive facilities, resilience hubs)
+- archetype repeatability (similar HVAC/metering patterns)
+- security feasibility (can we meet OT controls quickly?)
+
+### 8.3 Recommended “start set” archetypes
+Start with 8–15 buildings that maximize repeatability:
+- one common HVAC pattern per cohort (e.g., AHU+VAV schools)
+- consistent metering availability
+- stable operations team willing to participate
+
+### 8.4 Staffing model assumptions
+- City product owner (facilities/energy)
+- semantic modeler (Haystack/Brick)
+- OT integration engineer
+- security engineer (shared)
+- analyst for baselines/M&V
+- vendor/integrator capacity for BMS exports and on-site work
 
 ---
 
-## 15. References
+## 9) Operational runbooks (minimum)
+### 9.1 Onboarding a new building
+1. Register building identity + metadata.
+2. Confirm meters and utility accounts; ingest history.
+3. Obtain BMS export/point list; establish OT→DMZ→IT data path.
+4. Map equipment + points; apply templates; compute coverage.
+5. Run validators; fix units/tags.
+6. Establish baseline + initial dashboards.
+7. If Tier A: enable FDD rules/models; define fault-to-work workflow.
 
-### 15.1 Workspace source
-- Item 6 in [`kali-task-research.md`](../kali-task-research.md:1)
+### 9.2 Semantic drift detected (point rename/removal)
+1. Alert triggers on point churn/coverage drop.
+2. Freeze downstream model updates.
+3. Reconcile point changes; update crosswalk mappings.
+4. Re-run validators; require human sign-off.
+5. Backfill or annotate missing data intervals.
 
-### 15.2 External references (retrieved via Firecrawl MCP)
-- Metrics and Methods to Assess Building Fault Detection and Diagnostics (NREL, PDF): https://docs.nrel.gov/docs/fy19osti/72801.pdf
-- Yessef et al. (2025). "Digital twin technology in smart cities: A step toward intelligent urban management." Energy Reports, 14, 5539-5557. DOI: 10.1016/j.egyr.2025.11.097
-- Arun et al. (2025). "Investigating the performance of AI-driven smart building systems through advanced deep learning model analysis." Energy Reports, 13, 5885-5899.
-- Crespo-Aguado et al. (2024). "Flexible hyper-distributed IoT–edge–cloud platform for real-time digital twin applications." Future Internet, 16(11), 431.
+### 9.3 Suspected OT security incident / unauthorized control change
+1. Switch to read-only posture; disable writeback executors.
+2. Review remote access sessions and controller change logs.
+3. Isolate affected segments; rotate credentials.
+4. Restore known-good configs; verify safe operation.
+5. Post-incident review and control improvements.
 
-### 15.3 Suggested further reading (not fetched)
-- Building analytics and FDD methods
-- Measurement and verification (M&V) guidance
-- Semantic tagging approaches for building systems
-- Digital Twin Implementation Readiness Level (DT-IRL) framework
-- Zero-trust architecture for building systems
-- Federated learning for privacy-preserving building analytics
-- BIM to digital twin transformation methods
+### 9.4 M&V discrepancy investigation (savings claim challenged)
+1. Confirm intervention dates and scope.
+2. Recompute baseline with documented parameters.
+3. Check meter integrity and data gaps.
+4. Run sensitivity checks (weather/occupancy adjustments).
+5. Publish revised savings range and document changes.
+
+---
+
+## 10) Key metrics (portfolio SLIs/SLOs)
+### Data and semantics
+- telemetry freshness (% points on-time per day)
+- completeness (% expected points present)
+- semantic coverage by tier (% tagged vs required)
+- semantic drift rate (point churn per month)
+
+### FDD quality
+- validated fault confirmation rate (proxy for precision)
+- time-to-triage, time-to-resolution
+- recurrence rate after close
+
+### Savings and performance
+- weather-normalized EUI trend
+- savings persistence (post-intervention decay)
+- uncertainty bands for savings claims
+
+### OT security posture
+- patch latency for key OT assets
+- remote access sessions: % time-bound + recorded
+- number of unauthorized change attempts detected
+
+---
+
+## 11) Implementation roadmap
+### 0–3 months
+- connectivity inventory + OT boundary documentation
+- canonical registry stand-up
+- meter ingestion + baseline dashboards
+- pilot semantic mapping for 3–5 buildings (read-only)
+
+### 3–12 months
+- scale onboarding with templates and validators
+- introduce FDD for Tier A cohort
+- establish M&V process + baseline reset governance
+- implement limited-writeback governance for 1–2 pilot buildings (optional)
+
+### 12–24 months
+- portfolio optimization and retrofit pipeline integration
+- expand topology-rich modeling where needed
+- evaluate closed-loop only with safety case; otherwise stay in limited-writeback/read-only
+
+---
+
+## 12) Risks and mitigations
+| Risk | Example | Mitigation |
+|---|---|---|
+| Automation bias / unsafe setpoint changes | staff trusts model blindly | default read-only; propose→approve workflow; bounds + rollback |
+| Vendor remote access compromise | credential theft, lateral movement | jump host, MFA, time-bound access, session recording |
+| Privacy harms | occupancy used for surveillance | minimization, access tiers, aggregation thresholds, audits |
+| Savings inflation / gaming | baseline manipulation | governed baseline resets, uncertainty reporting, peer review |
+
+---
+
+## Sources (high-signal anchors)
+- Brick Schema — Introduction. https://brickschema.org/ — Brick is an open-source ontology for consistent semantic descriptions of building assets and their relationships.
+- NIST SP 800-82 Rev. 2 — Guide to Industrial Control Systems (ICS) Security (PDF). https://nvlpubs.nist.gov/nistpubs/specialpublications/nist.sp.800-82r2.pdf — Guidance on securing ICS environments including segmentation concepts and risk management relevant to BMS/OT.
+- CISA — Configuring and Managing Remote Access for Industrial Control Systems (PDF). https://www.cisa.gov/sites/default/files/2023-01/RP_Managing_Remote_Access_S508NC.pdf — Practical recommended practices for governing and hardening remote access into control environments.
+- U.S. DOE FEMP — Measurement and Verification Options for Federal Energy- and Water-Saving Projects. https://www.energy.gov/femp/measurement-and-verification-options-federal-energy-and-water-saving-projects — Summarizes four widely used M&V options (A–D) and their applicability.
+- NIST — Privacy Framework. https://www.nist.gov/privacy-framework — A risk management framework for identifying and managing privacy risks; supports minimization and governance patterns.

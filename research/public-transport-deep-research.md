@@ -1,294 +1,281 @@
 # Public transport — Deep research
 
 ## Executive summary
-A public transport “twin” is a decision-support system that models service supply (routes, stops, vehicles, schedules, headways), passenger demand (boarding/alighting, crowding), and disruptions (incidents, weather, operator constraints) to improve reliability, capacity utilization, and passenger experience.
+A public transport “twin” is a **decision-support system** for transit operations and service planning. It integrates operational supply (routes, trips, blocks, headways, crew/vehicle constraints), demand signals (APC, fare aggregates, station/stop counts), and disruptions (incidents, closures, maintenance, weather) to improve:
+- **reliability** (headway regularity and predictable travel time)
+- **crowding** (load distribution and capacity constraints)
+- **passenger information trust** (stable, truthful ETAs and service alerts)
+- **equity and accessibility reliability** (service quality by place and protected-class proxies in a privacy-safe way)
 
-The critical technical outputs are: (1) real-time service state (vehicle locations, delays, headway adherence), (2) predictive ETAs and crowding forecasts, (3) disruption impact simulation, and (4) optimization recommendations (dispatching, holding, short-turns, priority measures). Achieving these requires high-quality operational data, robust inference under missing/late telemetry, and strong governance to ensure recommendations are safe, explainable, and aligned with labor and safety constraints.
+The twin is not a magic optimizer. It must be operationally realistic about:
+- labor agreements, break rules, operator discretion and safety
+- what dispatch/OCC can actually instruct and enforce
+- the difference between **advice** and **actions** (especially stop-skipping and short-turns)
+- data gaps and noisy telemetry that can cause “ETA thrashing” and erode trust
 
-This document deepens item 4 in [`kali-task-research.md`](../kali-task-research.md:1): *“Public transport: Simulate routes, headways, capacity, and disruptions to improve reliability and passenger experience.”*
-
----
-
-## 1. Background and context
-Public transport performance hinges on variability:
-- Demand variability (peaks, events)
-- Traffic variability (mixed-traffic buses)
-- Operations variability (dwell time, dispatching, operator availability)
-
-Common issues:
-- Bus bunching and headway instability
-- Overcrowding, missed connections
-- Unreliable ETAs due to traffic and dwell uncertainty
-- Disruptions (road closures, vehicle breakdowns)
-
-A twin approach supports:
-- Real-time control strategies (holding, stop-skipping, short-turning)
-- Tactical planning (schedule adjustments, priority measures)
-- Strategic planning (route redesign, fleet sizing)
+This document deepens item 4 in [`kali-task-research.md`](kali-task-research.md:1): *“Public transport: Simulate routes, headways, capacity, and disruptions to improve reliability and passenger experience.”*
 
 ---
 
-## 2. Stakeholders
-- **Transit agency operations control center (OCC)**: real-time management
-- **Schedulers/planners**: timetable and resource planning
-- **Drivers/operators and unions**: work rules, safety constraints
-- **Maintenance**: vehicle availability and breakdown response
-- **Passengers/public**: reliability, crowding, accessibility
-- **City DOT/TMC**: signal priority, lane management, incident coordination
-- **Accessibility advocates**: equitable service and station/stop accessibility
-- **IT/data**: telemetry, integration, security
+## 1) Scope, decisions, and non-goals (operationally anchored)
+
+### 1.1 Decisions the twin supports
+**Operations Control Center (OCC) / dispatch (real-time):**
+- holding / headway management at control points
+- dispatch spacing adjustments (where allowed)
+- incident response support: detours, turnbacks, short-turn proposals
+- passenger information: consistent ETAs and service alerts
+
+**Service planning (tactical/strategic):**
+- schedule and runtime adjustments
+- stop/station capacity and crowding mitigation
+- scenario evaluation for infrastructure measures (bus lanes, signal priority)
+
+### 1.2 Non-goals (explicitly not automated without separate governance)
+- automated stop-skipping and short-turn execution without human approval
+- automated passenger messaging that contradicts OCC/CAD decisions
+- individual-level passenger targeting or per-person trip tracing
 
 ---
 
-## 3. Threat model / abuse cases
+## 2) Constraint model for labor + safety (explicit “constraints library”)
+Transit control is constrained optimization. Encode the constraints explicitly, version them, and subject changes to governance.
 
-### 3.1 Assets to protect
-- Integrity of real-time vehicle location and schedule adherence data
-- Integrity of control commands (dispatching instructions)
-- Availability of passenger information systems (PIS) and OCC tools
-- Privacy of passenger data (if APC, fare, or app data is used)
+### 2.1 Constraints library (parameterizable)
+Define a shared library of constraints, keyed by route/mode/garage/crew agreement.
 
-### 3.2 Abuse/failure cases
-- **Telemetry spoofing** causing false ETAs or control actions
-- **Denial of service** against real-time feeds leading to blind operations
-- **Unauthorized service changes** (route/stop updates) causing widespread confusion
-- **Re-identification** from fine-grained passenger traces
+**Holding constraints**
+- `max_hold_seconds` (global and by control point)
+- `max_hold_as_percent_of_headway`
+- “no-hold if behind schedule beyond X” (policy-dependent)
 
-### 3.3 Controls
-- Signed/secured telemetry channels where feasible
-- Role-based control and approvals for operational interventions
-- Graceful degradation: fall back to scheduled service when telemetry fails
-- Privacy-preserving aggregation for passenger analytics
+**Stop-skipping constraints**
+- `prohibited_stops[]`:
+  - ADA/accessible stops
+  - major transfer points
+  - schools/hospitals (policy)
+  - stops with active accessibility incidents
+- maximum skipped stops per trip
+- “never skip last stop before major transfer” (policy)
 
----
+**Short-turn constraints**
+- allowable turnback locations (infrastructure)
+- minimum passenger offload/communication requirements
+- crew relief and operator sign-off requirements
 
-## 4. Reference architecture (components + data flows)
+**Break / layover / duty constraints**
+- minimum layover time
+- break timing windows
+- maximum duty time
+- deadhead constraints
 
-### 4.1 Components
-1. **Service configuration repository**
-   - Routes, trips, stops, calendars, operator constraints
+**Operator discretion boundaries**
+- what the operator may override
+- what must be acknowledged vs confirmed
 
-2. **Real-time vehicle telemetry ingestion**
-   - AVL/GPS pings, door open/close events, odometer, vehicle health
+### 2.2 Governance for changing constraints
+A realistic process:
+1. **Draft change** (ops engineering + planners) with rationale.
+2. **Union consultation** (where applicable) and operations leadership review.
+3. **Safety sign-off** (risk assessment; training impact).
+4. **Pilot** (shadow → advisory → limited corridor) with measurement plan.
+5. **Rollout** with rollback criteria and post-implementation review.
 
-3. **Passenger demand and load estimation**
-   - Automated passenger counts (APC), fare validation aggregates, platform counts
-
-4. **Inference layer**
-   - Map matching to route shapes
-   - ETA prediction, dwell time modeling
-   - Headway adherence and bunching detection
-
-5. **Simulation layer**
-   - Stochastic simulation of trips under traffic and demand variability
-   - Disruption simulation (detours, station closures)
-
-6. **Control/optimization layer**
-   - Holding strategies, dispatch control, short-turn recommendations
-   - Priority requests coordination (signal priority, bus lanes)
-
-7. **Serving layer**
-   - OCC dashboards, passenger info APIs, alerts
-
-8. **Governance/observability**
-   - Data quality, model drift, audit logs
-
-### 4.2 Data flows
-- Static schedule/config → baseline model
-- AVL + traffic → real-time state and ETA
-- APC/fare aggregates → load estimation → crowding forecasts
-- Events (incidents, closures) → simulation constraints → service impact
-- Optimizer → recommended interventions → OCC approval → execution
+All constraint changes must be:
+- versioned
+- auditable (who approved)
+- testable in simulation and in controlled pilots
 
 ---
 
-## 5. Methods / algorithms / standards
+## 3) Passenger data governance (privacy-by-design)
+Passenger telemetry is high re-identification risk when fine-grained. Default to aggregation and purpose limitation.
 
-### 5.1 Real-time state estimation
-- Map matching of vehicle locations to route geometry
-- Trip inference (which trip/block the vehicle is serving)
-- Headway computation and stability metrics
-- Time-series autoencoders and LSTM/GRU forecasters for deviation detection
+### 3.1 Data classes and access tiers
+**Data classes**
+- **Operational telemetry**: vehicle positions, trip updates, dwell events
+- **Passenger counts**: APC counts by stop/trip/time bucket
+- **Fare validation aggregates**: taps by station/route/time bucket
+- **App/RTPI usage**: query volumes, error rates (not user-level)
 
-### 5.2 ETA prediction
-- Segment travel time estimation with time-of-day and incident conditioning
-- Dwell time prediction based on boarding/alighting and crowding
-- Uncertainty estimates (prediction intervals)
-- Machine learning models for travel time prediction with incident conditioning
+**Access tiers**
+- **Tier A (OCC/ops)**: operational and aggregated passenger counts; no person-level data
+- **Tier B (planning/analytics)**: aggregated demand/crowding; limited joins
+- **Tier C (privacy/security/legal)**: audit logs; access-by-case
+- **Vendors**: least privilege, scoped to contracted services, expiring access
 
-### 5.3 Passenger load and crowding
-- Load estimation from APC when available
-- Inference from fare aggregates and historical patterns when APC is sparse
-- Capacity constraints: seated/standing, accessibility spaces
-- Federated learning with differential privacy for privacy-preserving load estimation
+### 3.2 Aggregation thresholds and publishability rules
+- No fine-grained trip traces in public outputs.
+- Apply minimum cell sizes (example policy):
+  - internal analytics: `k >= 11`
+  - public reporting: `k >= 25`
+- Coarsen space/time for public equity reporting (e.g., 30–60 min buckets; neighborhood level; no stop-level release where sparse).
 
-### 5.4 Disruption modeling
-- Detour travel time impacts, stop removals
-- Short-turn feasibility with turnaround constraints
-- Fleet and operator constraints (duty time, layover)
-- Stochastic simulation for corridors/routes under traffic and demand variability
+### 3.3 Minimization and purpose limitation
+- Collect only what is needed for reliability/crowding/equity metrics.
+- Prohibit secondary use (e.g., law enforcement targeting) without separate legal basis and oversight.
 
-### 5.5 Control strategies (operational)
-- Holding to maintain headways
-- Limited stop-skipping with passenger impact constraints
-- Short-turning to recover service frequency
-- Priority measures: transit signal priority requests, lane enforcement
+### 3.4 Retention windows (starter)
+- Raw high-granularity operational telemetry: short hot retention (e.g., 7–30 days)
+- Aggregated passenger metrics: longer (e.g., 6–24 months) for planning and equity trend analysis
+- Audit logs: longer (e.g., 1–2 years) with integrity controls
 
-### 5.6 Standards and protocols
-- GTFS (General Transit Feed Specification) for static schedule data
-- GTFS Realtime for vehicle positions, trip updates, and alerts
-- MQTT/AMQP for real-time telemetry with QoS levels
-- RESTful APIs for platform integration
-- NGSI-LD context models for interoperability
+### 3.5 Re-identification risk mitigation
+- Avoid releasing linked origin-destination traces.
+- Limit joins (e.g., do not join fare + app + precise AVL at individual level).
+- Conduct periodic re-identification risk reviews for new datasets.
 
 ---
 
-## 6. Data requirements
+## 4) Decision boundaries + HITL tiering (advisory-by-default)
+Define what is advice vs what triggers actions, and who can approve.
 
-### 6.1 Minimum datasets
-- Route/stop geometry, schedules, blocks (service plan)
-- Real-time vehicle positions with timestamps
-- Operational events: trip start/end, doors, layover
-- Disruption feed: incidents, roadworks, detours
+### 4.1 Evidence packet requirement (for any intervention suggestion)
+Every recommendation must carry an evidence packet:
+- `route_id`, `trip_id/block_id`, `vehicle_id`
+- `timestamp`, `last_updated`, telemetry freshness
+- headway state (ahead/behind, variance)
+- predicted impact (passenger delay, crowding)
+- confidence/uncertainty and failure flags (missing AVL, detour active)
+- constraints applied (which rules bound the suggestion)
 
-### 6.2 High-value datasets
-- APC load by stop/trip
-- Real-time traffic speeds on bus corridors
-- Station crowding sensors for rail/metro
-- Accessibility constraints and elevator/escalator status
+### 4.2 Risk-tiering table
+| Intervention | Risk level | Default mode | Required approver | Rollout pattern | Notes |
+|---|---:|---|---|---|---|
+| Holding at control point | 1 | advisory | OCC supervisor | shadow → advisory → pilot | bounded by max hold |
+| Headway management prompts | 1 | advisory | OCC supervisor | advisory → pilot | must respect operator discretion |
+| Signal priority request | 2 | advisory | OCC + TMC approver | pilot by corridor | constrained by street ops approvals |
+| Short-turn proposal | 3 | advisory only | operations manager / incident commander | shadow → limited pilot | high passenger impact |
+| Stop-skipping | 3 | advisory only | operations manager | pilot only | prohibited stops and accessibility constraints |
+| Automated passenger messaging | 2 | limited automation with HITL | comms + OCC | pilot | must avoid contradictions across channels |
 
-### 6.3 Data quality requirements
-- Time sync and late telemetry handling
-- Stop-level accuracy for ETAs
-- Consistent vehicle and trip identifiers
+### 4.3 Rollback criteria and incident mode
+Rollback triggers:
+- increased customer complaints
+- increased missed connections / crowding
+- safety incidents
+- evidence packet quality failures (stale data, missing confidence)
 
----
-
-## 7. Implementation plan (phases)
-
-### Phase 0 — Baseline and governance
-- Define reliability metrics (on-time, headway adherence) and thresholds
-- Define privacy approach for passenger data
-
-### Phase 1 — Real-time state and ETA foundation
-- Ingest AVL, map match, compute real-time delay/headway
-- Provide stable passenger-facing ETA API
-
-### Phase 2 — Crowding and disruption support
-- Implement load estimation and crowding forecasts
-- Integrate disruption feed and detour logic
-
-### Phase 3 — Simulation and decision support
-- Stochastic simulation for corridors/routes
-- Post-incident what-if analysis and schedule adjustments
-
-### Phase 4 — Operational optimization
-- Provide intervention recommendations with explainability
-- Implement approval workflows, rollback, and post-action evaluation
+Incident mode policy:
+- during major disruptions, broaden human authority but tighten logging and audit.
 
 ---
 
-## 8. Testing and validation
-- Data pipeline tests: telemetry parsing, late/out-of-order handling
-- ETA backtesting: compare predictions to actual arrival times by corridor
-- Load estimation accuracy vs APC ground truth
-- Simulation calibration: reproduce headway distributions and bunching frequency
-- Human factors validation: ensure recommendations are usable and safe
+## 5) PIS integration: truthfulness and stability
+Passenger Information Systems (PIS) are trust systems. “ETA thrashing” destroys credibility.
+
+### 5.1 Consistency guarantees across channels
+Define a “single source of truth” service for passenger-facing messaging:
+- apps/web, station/stop signs, onboard announcements consume the same message object
+- versioned messages with `last_updated` and confidence
+- no contradictory messages across channels
+
+### 5.2 Data contracts for ETA and alerts
+For ETA APIs:
+- include `generated_at`, `valid_until`, `confidence_band`
+- include `data_freshness` and degraded-mode flags
+- define behavior when telemetry is missing (fallback to schedule)
+
+For service alerts:
+- stable identifiers, start/end validity windows
+- clear severity levels
+
+### 5.3 ETA stability (anti-thrashing)
+- smoothing rules (e.g., bounded rate of change)
+- hysteresis for switching between model vs schedule fallback
+- degrade gracefully: show wider uncertainty rather than rapidly changing numbers
+
+### 5.4 Caching and degraded-mode behavior
+- edge caching for station/stop signs
+- offline signage behavior: show last-known + “may be stale”
 
 ---
 
-## 9. Observability (SLIs/SLOs)
+## 6) Equity & accessibility measurement
+Equity must be measured and must constrain optimization objectives.
 
-### 9.1 SLIs
-- ETA error (MAE) and calibration (coverage of prediction intervals)
-- Headway adherence (% time within target band)
-- Telemetry freshness/coverage by route
-- Disruption handling latency
-- End-to-end latency (ms)
-- Synchronicity error between physical and virtual states
-- Update rate (Hz)
-- Service availability (%)
-- Mean time to detect/recover (MTTD/MTTR)
+### 6.1 Privacy-safe equity metrics
+Report service quality by neighborhood and demographic proxies (policy-approved):
+- headway regularity by neighborhood
+- crowding exceedance rates
+- travel time reliability
+- missed connection proxies
 
-### 9.2 Example SLOs
-- 99% of vehicle pings processed within 10 seconds
-- Passenger ETA API p95 latency < 300 ms
-- ETA MAE < threshold for top corridors before enabling controls
-- System uptime ≥ 99.9%
-- Update rate ≥ 1 Hz for critical corridors
-- End-to-end latency < 5 seconds for real-time state updates
+### 6.2 Accessibility reliability as equity
+Track and report:
+- elevator/escalator outages (where applicable)
+- stop accessibility disruptions
+- “accessible trip success” proxy (percentage of trips with functioning accessible path)
 
----
-
-## 10. Governance, compliance, and labor constraints
-- Auditability of interventions (who recommended/approved/executed)
-- Ensure strategies comply with safety rules and operator agreements
-- Public transparency where changes affect service patterns
-- Data retention policies for passenger-related datasets
+### 6.3 Equity constraints in optimization
+- add constraints/penalties to avoid shifting unreliability/crowding to disadvantaged areas
+- require equity impact review for control strategies
 
 ---
 
-## 11. Risks and mitigations
-- **Bunching control harms passengers** → constrain stop-skipping; optimize for total passenger delay
-- **Telemetry gaps** → fallback to schedule-based estimates; detect sensor failures
-- **Model drift during major changes** → recalibrate after network/service changes
-- **Equity impacts** → measure crowding and reliability by neighborhood
+## 7) Multi-modal interaction (system coupling)
+Transit does not operate in isolation.
+
+### 7.1 Coupling to street operations
+- signal priority constraints and approvals (TMC coordination)
+- bus lanes and curb enforcement interactions
+- incident detours and temporary curb rules
+
+### 7.2 Interaction at stops and curb
+- micromobility and ridehail conflicts at stops
+- curb availability and dwell time impacts
 
 ---
 
-## 12. Costs and FinOps
-- Compute for real-time inference and simulation
-- Data costs (traffic feeds, passenger counting infrastructure)
-- Operational training and change management
-
-Unit costs to track:
-- Cost per route supported with real-time + simulation
-- Cost per million telemetry messages processed
+## 8) Operational runbooks (minimum set)
+- ETA thrashing event (PIS stabilization + fallback)
+- Telemetry outage (AVL missing → degrade to schedule)
+- Major disruption (turnbacks/short-turn governance)
+- Equity regression detected (pause rollout, review constraints)
+- Data privacy incident (suspected re-identification/leak)
 
 ---
 
-## 13. KPIs
-- On-time performance / headway adherence improvement
-- Reduction in bunching frequency and severity
-- Passenger wait time reduction and reliability increase
-- Crowding reduction (percent of trips over capacity)
-- Disruption recovery time (service restored faster)
+## 9) Key metrics
+- headway adherence and variability by route and neighborhood
+- ETA error and calibration; thrashing rate
+- telemetry freshness/coverage
+- crowding exceedance and distribution
+- accessibility reliability (outage minutes)
+- intervention outcomes (before/after) with auditability
 
 ---
 
-## 14. Deliverables and checklists
+## 10) Implementation roadmap
 
-### 14.1 Deliverables
-- Real-time transit state service (vehicle positions, delays)
- triggering, MTTR
-- ETA API with uncertainty
-- Crowding/load estimation service
-- Disruption simulation and decision-support dashboard
-- Governance/runbooks for interventions
+### 0–3 months
+- integration inventory + data contracts
+- stable ETA service with degraded mode
+- privacy governance for passenger data
+- initial equity reporting (aggregated)
 
-### 14.2 Readiness checklist
-- [ ] Route/trip identity mapping is stable
-- [ ] ETA backtests meet performance thresholds
-- [ ] Disruption feed integrated and tested
-- [ ] Approval workflow for interventions is in place
+### 3–12 months
+- advisory headway management with constraints library
+- PIS consistency layer and anti-thrashing
+- pilot governance process (union + safety sign-off)
+
+### 12–24 months
+- expanded multimodal coordination (signal priority, curb)
+- mature equity-constrained optimization and continuous audit readiness
 
 ---
 
-## 15. References
+## References (high-signal sources; starting points)
 
-### 15.1 Workspace source
-- Item 4 in [`kali-task-research.md`](../kali-task-research.md:1)
+### GTFS / GTFS-RT and passenger information reliability
+- GTFS Realtime Best Practices: [`gtfs.org/documentation/realtime/realtime-best-practices/`](https://gtfs.org/documentation/realtime/realtime-best-practices/) — Practical expectations for freshness and handling of Trip Updates/Vehicle Positions/Service Alerts to keep passenger information reliable.
 
-### 15.2 External references (retrieved via Firecrawl MCP)
-- GTFS Overview (GTFS Schedule + GTFS Realtime): https://gtfs.org/documentation/overview/
-- GTFS Realtime Reference: https://gtfs.org/documentation/realtime/reference/
-- Yessef et al. (2025). "Digital twin technology in smart cities: A step toward intelligent urban management." Energy Reports, 14, 5539-5557. DOI: 10.1016/j.egyr.2025.11.097
-- Crespo-Aguado et al. (2024). "Flexible hyper-distributed IoT–edge–cloud platform for real-time digital twin applications." Future Internet, 16(11), 431.
+### Transit operations interventions and headway management
+- Daganzo (2009) — A headway-based approach to eliminate bus bunching: [`www.sciencedirect.com/science/article/abs/pii/S0191261509000484`](https://www.sciencedirect.com/science/article/abs/pii/S0191261509000484) — Foundational headway-based holding strategy framing (useful for policy design even if implementation details vary).
 
-### 15.3 Suggested further reading (not fetched)
-- Headway-based control and bus bunching literature
-- Real-time ETA prediction and uncertainty estimation
-- Transit operations research for holding/short-turn strategies
-- Digital Twin Implementation Readiness Level (DT-IRL) framework
-- Zero-trust architecture for transit systems
-- Federated learning for privacy-preserving transit analytics
+### Passenger data privacy and re-identification risk
+- TransitCenter — “Do Not Track” fare/payment privacy guide: [`transitcenter.org/wp-content/uploads/2021/03/DoNotTrack_RGB_interactive.pdf`](https://transitcenter.org/wp-content/uploads/2021/03/DoNotTrack_RGB_interactive.pdf) — Transit-focused privacy guidance for fare systems and minimizing passenger tracking.
+- Ontario IPC — De-identification Guidelines for Structured Data: [`www.ipc.on.ca/en/media/5946/download`](https://www.ipc.on.ca/en/media/5946/download) — Emphasizes that aggregation is not automatically de-identification and describes risk-aware de-identification practices.
+
+### Equity metrics in transit service
+- CNT AllTransit metrics: [`alltransit.cnt.org/metrics/`](https://alltransit.cnt.org/metrics/) — Catalog of transit access and quality metrics, including equity-relevant measures.

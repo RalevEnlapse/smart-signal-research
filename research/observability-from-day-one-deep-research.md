@@ -1,477 +1,375 @@
 # Observability from day one — Deep research
 
 ## Executive summary
-
-Observability from day one is the practice of designing and implementing comprehensive monitoring, logging, metrics, and tracing capabilities from the inception of a system rather than adding them as an afterthought. For a city digital twin program, observability from day one enables proactive issue detection, rapid troubleshooting, performance optimization, and data-driven decision-making throughout the system lifecycle. This research outlines a comprehensive observability framework including the three pillars (logs, metrics, traces), instrumentation strategies, data collection and storage, alerting and dashboards, and integration with development and operations workflows.
-
-## 1. Background and context
-
-Observability is the ability to understand a system's internal state by examining its external outputs. The three pillars of observability—logs, metrics, and traces—provide complementary perspectives on system behavior. Traditional monitoring approaches often focus on infrastructure health and uptime, but modern distributed systems require deeper visibility into application behavior, data flows, and user experience.
-
-For city digital twin programs, observability from day one is particularly critical due to:
-- **System complexity**: Digital twins integrate multiple data sources, processing pipelines, and visualization layers
-- **Real-time requirements**: Many digital twin applications require low-latency data processing and updates
-- **High availability expectations**: City services depend on reliable digital twin operations
-- **Data volume and velocity**: Large-scale sensor networks generate massive telemetry data
-- **Multi-stakeholder needs**: Different stakeholders require different observability views
-
-The "from day one" approach ensures that observability is:
-- **Architecturally integrated**: Built into system design rather than bolted on
-- **Culturally embedded**: Part of development and operations practices
-- **Continuously evolving**: Growing with the system and changing requirements
-- **Cost-optimized**: Designed with data retention and query patterns in mind
-
-This approach contrasts with traditional monitoring that is often added reactively when problems occur, resulting in incomplete visibility and higher implementation costs.
-
-## 2. Stakeholders
-
-### Operations stakeholders
-- **Site reliability engineers (SREs)**: Responsible for system reliability and incident response
-- **DevOps engineers**: Implement observability tooling and automation
-- **Platform engineers**: Maintain observability infrastructure and platforms
-- **System administrators**: Monitor infrastructure health and performance
-
-### Development stakeholders
-- **Software engineers**: Instrument code and implement observability features
-- **Data engineers**: Monitor data pipelines and data quality
-- **Frontend engineers**: Track user experience and application performance
-- **QA engineers**: Use observability data for testing and validation
-
-### Business stakeholders
-- **Product managers**: Use observability data to understand product usage
-- **Business analysts**: Analyze system performance for business insights
-- **Service owners**: Accountable for service performance and availability
-- **Executive sponsors**: Require high-level dashboards and reports
-
-### External stakeholders
-- **Citizens**: Benefit from reliable and responsive digital twin services
-- **Partner organizations**: May require observability data for integration
-- **Regulatory bodies**: May require performance and availability reporting
-- **Vendors**: May need observability access for support and troubleshooting
-
-## 3. Threat model / abuse cases
-
-### Data integrity threats
-- **Log injection**: Malicious actors injecting false or misleading log entries
-- **Metric manipulation**: Tampering with metric collection or reporting
-- **Trace corruption**: Modifying or deleting trace data to hide issues
-- **Data exfiltration**: Extracting sensitive information from observability data
-
-### Availability threats
-- **Observability overload**: Excessive telemetry impacting system performance
-- **Storage exhaustion**: Unbounded data growth causing storage issues
-- **Query performance**: Poorly optimized queries degrading observability system
-- **Alert fatigue**: Excessive alerts causing important issues to be missed
-
-### Privacy threats
-- **Sensitive data leakage**: Personal information exposed in logs or traces
-- **User tracking**: Unauthorized tracking of user behavior through observability
-- **Data retention**: Storing observability data longer than required by policy
-- **Cross-border data**: Observability data stored in non-compliant jurisdictions
-
-### Process threats
-- **Instrumentation gaps**: Critical code paths not instrumented
-- **Inconsistent standards**: Different teams using different observability approaches
-- **Tool fragmentation**: Multiple observability tools creating silos
-- **Skill gaps**: Team lacks expertise in observability best practices
-
-### Mitigation strategies
-- Data sanitization and redaction for sensitive information
-- Rate limiting and sampling for high-volume telemetry
-- Clear data retention policies and automated cleanup
-- Standardized instrumentation libraries and patterns
-- Regular review of observability coverage and effectiveness
-
-## 4. Reference architecture (components + data flows)
-
-### Core components
-
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                        Observability Platform                                │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                              │
-│  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐                  │
-│  │  Log         │    │  Metric      │    │  Trace       │                  │
-│  │  Collection  │◄──►│  Collection  │◄──►│  Collection  │                  │
-│  └──────────────┘    └──────────────┘    └──────────────┘                  │
-│         │                   │                   │                           │
-│         └───────────────────┼───────────────────┘                           │
-│                             ▼                                               │
-│  ┌──────────────────────────────────────────────────────────────────────┐  │
-│  │                      Processing & Enrichment                         │  │
-│  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌───────────┐ │  │
-│  │  │  Parsing     │  │  Aggregation │  │  Enrichment  │  │  Sampling  │ │  │
-│  │  └──────────────┘  └──────────────┘  └──────────────┘  └───────────┘ │  │
-│  └──────────────────────────────────────────────────────────────────────┘  │
-│                             │                                               │
-│                             ▼                                               │
-│  ┌──────────────────────────────────────────────────────────────────────┐  │
-│  │                      Storage & Indexing                               │  │
-│  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌───────────┐ │  │
-│  │  │  Log Store   │  │  Metric DB   │  │  Trace Store │  │  Metadata  │ │  │
-│  │  └──────────────┘  └──────────────┘  └──────────────┘  └───────────┘ │  │
-│  └──────────────────────────────────────────────────────────────────────┘  │
-│                             │                                               │
-│                             ▼                                               │
-│  ┌──────────────────────────────────────────────────────────────────────┐  │
-│  │                      Query & Analysis                                │  │
-│  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌───────────┐ │  │
-│  │  │  Query       │  │  Alerting    │  │  Dashboard   │  │  ML/AI     │ │  │
-│  │  │  Engine      │  │  Engine      │  │  Builder     │  │  Analysis  │ │  │
-│  │  └──────────────┘  └──────────────┘  └──────────────┘  └───────────┘ │  │
-│  └──────────────────────────────────────────────────────────────────────┘  │
-│                                                                              │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
-
-### Data flows
-
-1. **Instrumentation flow**: Application code → Instrumentation libraries → Telemetry generation → Collection agents
-2. **Processing flow**: Raw telemetry → Parsing → Enrichment → Aggregation → Storage
-3. **Query flow**: User query → Query engine → Data retrieval → Processing → Results
-4. **Alerting flow**: Metric evaluation → Threshold check → Alert generation → Notification → Escalation
-
-### Integration points
-- **Application code**: Instrumentation libraries and SDKs
-- **Infrastructure**: System and infrastructure metrics collection
-- **CI/CD pipelines**: Observability testing and validation
-- **Incident management**: Alert integration and incident creation
-- **Service mesh**: Distributed tracing and service metrics
-
-## 5. Methods / algorithms / standards
-
-### The three pillars of observability
-
-#### Logs
-- **Structured logging**: JSON-formatted logs with consistent fields
-- **Log levels**: DEBUG, INFO, WARN, ERROR, FATAL with appropriate usage
-- **Log aggregation**: Centralized collection and indexing of logs
-- **Log retention**: Tiered storage based on log age and importance
-- **Log analysis**: Search, filtering, and pattern matching
-
-#### Metrics
-- **Counter metrics**: Monotonically increasing values (e.g., requests processed)
-- **Gauge metrics**: Point-in-time values (e.g., current memory usage)
-- **Histogram metrics**: Distribution of values (e.g., request latency)
-- **Summary metrics**: Aggregated statistics (e.g., p50, p95, p99 latency)
-- **Metric labeling**: Dimensional data for filtering and aggregation
-
-#### Traces
-- **Distributed tracing**: End-to-end request tracking across services
-- **Span context**: Trace and span IDs for request correlation
-- **Span timing**: Duration and timing relationships between operations
-- **Span tags**: Metadata for trace filtering and analysis
-- **Trace sampling**: Strategies for managing trace volume
-
-### Instrumentation strategies
-- **Code instrumentation**: Direct instrumentation in application code
-- **Library instrumentation**: Using instrumented libraries and frameworks
-- **Auto-instrumentation**: Automatic instrumentation through agents or sidecars
-- **Service mesh instrumentation**: Observability through service mesh proxies
-- **Infrastructure instrumentation**: System-level metrics and logs
-
-### Standards and protocols
-- **OpenTelemetry**: Unified observability instrumentation standard
-- **Prometheus**: Metric collection and query standard
-- **OpenMetrics**: Metric exposition format
-- **ELK Stack**: Elasticsearch, Logstash, Kibana for log management
-- **Jaeger/Zipkin**: Distributed tracing protocols
-
-### Alerting algorithms
-- **Threshold-based alerts**: Simple threshold violations
-- **Rate-of-change alerts**: Detecting rapid metric changes
-- **Anomaly detection**: Statistical anomaly identification
-- **Composite alerts**: Multiple condition combinations
-- **Machine learning alerts**: Predictive anomaly detection
-
-## 6. Data requirements
-
-### Log data
-- Application logs with structured format
-- System and infrastructure logs
-- Access and audit logs
-- Error and exception logs
-- Performance and timing logs
-
-### Metric data
-- Application performance metrics
-- Infrastructure resource metrics
-- Business metrics and KPIs
-- Custom domain-specific metrics
-- SLI/SLO metrics
-
-### Trace data
-- Request traces across services
-- Database query traces
-- External API call traces
-- Background job traces
-- User session traces
-
-### Metadata
-- Service and deployment metadata
-- Environment and configuration data
-- Host and infrastructure metadata
-- User and session context
-- Business context and tags
-
-### Data quality requirements
-- Accuracy: Telemetry data must accurately reflect system state
-- Completeness: Critical telemetry must not be missing
-- Timeliness: Data must be available for timely analysis
-- Consistency: Standardized formats and naming conventions
-- Retention: Appropriate retention policies for different data types
-
-## 7. Implementation plan (phases)
-
-### Phase 1: Foundation (Months 1-2)
-- Define observability requirements and strategy
-- Select observability platform and tools
-- Establish instrumentation standards
-- Create initial instrumentation library
-- Set up basic logging infrastructure
-
-### Phase 2: Core implementation (Months 2-4)
-- Implement structured logging across services
-- Deploy metric collection and storage
-- Set up basic dashboards and visualizations
-- Configure initial alerting rules
-- Integrate with incident management
-
-### Phase 3: Advanced capabilities (Months 4-6)
-- Implement distributed tracing
-- Add advanced analytics and ML capabilities
-- Implement log aggregation and search
-- Create role-based dashboards
-- Integrate with CI/CD pipelines
-
-### Phase 4: Optimization (Months 6-9)
-- Optimize data retention and storage costs
-- Implement intelligent sampling strategies
-- Enhance alerting with anomaly detection
-- Create self-service observability capabilities
-- Establish observability governance
-
-### Phase 5: Maturity (Months 9-12)
-- Implement predictive observability
-- Establish observability as code practices
-- Integrate with business intelligence
-- Create observability best practices library
-- Establish observability culture
-
-## 8. Testing and validation
-
-### Instrumentation validation
-- Verify instrumentation coverage of critical code paths
-- Validate telemetry data accuracy and completeness
-- Test instrumentation performance impact
-- Confirm telemetry data quality and consistency
-
-### Platform validation
-- Test data collection and ingestion pipelines
-- Validate query performance and scalability
-- Verify alerting accuracy and timeliness
-- Test dashboard functionality and usability
-
-### Integration validation
-- Test integration with incident management systems
-- Validate CI/CD pipeline observability integration
-- Verify service mesh tracing integration
-- Test cross-service trace correlation
-
-### Continuous validation
-- Regular review of observability coverage and gaps
-- Analysis of alert effectiveness and false positive rates
-- Performance testing of observability infrastructure
-- User feedback collection and process improvement
-
-## 9. Observability (SLIs/SLOs)
-
-### Service Level Indicators (SLIs)
-- **Telemetry collection rate**: Percentage of expected telemetry collected
-- **Data freshness**: Time from event to data availability
-- **Query latency**: Time to execute observability queries
-- **Alert latency**: Time from condition to alert generation
-- **System availability**: Uptime of observability platform
-
-### Service Level Objectives (SLOs)
-- **Telemetry collection rate**: 99.9% of expected telemetry collected
-- **Data freshness**: Logs available within 1 minute, metrics within 30 seconds
-- **Query latency**: 95th percentile query time under 5 seconds
-- **Alert latency**: Critical alerts generated within 1 minute
-- **System availability**: 99.9% platform uptime
-
-### Monitoring and alerting
-- Dashboard tracking of observability platform health
-- Automated alerts for platform issues
-- Regular reporting on SLI performance
-- Capacity planning based on telemetry growth
-
-## 10. Governance and compliance
-
-### Governance structure
-- **Observability Council**: Cross-functional team overseeing observability strategy
-- **Platform Owners**: Responsible for observability platform components
-- **Data Stewards**: Responsible for telemetry data quality and privacy
-- **Observability Champions**: Promote observability best practices
-
-### Decision rights
-- Instrumentation standards: Observability Council with technical input
-- Tool selection: Platform Owners with stakeholder input
-- Data retention policies: Data Stewards with legal and compliance input
-- Alert configuration: Service owners with operations input
-
-### Compliance requirements
-- Data protection and privacy regulations for telemetry data
-- Audit trail requirements for system events
-- Data retention and deletion policies
-- Cross-border data transfer restrictions
-- Accessibility requirements for dashboards and reports
-
-### Documentation requirements
-- Observability strategy and standards documentation
-- Instrumentation guidelines and best practices
-- Platform architecture and configuration documentation
-- Data retention and privacy policies
-- Regular observability reports and assessments
-
-## 11. Risks and mitigations
-
-### Risk: Instrumentation overhead
-- **Impact**: Performance degradation from excessive telemetry
-- **Mitigation**: Performance testing, sampling strategies, selective instrumentation
-
-### Risk: Data volume explosion
-- **Impact**: Storage costs and query performance issues
-- **Mitigation**: Intelligent sampling, tiered storage, data retention policies
-
-### Risk: Alert fatigue
-- **Impact**: Important alerts missed due to noise
-- **Mitigation**: Alert tuning, anomaly detection, alert grouping
-
-### Risk: Tool complexity
-- **Impact**: Difficulty using and maintaining observability tools
-- **Mitigation**: Simplified interfaces, training, vendor support
-
-### Risk: Skill gaps
-- **Impact**: Team lacks expertise in observability practices
-- **Mitigation**: Training, hiring, knowledge sharing
-
-### Risk: Privacy violations
-- **Impact**: Sensitive data exposed in telemetry
-- **Mitigation**: Data sanitization, access controls, regular audits
-
-## 12. Costs and FinOps
-
-### Implementation costs
-- Observability platform licensing: $100K-$250K
-- Infrastructure and storage: $50K-$150K
-- Implementation and integration: $75K-$150K
-- Training and change management: $30K-$75K
-
-### Operating costs
-- Platform licensing and maintenance: $50K-$150K annually
-- Storage and infrastructure: $100K-$300K annually
-- Support and operations: $150K-$300K annually
-- Training and onboarding: $20K-$50K annually
-
-### Cost-benefit considerations
-- Observability typically costs 3-7% of infrastructure spend
-- ROI through reduced downtime: 5:1 to 20:1
-- Avoided costs from faster incident resolution
-- Improved operational efficiency and developer productivity
-
-### FinOps practices
-- Regular review of observability costs vs. value
-- Optimization of data retention and sampling strategies
-- Leveraging cloud-native observability services
-- Right-sizing infrastructure based on actual usage
-
-## 13. KPIs
-
-### Effectiveness KPIs
-- **Mean time to detection (MTTD)**: Average time to detect issues
-- **Mean time to resolution (MTTR)**: Average time to resolve issues
-- **Observability coverage**: Percentage of services instrumented
-- **Alert effectiveness**: Percentage of alerts leading to actionable incidents
-
-### Efficiency KPIs
-- **Query performance**: Average query response time
-- **Data ingestion rate**: Telemetry data processed per second
-- **Storage efficiency**: Cost per GB of telemetry data stored
-- **Automation rate**: Percentage of observability tasks automated
-
-### Quality KPIs
-- **Data completeness**: Percentage of expected telemetry collected
-- **Data accuracy**: Percentage of telemetry data passing validation
-- **False positive rate**: Percentage of alerts that are false positives
-- **User satisfaction**: Survey results on observability tool effectiveness
-
-### Strategic KPIs
-- **System availability**: Uptime of monitored services
-- **Performance improvement**: Reduction in system latency and errors
-- **Cost optimization**: Reduction in infrastructure costs through insights
-- **Innovation enablement**: Number of new features enabled by observability
-
-## 14. Deliverables and checklists
-
-### Phase 1 deliverables
-- [ ] Observability requirements document
-- [ ] Platform selection and procurement
-- [ ] Instrumentation standards document
-- [ ] Initial instrumentation library
-- [ ] Basic logging infrastructure
-
-### Phase 2 deliverables
-- [ ] Structured logging implementation
-- [ ] Metric collection and storage
-- [ ] Basic dashboards and visualizations
-- [ ] Initial alerting rules
-- [ ] Incident management integration
-
-### Phase 3 deliverables
-- [ ] Distributed tracing implementation
-- [ ] Advanced analytics capabilities
-- [ ] Log aggregation and search
-- [ ] Role-based dashboards
-- [ ] CI/CD pipeline integration
-
-### Phase 4 deliverables
-- [ ] Optimized data retention policies
-- [ ] Intelligent sampling strategies
-- [ ] Enhanced alerting with anomaly detection
-- [ ] Self-service observability capabilities
-- [ ] Observability governance documentation
-
-### Phase 5 deliverables
-- [ ] Predictive observability capabilities
-- [ ] Observability as code practices
-- [ ] Business intelligence integration
-- [ ] Best practices library
-- [ ] Observability culture program
-
-### Ongoing deliverables
-- [ ] Daily observability dashboards
-- [ ] Weekly performance reports
-- [ ] Monthly observability reviews
-- [ ] Quarterly capacity planning
-- [ ] Annual observability strategy review
-
-## 15. References
-
-### 15.1 Workspace source
-- [`kali-task-research.md`](../kali-task-research.md:1) — Item 20: Observability from day one
-
-### 15.2 External references (retrieved via Firecrawl MCP)
-- CrowdStrike. *The Three Pillars of Observability: Logs, Metrics, and Traces*. Retrieved from https://www.crowdstrike.com/en-us/cybersecurity-101/observability/three-pillars-of-observability/ — Explains that the three pillars of observability are logs, metrics, and traces, and how these three data outputs provide different insights into the health and functions of systems.
-
-- Microsoft Engineering Playbook. *Logs vs Metrics vs Traces - Engineering Fundamentals Playbook*. Retrieved from https://microsoft.github.io/code-with-engineering-playbook/observability/log-vs-metric-vs-trace/ — Describes using logs to track detailed information about an event also monitored by a metric, particularly errors, warnings or other exceptional situations.
-
-- IBM. *Three Pillars of Observability: Logs, Metrics and Traces*. Retrieved from https://www.ibm.com/think/insights/observability-pillars — States that observability relies on three pillars of telemetry data—metrics, logs and traces—to make computing networks easier to visualize and understand.
-
-### 15.3 Suggested further reading (not fetched)
-- *Observability Engineering* — Book by Charity Majors, Liz Fong-Jones, and George Miranda
-- *Site Reliability Engineering* — Google SRE book on monitoring and observability
-- *The Site Reliability Workbook* — Practical SRE implementation guide
-- *Distributed Systems Observability* — Book by Cindy Sridharan
-- *OpenTelemetry Documentation* — Comprehensive guide to OpenTelemetry implementation
+A City Digital Twin is only useful if leaders and operators can answer one question quickly and defensibly:
+
+> **Is the twin safe to use right now for this decision?**
+
+“Observability from day one” for a city twin therefore goes beyond “services are up.” It must make **data freshness, coverage, trustworthiness, governance compliance, and model validity** visible across a distributed, multi-tenant, multi-vendor system.
+
+This document defines a digital-twin-specific observability program that is:
+- **Standards-first** (OpenTelemetry + W3C context propagation; OpenMetrics/Prometheus conventions where applicable).
+- **Governed** (telemetry never becomes a backdoor for PII, sensitive locations, or surveillance).
+- **Federated** (clear ownership boundaries and escalation that work across agencies and vendors).
+- **SLO-driven** (alerting based on error budgets and burn rates, not ad-hoc thresholds).
+- **FinOps-aware** (sampling, retention tiers, cardinality control, and cost showback).
+
+Core deliverables:
+1. **Twin Observability Contract**: required fields/tags across logs/metrics/traces (dataset IDs, schema versions, run IDs, model versions, tenant/agency, classification tier, correlation IDs).
+2. **Twin SLI/SLO catalog**: standard indicators for pipelines, state synchronization, model services, APIs/dashboards, and governance/audit systems.
+3. **Ownership + escalation model**: who is on call for source feeds vs pipelines vs platform vs products; who can silence alerts; how audits are logged.
+4. **Telemetry governance**: “never log” rules, sanitization enforcement, access tiering (ops/dev/vendor), tiered retention + legal hold.
+5. **Testing + rehearsals**: CI observability tests, synthetic transactions/replay, and chaos drills integrated with incident response rehearsals.
+
+This document deepens item 20 in [`kali-task-research.md`](kali-task-research.md:1): *"Observability from day one: Build observability into the digital twin platform from the outset to ensure reliable operations."*
+
+---
+
+## 1) Observability goals for a city digital twin
+
+### 1.1 What you are trying to know
+1. **Twin usability**: the twin is fresh enough, complete enough, and not misleading.
+2. **Twin integrity**: state and pipelines are not silently corrupt or drifting.
+3. **Governance posture**: telemetry and audit logs comply with privacy, access, and retention commitments.
+4. **Operational readiness**: cross-agency operations can detect, triage, and resolve incidents.
+5. **Cost sustainability**: telemetry volume and query patterns are bounded.
+
+### 1.2 “Safe to use” signals (what dashboards must show)
+Every major twin view (internal and public-facing) must surface:
+- **Last updated** timestamp per dataset layer (and the dataset criticality tier).
+- **Freshness SLO state** (OK / at-risk / violated) with a simple explanation.
+- **Coverage / completeness** (what portion of expected sensors/feeds are contributing).
+- **Degraded-mode flags** (e.g., “model fallback”, “missing district feeds”, “state-store resync”).
+- **Confidence / uncertainty** where models are used.
+
+---
+
+## 2) Twin-specific observability contract (explicit and enforced)
+
+### 2.1 Contract scope (what must conform)
+The contract is a hard requirement for:
+- all ingestion/pipeline jobs that publish datasets into the twin
+- all state-store writers/readers
+- all model services used in the twin
+- all serving APIs and dashboards
+- all governance/audit subsystems
+
+### 2.2 Required identifiers and tags across signals
+**All signals** (logs/metrics/traces) must include (where applicable):
+- `correlation_id` (request ID or job/run correlation)
+- `tenant_id` (agency/department tenant)
+- `vendor_id` (if a vendor-operated subsystem)
+- `dataset_id` (canonical dataset identifier)
+- `dataset_tier` (criticality tier)
+- `schema_id` and/or `schema_version`
+- `run_id` (pipeline run / batch ID)
+- `state_store_id` (if applicable)
+- `model_id`, `model_version`, `model_validation_tier` (if applicable)
+- `data_classification` (e.g., public / internal / sensitive / restricted)
+
+**Traces** additionally must include:
+- `trace_id`, `span_id`
+
+**OpenTelemetry resource attributes** (minimum):
+- `service.name`, `service.version`, `deployment.environment`
+
+### 2.3 Canonical event types (minimum)
+Standardize event families so operators can work across agencies/vendors:
+- `data.ingest`
+- `data.validate`
+- `data.quarantine`
+- `data.publish`
+- `state.sync`
+- `model.infer`
+- `model.drift_check`
+- `dashboard.render`
+- `access.audit`
+
+### 2.4 Context propagation rules
+- Use W3C Trace Context (`traceparent`) for correlation across service boundaries.
+- Use W3C Baggage sparingly for **non-sensitive** routing hints only.
+
+Hard rules:
+- **Never put PII or precise locations into baggage.**
+- Prefer deriving routing/ownership from `dataset_id`/`tenant_id` rather than carrying user identifiers.
+
+### 2.5 Enforcement posture (guardrails-first)
+- **Standard libraries/SDKs** enforce required fields and redaction.
+- **CI blocks merges** that violate contract and “never log” policies.
+- **Collector-level enforcement** can:
+  - drop attributes not in allowlists
+  - hash/pseudonymize allowed identifiers where necessary
+  - drop high-risk payloads (e.g., bodies)
+
+---
+
+## 3) Standard SLI/SLO catalog for city twins
+
+### 3.1 Dataset criticality tiers (example)
+Define tiers that drive alerting urgency, retention, and staffing:
+- **Tier 0 (safety/critical operations)**: used for time-sensitive operational decisions.
+- **Tier 1 (operational)**: affects day-to-day operations; tolerates short outages.
+- **Tier 2 (planning/public health)**: analytics and planning; tolerates longer delays.
+- **Tier 3 (informational)**: nice-to-have.
+
+### 3.2 SLI/SLO catalog table
+Starter catalog; tune per domain and dataset:
+
+| Group | SLI | Definition / calculation | Why it matters in a twin | Example SLO (Tier 0 / Tier 1 / Tier 2) |
+|---|---|---|---|---|
+| Ingestion/pipelines | Freshness by dataset | `now - last_event_time(dataset_id)` | “Is the layer current?” | 99% < 5m / < 30m / < 24h |
+| Ingestion/pipelines | Coverage by dataset | `% expected sources contributing` | Avoid silent partial blindness | ≥ 98% / ≥ 95% / ≥ 90% |
+| Ingestion/pipelines | Schema error rate | invalid records / total | Detect breaking changes early | < 0.1% / < 0.5% / < 1% |
+| Ingestion/pipelines | Missingness rate | missing required fields / total | Data quality SLO, not infra | dataset-specific error budget |
+| Ingestion/pipelines | Outlier rate | outlier flags / total | Detect sensor drift/tampering | dataset-specific guardrails |
+| Ingestion/pipelines | Quarantine rate | quarantined / total | Early warning + abuse detection | bounded; spike triggers incident |
+| Ingestion/pipelines | Reprocessing backlog age | age of oldest pending reprocess | Detect growing debt | < target window |
+| State store/sync | Sync lag | producer timestamp → state-store commit | “How behind is the state?” | p95 < 10s / < 60s / N/A |
+| State store/sync | Virtual vs physical divergence | `|twin_state - observed_state|` where defined | Detect stale/incorrect “world state” | divergence p95 < threshold |
+| State store/sync | Conflict rate | conflicting updates / total | Detect integration breakage | < threshold |
+| Model services | Drift indicators | PSI/KL or domain metric | Prevent silent accuracy loss | investigated within X hours |
+| Model services | Calibration health | calibration error/curve | Prevent overconfident outputs | within bounds |
+| Model services | Fairness/impact proxy | outcome parity/impact ratios where relevant | Avoid uneven harm | monitored + guardrail triggers |
+| Model services | Version distribution | % traffic by model_version | Know what’s actually running | 99% on approved versions |
+| Serving/APIs | Availability | success responses / total | User-facing reliability | 99.9% |
+| Serving/APIs | Latency | p95/p99 response time | Usability and trust | p95 < target |
+| Serving/APIs | “Truthfulness indicators present” | % views with last-updated + degraded flags | Prevent misleading dashboards | 100% |
+| Public dashboards | Staleness disclosure | disclosure shown when stale | Trust and compliance | 100% when SLO violated |
+| Governance/audit | Audit log completeness | % privileged actions logged | Compliance + investigations | 100% |
+| Governance/audit | Break-glass usage | count and rate | Detect misuse | reviewed within 24h |
+| Governance/audit | Alert silencing audit | % silences with ticket + expiry | Prevent hiding incidents | 100% |
+
+**Integration note:** dataset-level SLIs should align to data quality definitions and quarantine policy in [`research/data-quality-slas-deep-research.md`](research/data-quality-slas-deep-research.md:1).
+
+---
+
+## 4) Telemetry governance (privacy + access + retention)
+
+### 4.1 “Never log / never emit” rules
+Telemetry must never include:
+- Direct identifiers: names, phone/email, national IDs, patient identifiers.
+- Credentials/secrets: tokens, API keys, session IDs, private keys.
+- Raw payloads from sensitive systems (case files, health records, policing notes).
+- **Precise residential location** or person-level location traces.
+- Raw images/audio/video frames unless explicitly approved for a bounded debugging window.
+- Full request/response bodies by default.
+
+### 4.2 Enforcement mechanisms (what actually works)
+**At the code boundary** (preferred):
+- Standard logging wrapper that only accepts structured objects.
+- Field allowlists for each log event type.
+- Secret scrubbing (regex + known key patterns).
+
+**In CI**:
+- “Never log” linters (blocklist common anti-patterns: `console.log(req.body)`, payload dumps).
+- Schema validation for log events.
+- Unit tests for redaction.
+
+**At the collector**:
+- Attribute allowlists.
+- Drop/transform processors.
+- Rate limits and backpressure to avoid cascading failures.
+
+### 4.3 Access tiering (ops vs dev vs vendor)
+Observability data is production data. Apply least privilege:
+
+- **Ops (SRE/on-call)**: access to operational telemetry needed to restore service.
+- **Developers / data engineers**: access scoped to owned services; time-bounded elevated access.
+- **Vendors**: ticket-based, expiring access; no blanket access across tenants.
+
+RBAC dimensions to enforce:
+- `tenant_id`
+- `service.name`
+- `dataset_id`
+- `data_classification`
+
+Break-glass access requires:
+- incident ID
+- explicit approval per policy
+- immutable audit trail of queries and exports
+
+### 4.4 Retention tiers + legal hold
+Tiered retention controls cost and supports investigations:
+
+- **Hot (7–14 days)**: high-cardinality traces/logs for active debugging.
+- **Warm (30–90 days)**: reduced-cardinality logs + key metrics.
+- **Cold (6–24 months)**: compliance/audit logs + aggregated metrics.
+
+Legal hold:
+- immutable retention override tied to case/incident number
+- explicit export controls and audit logging
+
+---
+
+## 5) Alert design, ownership, and escalation (federated)
+
+### 5.1 SLO-driven paging strategy
+- Page on **error budget burn** (multiwindow burn-rate) for customer-impacting SLOs.
+- Use symptom alerts (fast detection) and cause signals (diagnosis).
+- Every page must have:
+  - a clear owner
+  - a runbook
+  - a safe-mode/rollback
+
+### 5.2 On-call boundaries (data source vs pipeline vs platform vs product)
+- **Data source owners**: sensor networks, partner feeds, vendor APIs.
+- **Pipeline owners**: ingest/validate/quarantine/publish jobs.
+- **Platform SRE**: shared infra (collectors, storage, query, IAM, networking).
+- **Product/domain ops**: dashboards and operational workflows.
+
+### 5.3 Escalation paths (minimum)
+- Freshness/coverage SLO breach → pipeline on-call → source owner if upstream.
+- Schema errors/quarantine spike → pipeline on-call + data steward → source owner.
+- Observability platform outage → platform SRE → vendor (if managed service).
+- Suspected PII leakage → security/privacy on-call + platform SRE (immediate).
+
+### 5.4 Alert fatigue controls
+- Burn-rate alerts instead of hard thresholds for SLOs.
+- Paging policies: severity gating, aggregation/grouping, maintenance windows.
+- Weekly review: top noisy alerts, precision/recall proxies, paging load.
+
+### 5.5 “Who can silence alerts” + audit logging
+Only:
+- on-call leads
+- incident commander
+
+All silences require:
+- reason
+- duration
+- ticket/incident reference
+
+Silences must be written to immutable audit logs.
+
+---
+
+## 6) Cost governance for observability (FinOps integration)
+
+### 6.1 Sampling strategies (practical defaults)
+- **Traces**: tail-based sampling (keep errors; sample successful requests).
+- **Logs**: default INFO/WARN; restrict DEBUG to bounded time windows.
+- **Metrics**: prefer pre-aggregated metrics for high-volume questions.
+
+### 6.2 Retention tiers by signal class and dataset tier
+- Tier 0: longer retention for key metrics + audit logs; traces remain short.
+- Tier 2/3: shorter retention and heavier sampling.
+
+### 6.3 Query guardrails and cardinality controls
+- Ban unbounded labels (user IDs, raw addresses, full URLs with query params).
+- Collector allowlists for attributes.
+- Per-metric cardinality limits and dashboards for top offenders.
+
+### 6.4 Showback/chargeback
+Attribute telemetry cost by:
+- `service.name`
+- `tenant_id`
+- `vendor_id`
+
+Publish monthly reports:
+- telemetry ingest/storage/query cost per team/service
+- top cardinality offenders
+
+### 6.5 Metrics vs logs vs traces (when to use what)
+- “Are we meeting SLO?” → metrics.
+- “What failed?” → traces + structured logs.
+- “Who did what?” → audit logs.
+
+---
+
+## 7) Testing observability (CI + synthetic + chaos)
+
+### 7.1 Observability tests in CI/CD
+Minimum tests:
+- Required span/log fields exist (contract conformance).
+- Correlation works across boundaries (trace + log correlation).
+- Forbidden fields never appear (PII/secrets).
+
+### 7.2 Synthetic transactions and replay tests
+- Synthetic end-to-end flows: ingest → validate → publish → dashboard render.
+- Replay-based tests for pipelines using fixed snapshots.
+
+### 7.3 Chaos experiments (validate signal quality under failure)
+Run drills that confirm operators still have diagnosable signals:
+- drop a source feed
+- corrupt schema
+- slow a pipeline stage
+- break context propagation across a vendor boundary
+
+Integrate with [`research/incident-response-rehearsals-deep-research.md`](research/incident-response-rehearsals-deep-research.md:1) and require AAR evidence.
+
+---
+
+## 8) Operational runbooks (minimum set)
+
+### 8.1 Dataset freshness breach
+- Triage: confirm scope (`dataset_id`, `tenant_id`), check ingestion lag and upstream status.
+- Mitigation: mark dashboards degraded; show “last updated”; switch to fallback.
+- Escalation: source owner if upstream; product ops for user communications.
+
+### 8.2 Suspected PII leakage into logs
+- Contain: restrict access, stop exports, rotate credentials if needed.
+- Identify: search patterns, find emitting `service.name`/`service.version`.
+- Remediate: patch + deploy; purge within retention policy; document.
+- Notify: privacy/legal per policy.
+
+### 8.3 Cardinality/cost explosion
+- Contain: drop offending attributes at collector; tighten sampling.
+- Identify: top label keys/services.
+- Prevent: add CI checks; improve dashboards; update standards.
+
+### 8.4 Drift in key model outputs
+- Validate: confirm data shift vs model bug.
+- Mitigate: fallback model; disable feature; increase HITL sampling.
+- Escalate: model owner + domain ops.
+
+### 8.5 Vendor-operated subsystem telemetry outage
+- Identify: vendor boundary vs platform.
+- Mitigate: mark degraded; use vendor status feed.
+- Escalate: vendor on-call via contract; require post-incident report.
+
+---
+
+## 9) Key metrics (program-level)
+- SLO compliance by domain and dataset tier.
+- Alert quality: page volume per on-call, noisy alert rate, actionability rate.
+- Time-to-detect and time-to-diagnose.
+- Telemetry cost per service/team; top cardinality offenders.
+- Governance: break-glass frequency; audit log completeness.
+
+---
+
+## 10) Implementation roadmap
+
+### 0–3 months: contract + minimal SLIs + safe logging + on-call routing
+- Publish the **Twin Observability Contract** and ship shared libraries.
+- Define dataset tiers and minimal SLIs (freshness, coverage, schema errors).
+- Establish safe logging rules (“never log”) and basic RBAC.
+- Implement on-call routing boundaries and escalation contacts.
+
+### 3–12 months: SLO-based paging + cost controls + CI tests + chaos drills
+- Add error budgets and burn-rate paging.
+- Implement retention tiers + sampling policies.
+- Add CI observability tests and synthetic transactions.
+- Introduce cardinality dashboards + showback.
+
+### 12–24 months: federation maturity + cross-domain dashboards + audit readiness
+- Cross-domain “safe to use” dashboards.
+- Continuous audit readiness (legal hold workflows, immutable logs).
+- Regular chaos drills and rehearsal integration.
+
+---
+
+## References (high-signal sources; use as starting points)
+
+### OpenTelemetry and modern observability conventions
+- OpenTelemetry context propagation: [`opentelemetry.io/docs/concepts/context-propagation/`](https://opentelemetry.io/docs/concepts/context-propagation/) — Explains correlating traces/metrics/logs via propagated context across services.
+- OpenTelemetry specification — environment variable propagation carriers: [`opentelemetry.io/docs/specs/otel/context/env-carriers/`](https://opentelemetry.io/docs/specs/otel/context/env-carriers/) — Recommends consistent context propagation using W3C Trace Context and Baggage across carriers.
+- W3C Baggage specification: [`www.w3.org/TR/baggage/`](https://www.w3.org/TR/baggage/) — Defines a standard format for propagating request context properties (must be used carefully to avoid leaking sensitive data).
+
+### SLO-based alerting / burn-rate alerting
+- Google SRE Workbook — alerting on SLOs: [`sre.google/workbook/alerting-on-slos/`](https://sre.google/workbook/alerting-on-slos/) — Practical guidance for turning SLOs into alerts using burn-rate and multiwindow patterns.
+
+### Privacy-safe logging guidance and audit log integrity norms
+- OWASP Logging Cheat Sheet: [`cheatsheetseries.owasp.org/cheatsheets/Logging_Cheat_Sheet.html`](https://cheatsheetseries.owasp.org/cheatsheets/Logging_Cheat_Sheet.html) — Secure logging guidance with emphasis on avoiding sensitive data exposure.
+
+### Cost control practices for high-cardinality telemetry
+- OpenTelemetry metric best practices (cardinality): [`opentelemetry.io/docs/languages/dotnet/metrics/best-practices/`](https://opentelemetry.io/docs/languages/dotnet/metrics/best-practices/) — Notes cardinality limits and suggests using configuration (Views) to manage attribute explosion.

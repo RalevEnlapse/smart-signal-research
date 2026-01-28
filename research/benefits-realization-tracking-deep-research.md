@@ -1,454 +1,296 @@
-# Benefits realization tracking — Deep research
-
-## Executive summary
-
-Benefits realization tracking is the systematic process of identifying, planning, measuring, and monitoring the expected benefits from investments, projects, and initiatives throughout their lifecycle. For a city digital twin program, this capability ensures that investments deliver measurable value to stakeholders, enables data-driven decision-making, and provides accountability for outcomes. This research outlines a comprehensive framework for benefits realization tracking including baseline establishment, benefit categorization, measurement methodologies, governance structures, and integration with project portfolio management.
-
-## Why this theme matters for a City Digital Twin (and how it helps you run it)
-Digital twin programs often fail in public-sector settings not because the tech is impossible, but because the “value story” is vague, benefits are claimed without baselines, and funding confidence erodes. Benefits realization tracking turns the twin into an outcomes-driven program: you define what success means, measure leading indicators, and keep an auditable link from platform capabilities → interventions → real-world impact.
-
-### Why you need it
-- **Protects the program from “demo-ware”:** Without agreed benefit definitions and baselines, the twin risks becoming a visualization project rather than a service-improving platform.
-- **Aligns stakeholders across agencies:** Benefits are cross-cutting (ops efficiency, safety, sustainability). A formal benefits model clarifies ownership and makes trade-offs explicit.
-- **Improves investment decisions:** Measurement and attribution allow you to scale what works and stop what doesn’t, supporting portfolio governance.
-
-### How it helps you run the twin (practical operational impact)
-- **Benefit dashboards as an operating instrument:** Track leading indicators (adoption, data quality, response times) and lagging indicators (cost avoidance, service reliability, exposure reduction).
-- **Closed-loop governance:** Use variance reviews to trigger corrective actions (data fixes, process changes, additional training) rather than post-hoc reporting.
-- **Better change management:** Clear “why” and visible outcomes increase adoption of new workflows enabled by the twin.
-
-### Evidence pointers (deep research starting points)
-- Monday.com’s benefits management guidance emphasizes that projects can finish “on time and on budget” yet miss expectations, and that benefits management connects deliverables to measurable outcomes via clear ownership, baselines, success metrics, and continuous tracking ([`monday.com` benefits management](https://monday.com/blog/project-management/benefits-management/)).
-
-## 1. Background and context
-
-Benefits realization management (BRM) emerged from project management and portfolio management disciplines as organizations recognized that project completion does not guarantee value delivery. Traditional project management focuses on delivering outputs (products, services, results) on time, on budget, and to specification. However, the ultimate purpose of investments is to achieve outcomes and benefits that justify the expenditure.
-
-In the context of smart city and digital twin initiatives, benefits are often complex, cross-cutting, and realized over extended timeframes. A digital twin platform may generate benefits across multiple domains: operational efficiency, improved service delivery, enhanced citizen experience, environmental sustainability, and economic development. These benefits may accrue to different stakeholders at different times, making tracking challenging.
-
-The shift from output-focused to outcome-focused management requires:
-- Clear articulation of expected benefits before investment approval
-- Establishment of measurable baselines and targets
-- Ongoing measurement throughout the initiative lifecycle
-- Attribution of benefits to specific interventions
-- Governance mechanisms to ensure accountability
-
-Benefits realization tracking provides the feedback loop that enables continuous improvement, validates investment decisions, and builds stakeholder confidence in the digital twin program.
-
-## 2. Stakeholders
-
-### Primary stakeholders
-- **Executive sponsors**: City leadership, CIO, Chief Digital Officer who approve investments and are accountable for outcomes
-- **Program/Project managers**: Responsible for delivering initiatives and tracking benefit progress
-- **Benefits owners**: Individuals accountable for specific benefit categories (e.g., operational efficiency, sustainability)
-- **Domain experts**: Subject matter experts who define benefit measures and validate results
-
-### Secondary stakeholders
-- **Finance department**: Budget owners who need to understand return on investment
-- **Operations teams**: Service delivery units that realize operational benefits
-- **Citizens and businesses**: Ultimate beneficiaries of improved city services
-- **Technology vendors**: Partners whose solutions contribute to benefit delivery
-- **Regulatory bodies**: External entities that may require benefit reporting
-
-### Governance stakeholders
-- **Portfolio management office (PMO)**: Oversees benefits tracking across the portfolio
-- **Audit and risk committees**: Provide oversight and assurance
-- **Performance management teams**: Align benefits with organizational KPIs
-
-## 3. Threat model / abuse cases
-
-### Data integrity threats
-- **Baseline manipulation**: Deliberate setting of unfavorable baselines to exaggerate benefits
-- **Measurement gaming**: Selective reporting of metrics that show positive outcomes
-- **Attribution errors**: Claiming credit for benefits caused by external factors
-
-### Process threats
-- **Benefit creep**: Adding new benefits after approval without proper governance
-- **Premature declaration**: Claiming benefits before they are fully realized
-- **Scope-benefit misalignment**: Tracking benefits not aligned with actual project scope
-
-### Governance threats
-- **Lack of accountability**: No clear ownership of benefit delivery
-- **Insufficient independence**: Benefits measured by those responsible for delivery
-- **Political interference**: Pressure to report favorable outcomes
-
-### Mitigation strategies
-- Independent validation of baselines and measurements
-- Clear benefit ownership and accountability structures
-- Regular audit of benefit tracking processes
-- Transparent reporting with methodology documentation
-- Separation of measurement and delivery responsibilities
-
-## 4. Reference architecture (components + data flows)
-
-### Core components
-
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                        Benefits Realization Platform                         │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                              │
-│  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐                  │
-│  │  Benefit     │    │  Baseline    │    │  Target      │                  │
-│  │  Definition  │◄──►│  Management  │◄──►│  Management  │                  │
-│  │  Repository  │    │  Module      │    │  Module      │                  │
-│  └──────────────┘    └──────────────┘    └──────────────┘                  │
-│         │                   │                   │                           │
-│         └───────────────────┼───────────────────┘                           │
-│                             ▼                                               │
-│  ┌──────────────────────────────────────────────────────────────────────┐  │
-│  │                    Benefit Measurement Engine                         │  │
-│  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌───────────┐ │  │
-│  │  │  Data        │  │  Metric      │  │  Attribution │  │  Trend    │ │  │
-│  │  │  Collection  │  │  Calculation │  │  Analysis    │  │  Analysis │ │  │
-│  │  └──────────────┘  └──────────────┘  └──────────────┘  └───────────┘ │  │
-│  └──────────────────────────────────────────────────────────────────────┘  │
-│                             │                                               │
-│                             ▼                                               │
-│  ┌──────────────────────────────────────────────────────────────────────┐  │
-│  │                    Reporting & Visualization                          │  │
-│  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌───────────┐ │  │
-│  │  │  Dashboards  │  │  Benefit     │  │  Executive   │  │  Alerts   │ │  │
-│  │  │              │  │  Reports     │  │  Summaries   │  │           │ │  │
-│  │  └──────────────┘  └──────────────┘  └──────────────┘  └───────────┘ │  │
-│  └──────────────────────────────────────────────────────────────────────┘  │
-│                                                                              │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
-
-### Data flows
-
-1. **Benefit definition flow**: Business case → Benefit definition → Baseline establishment → Target setting → Approval
-2. **Measurement flow**: Data sources → Data collection → Metric calculation → Attribution analysis → Benefit realization calculation
-3. **Reporting flow**: Benefit data → Aggregation → Visualization → Distribution → Review
-4. **Governance flow**: Benefit tracking → Periodic review → Variance analysis → Decision making → Adjustment
-
-### Integration points
-- **Project portfolio management**: Link benefits to projects and programs
-- **Financial systems**: Connect benefits to budget and cost data
-- **Operational systems**: Source data for operational metrics
-- **Digital twin platform**: Leverage twin data for benefit measurement
-- **Performance management**: Align with organizational KPIs
-
-## 5. Methods / algorithms / standards
-
-### Benefit categorization framework
-- **Financial benefits**: Cost savings, revenue generation, cost avoidance
-- **Operational benefits**: Efficiency gains, productivity improvements, service level improvements
-- **Strategic benefits**: Competitive advantage, market positioning, innovation enablement
-- **Social benefits**: Citizen satisfaction, equity improvements, accessibility
-- **Environmental benefits**: Emissions reduction, resource conservation, sustainability
-
-### Measurement methodologies
-- **Baseline-target method**: Measure current state, set target, track progress
-- **Counterfactual analysis**: Estimate what would have happened without the intervention
-- **Before-after comparison**: Compare pre- and post-implementation metrics
-- **Control group comparison**: Compare with similar entities without the intervention
-- **Time-series analysis**: Track trends and identify inflection points
-
-### Attribution techniques
-- **Direct attribution**: Benefits clearly linked to specific interventions
-- **Proportional attribution**: Allocate benefits across multiple contributing factors
-- **Contribution analysis**: Assess relative contribution of different factors
-- **Logic models**: Map inputs, activities, outputs, outcomes, and impacts
-
-### Standards and frameworks
-- **PMI Benefits Realization Management**: PMI practice standard for benefits management
-- **OGC Managing Successful Programmes (MSP)**: Benefits management framework
-- **ISO 21502**: Project, programme and portfolio management — Guidance on project management
-- **The Standard for Portfolio Management**: PMI standard including benefits realization
-
-### Key metrics
-- **Benefit realization rate**: Percentage of planned benefits achieved
-- **Time to benefit**: Duration from implementation to benefit realization
-- **Benefit cost ratio**: Total benefits divided by total costs
-- **Net present value of benefits**: Discounted value of future benefits
-- **Benefit sustainability**: Duration over which benefits are maintained
-
-## 6. Data requirements
-
-### Baseline data
-- Pre-implementation performance metrics
-- Historical trends and seasonality
-- Industry benchmarks for comparison
-- Contextual factors affecting performance
-
-### Target data
-- Quantified benefit targets with timeframes
-- Stretch targets for aspirational goals
-- Minimum acceptable thresholds
-- Confidence intervals for estimates
-
-### Measurement data
-- Operational metrics from source systems
-- Financial data from accounting systems
-- Customer feedback and satisfaction data
-- Environmental and sustainability metrics
-
-### Attribution data
-- Project implementation dates and milestones
-- External events and market conditions
-- Parallel initiatives and interventions
-- Control group data where applicable
-
-### Data quality requirements
-- Accuracy: Measurements must be precise and reliable
-- Completeness: All relevant data points must be captured
-- Timeliness: Data must be available for timely reporting
-- Consistency: Standardized definitions and calculation methods
-- Traceability: Clear audit trail from source to reported benefit
-
-## 7. Implementation plan (phases)
-
-### Phase 1: Foundation (Months 1-3)
-- Establish benefits realization governance structure
-- Define benefit categorization framework
-- Create benefit definition templates
-- Identify initial benefit owners
-- Select pilot projects for implementation
-
-### Phase 2: Baseline establishment (Months 3-6)
-- Collect baseline data for pilot projects
-- Establish measurement methodologies
-- Define benefit targets and timeframes
-- Set up data collection mechanisms
-- Train benefits owners on tracking processes
-
-### Phase 3: Platform implementation (Months 6-9)
-- Implement benefits tracking platform
-- Integrate with data sources
-- Create dashboards and reports
-- Establish automated data collection
-- Test measurement calculations
-
-### Phase 4: Rollout (Months 9-12)
-- Expand to all active projects
-- Conduct benefits owner training
-- Establish regular review cadence
-- Implement variance analysis processes
-- Create executive reporting
-
-### Phase 5: Optimization (Months 12-18)
-- Refine measurement methodologies
-- Improve attribution accuracy
-- Enhance predictive capabilities
-- Integrate with portfolio management
-- Establish continuous improvement processes
-
-## 8. Testing and validation
-
-### Data validation
-- Verify baseline data accuracy through independent sources
-- Validate measurement calculations with sample data
-- Test data integration with source systems
-- Confirm automated collection processes
-
-### Process validation
-- Conduct walkthrough of benefit tracking process
-- Validate governance approvals and sign-offs
-- Test variance analysis and escalation procedures
-- Verify reporting accuracy and completeness
-
-### Stakeholder validation
-- Review benefit definitions with domain experts
-- Validate measurement methodologies with operations teams
-- Confirm benefit targets with executive sponsors
-- Test reporting usability with stakeholders
-
-### Continuous validation
-- Regular audits of benefit tracking processes
-- Independent validation of high-impact benefits
-- Peer review of benefit calculations
-- External benchmarking of benefit realization rates
-
-## 9. Observability (SLIs/SLOs)
-
-### Service Level Indicators (SLIs)
-- **Data freshness**: Time from data availability to benefit calculation
-- **Calculation accuracy**: Percentage of calculations passing validation checks
-- **Report availability**: Uptime of benefits reporting platform
-- **Data completeness**: Percentage of required data points captured
-- **Attribution confidence**: Statistical confidence in benefit attribution
-
-### Service Level Objectives (SLOs)
-- **Data freshness**: Benefit calculations within 5 business days of period end
-- **Calculation accuracy**: 99% of calculations pass validation
-- **Report availability**: 99.5% platform uptime during business hours
-- **Data completeness**: 95% of required data points captured
-- **Attribution confidence**: 80% confidence level for primary benefits
-
-### Monitoring and alerting
-- Real-time monitoring of data collection processes
-- Automated alerts for data quality issues
-- Dashboard tracking of SLI performance
-- Regular reporting on SLO compliance
-
-## 10. Governance and compliance
-
-### Governance structure
-- **Benefits Steering Committee**: Executive oversight of benefits realization
-- **Benefits Management Office**: Central coordination and support
-- **Benefits Owners**: Accountability for specific benefit categories
-- **Benefits Analysts**: Technical execution of measurement and reporting
-
-### Decision rights
-- Benefit definition and approval: Executive sponsors
-- Baseline and target setting: Benefits owners with steering committee approval
-- Measurement methodology: Benefits management office with domain expert input
-- Benefit validation: Independent audit function
-- Reporting and communication: Benefits management office
-
-### Compliance requirements
-- Financial reporting standards for cost-benefit analysis
-- Government accountability requirements for public investments
-- Audit trail requirements for benefit calculations
-- Transparency requirements for public reporting
-- Data protection and privacy for citizen-related metrics
-
-### Documentation requirements
-- Benefit definition documents with clear rationale
-- Baseline measurement methodology documentation
-- Calculation formulas and assumptions
-- Attribution analysis documentation
-- Regular benefit realization reports
-
-## 11. Risks and mitigations
-
-### Risk: Inaccurate baselines
-- **Impact**: Overstated or understated benefits
-- **Mitigation**: Independent validation, multiple data sources, documented methodology
-
-### Risk: Benefit attribution challenges
-- **Impact**: Difficulty proving causal relationship
-- **Mitigation**: Use multiple attribution methods, maintain control groups, document assumptions
-
-### Risk: Data quality issues
-- **Impact**: Unreliable benefit measurements
-- **Mitigation**: Data quality controls, automated validation, regular audits
-
-### Risk: Stakeholder resistance
-- **Impact**: Lack of engagement in tracking process
-- **Mitigation**: Early stakeholder involvement, clear communication, demonstrate value
-
-### Risk: Changing external conditions
-- **Impact**: Benefits affected by factors outside project control
-- **Mitigation**: Scenario analysis, flexible targets, regular reassessment
-
-### Risk: Resource constraints
-- **Impact**: Insufficient capacity for tracking activities
-- **Mitigation**: Prioritize high-impact benefits, automate processes, leverage existing data
-
-## 12. Costs and FinOps
-
-### Implementation costs
-- Platform development or licensing: $200K-$500K
-- Data integration and ETL development: $100K-$300K
-- Training and change management: $50K-$150K
-- Initial data collection and baseline establishment: $50K-$100K
-
-### Operating costs
-- Benefits management staff: $300K-$600K annually
-- Platform maintenance and support: $50K-$100K annually
-- Data storage and processing: $20K-$50K annually
-- Audit and validation activities: $30K-$60K annually
-
-### Cost-benefit considerations
-- Benefits tracking typically costs 1-3% of project portfolio value
-- ROI of benefits tracking: 10:1 to 20:1 through improved decision-making
-- Avoided costs from failed or underperforming projects
-- Improved resource allocation through better visibility
-
-### FinOps practices
-- Regular review of benefits tracking costs vs. value delivered
-- Optimization of data collection processes to reduce manual effort
-- Leveraging existing platforms and integrations to minimize licensing costs
-- Prioritizing benefits tracking based on investment size and strategic importance
-
-## 13. KPIs
-
-### Effectiveness KPIs
-- **Benefits realization rate**: Percentage of planned benefits achieved
-- **Benefit accuracy**: Variance between projected and actual benefits
-- **Time to benefit**: Average duration from implementation to benefit realization
-- **Benefit sustainability**: Percentage of benefits maintained over time
-
-### Efficiency KPIs
-- **Tracking coverage**: Percentage of projects with active benefits tracking
-- **Data timeliness**: Average time from period end to benefit calculation
-- **Process efficiency**: Cost of benefits tracking as percentage of portfolio value
-- **Automation rate**: Percentage of benefits calculated automatically
-
-### Quality KPIs
-- **Data quality score**: Composite measure of data accuracy, completeness, timeliness
-- **Attribution confidence**: Average confidence level in benefit attribution
-- **Stakeholder satisfaction**: Survey results on benefits tracking usefulness
-- **Audit findings**: Number and severity of audit issues
-
-### Strategic KPIs
-- **Portfolio ROI**: Return on investment across tracked projects
-- **Strategic alignment**: Percentage of benefits aligned with strategic objectives
-- **Innovation enablement**: Number of new initiatives enabled by realized benefits
-- **Citizen impact**: Measurable improvements in citizen outcomes
-
-## 14. Deliverables and checklists
-
-### Phase 1 deliverables
-- [ ] Benefits realization governance charter
-- [ ] Benefit categorization framework document
-- [ ] Benefit definition template
-- [ ] Benefits owner assignment matrix
-- [ ] Pilot project selection report
-
-### Phase 2 deliverables
-- [ ] Baseline data collection reports for pilot projects
-- [ ] Measurement methodology documentation
-- [ ] Benefit target documents
-- [ ] Data collection process documentation
-- [ ] Benefits owner training materials
-
-### Phase 3 deliverables
-- [ ] Benefits tracking platform implementation
-- [ ] Data integration specifications and test results
-- [ ] Dashboard and report designs
-- [ ] Automated data collection processes
-- [ ] Platform user documentation
-
-### Phase 4 deliverables
-- [ ] Expanded benefits tracking coverage report
-- [ ] Training completion records
-- [ ] Review cadence schedule
-- [ ] Variance analysis procedures
-- [ ] Executive reporting templates
-
-### Phase 5 deliverables
-- [ ] Refined measurement methodologies
-- [ ] Attribution accuracy improvement report
-- [ ] Predictive analytics capabilities
-- [ ] Portfolio management integration documentation
-- [ ] Continuous improvement process documentation
-
-### Ongoing deliverables
-- [ ] Monthly benefit realization dashboards
-- [ ] Quarterly benefit realization reports
-- [ ] Annual benefits portfolio review
-- [ ] Benefit variance analysis reports
-- [ ] Benefits tracking process improvements
-
-## 15. References
-
-### 15.1 Workspace source
-- [`kali-task-research.md`](../kali-task-research.md:1) — Item 16: Benefits realization tracking
-
-### 15.2 External references (retrieved via Firecrawl MCP)
-- PMI. *Learning Organization Benefits Track and Measure*. Project Management Institute. Retrieved from https://www.pmi.org/learning/library/learning-organization-benefits-track-measure-8409 — Provides a benefits management framework for creating common baselines and comparing project value delivery.
-
-- Prism PPM. *Benefits Realization: A PMO's Guide to Real Value*. Retrieved from https://prismppm.com/blog/pmo-strategy/the-case-for-benefits-realization-a-pmos-guide-to-real-value/ — Discusses benefits realization management as an approach to measuring project outcomes and maximizing project value.
-
-- Monday.com. *Benefits Management: Plan, Track, and Measure Business Value*. Retrieved from https://monday.com/blog/project-management/benefits-management/ — Covers establishing measurement methods before project starts, including baseline measurements, success criteria, and data collection methods.
-
-### 15.3 Suggested further reading (not fetched)
-- *Managing Successful Programmes (MSP)* — OGC framework for program management including benefits realization
-- *The Standard for Portfolio Management* — PMI standard covering benefits management in portfolio context
-- *Benefits Realization Management: A Practical Guide to Achieving Measurable Benefits* — Book by Gerald Bradley
-- *Realizing Benefits from Government Investments* — OECD guidance on public sector benefits management
-- *Measuring and Managing Performance in Organizations* — Book by Robert D. Austin on measurement methodologies
+# Benefits Realization Tracking (Deep Research)
+
+## Purpose
+Benefits Realization Tracking ensures the **City Digital Twin program produces measurable public value** and that claims about value are **auditable, reproducible, and hard to game**.
+
+This document defines:
+- A **tiered benefits-claim system** with publication thresholds.
+- A **benefit lineage** model (claim → intervention → decisions/ADRs → datasets/models/pipelines → evidence).
+- **Causal rigor** standards (baselines, counterfactuals, pre-analysis plans, sensitivity checks).
+- Governance to prevent Goodhart’s Law failures and to separate **internal operational learning** from **public reporting**.
+
+## Scope
+Applies to benefits claimed from:
+- Digital twin products (dashboards, simulations, scenario tools, 3D/4D/5D models)
+- Data platforms and integrations that feed the twin
+- Operational interventions enabled by the twin (signal timing changes, maintenance prioritization, inspections, dispatch routing)
+
+## Operating principles
+1. **Claims are tiered**: early signals are not presented as impact.
+2. **Evidence is linked**: every metric in a report must be traceable to raw data + processing + decision.
+3. **Rigor matches stakes**: higher spend / higher visibility requires stronger methods.
+4. **Net value**: benefits are evaluated **against total cost** (CapEx, OpEx, change management, risk).
+5. **Anti-gaming by design**: metrics are paired with guardrails, audits, and independent validation.
+
+---
+
+## Definitions
+- **Benefit**: a measurable improvement attributable (to some degree) to program activities, expressed in outcome terms (service levels, risk reduction, cost avoidance, emissions, equity).
+- **Output**: a delivered artifact (dataset, model, dashboard). Outputs are not benefits.
+- **Outcome**: real-world change in performance or conditions.
+- **Claim**: a formal statement that a benefit occurred, at a defined confidence tier.
+- **Baseline**: the “no-change” reference trajectory.
+- **Counterfactual**: what would have happened without the intervention.
+
+---
+
+## Benefits claim tiers (publication and decision thresholds)
+All benefits must be recorded as claims with one of the tiers below.
+
+### Tier 0 — Activity / Delivery
+**What it is**: work completed (datasets onboarded, model deployed, training delivered).
+- Acceptable evidence: completion checklists, pipeline run logs, change tickets.
+- Not allowed: public statements implying impact.
+
+### Tier 1 — Operational signal (plausible association)
+**What it is**: observed metric movement aligned with expectations, without a defensible counterfactual.
+- Requirements:
+  - Metric definition + owner + data lineage
+  - Baseline description (historical average or forecast)
+  - Confounder register (known external drivers)
+- Allowed messaging: “early signal / monitoring indicator”.
+
+### Tier 2 — Supported contribution (quasi-experimental)
+**What it is**: evidence supports that the intervention contributed meaningfully.
+- Requirements (minimum):
+  - Documented intervention timing and scope
+  - Baseline and comparison group or pre/post with adjustments
+  - Sensitivity checks and robustness narrative
+  - Peer review by independent analytics reviewer
+- Examples of methods:
+  - Difference-in-differences, interrupted time series, matched controls
+
+### Tier 3 — High-confidence impact (causal, audit-ready)
+**What it is**: strong causal attribution suitable for high-stakes decisions and public accountability.
+- Requirements (minimum):
+  - Pre-analysis plan (PAP) approved before outcome data is inspected
+  - Strong counterfactual strategy (RCT where feasible; otherwise best-available quasi-experimental)
+  - Full reproducibility package (code, data snapshots, parameterization, run logs)
+  - Independent validation and sign-off
+
+### Tier selection rules
+- Tier is set at claim creation and may only **increase** with additional evidence.
+- High-visibility claims (press releases, budget submissions) require **Tier 2+**, and material fiscal claims require **Tier 3**.
+
+---
+
+## Benefit lifecycle
+1. **Identify** benefit hypothesis (who benefits, mechanism, expected magnitude, risks).
+2. **Define** metrics + baselines + guardrails.
+3. **Register** a claim candidate with tier target and evaluation plan.
+4. **Collect & validate** data with lineage.
+5. **Analyze** per the evaluation plan.
+6. **Review & approve** per governance.
+7. **Report** internally and/or publicly with tier-appropriate language.
+8. **Retire** claim (benefit achieved, invalidated, or superseded).
+
+---
+
+## City digital twin benefit taxonomy (minimum set)
+Benefits should be tagged to support portfolio roll-up without misleading aggregation.
+
+### Service performance
+- Travel time reliability, on-time performance
+- Incident response time, clearance time
+- Maintenance backlog reduction
+
+### Cost and productivity
+- Avoided site visits / optimized inspections
+- Reduced rework in capital projects
+- Lower energy consumption / operational cost
+
+### Risk and resilience
+- Flood risk exposure reduction
+- Critical asset failure probability reduction
+- Improved recovery time objectives for key services
+
+### Environmental outcomes
+- Emissions reductions, air quality proxies
+- Noise reduction
+- Modal shift indicators
+
+### Equity and inclusion
+- Distributional impacts by neighborhood / demographic proxy (where lawful)
+- Access improvements (time to services, barrier reduction)
+
+### Governance and compliance
+- Faster permitting with maintained quality
+- Reduced audit findings
+- Improved data quality / fewer critical incidents
+
+---
+
+## Evidence & benefit lineage (audit-ready model)
+Every claim must have a **lineage chain** linking from decision to data to analysis.
+
+### Lineage chain
+- Claim ID → benefit statement → intervention(s) → decision record(s) → system changes → data sources → transformations → metrics → analysis runs → reviewer approvals.
+
+### Required evidence artifacts (per claim)
+- **Claim record** (metadata)
+- **Metric specification** (definition, inclusion/exclusion rules, units)
+- **Data contract references** (source systems, schema versions)
+- **Provenance** (pipeline run IDs, hashes, timestamps)
+- **Analysis package** (notebook/report, code, parameter files)
+- **Review log** (who reviewed, what was challenged, what changed)
+
+### Claim record template (minimum fields)
+| Field | Description |
+|---|---|
+| Claim ID | Unique ID (e.g., BR-2026-001) |
+| Tier | 0–3 |
+| Benefit statement | Plain-language statement |
+| Owner | Accountable lead |
+| Reviewers | Independent reviewers |
+| Intervention | What changed, where, when |
+| Affected population | Who/what is impacted |
+| Primary metric(s) | Outcome metrics |
+| Guardrail metrics | Anti-gaming / safety metrics |
+| Baseline method | Historical/forecast/control |
+| Counterfactual method | RCT / DiD / ITS / matched controls / none |
+| Data lineage | Links to datasets and pipeline runs |
+| Cost basis | TCO inputs used |
+| Uncertainty | CI/ranges, sensitivity summary |
+| Approval status | Draft/Reviewed/Approved/Published |
+| Publication level | Internal only / Public summary / Public detailed |
+
+---
+
+## Causal rigor requirements (baseline, counterfactual, uncertainty)
+### Baselines
+- Define the baseline period and justify representativeness.
+- Address seasonality and policy changes.
+- Prefer baselines that can be reproduced from archived data snapshots.
+
+### Counterfactual strategies
+Choose the strongest feasible approach:
+1. **Randomized / phased rollout** (best)
+2. **Matched controls** (comparable areas/assets)
+3. **Difference-in-differences**
+4. **Interrupted time series** with covariates
+5. **Before/after** (Tier 1 only)
+
+### Pre-analysis plan (PAP)
+Required for Tier 3 and recommended for Tier 2.
+PAP must include:
+- Primary/secondary outcomes, hypothesis direction
+- Data sources and inclusion criteria
+- Model specification and covariates
+- Multiple testing controls (if many metrics)
+- Stopping rules and handling of missing data
+
+### Uncertainty and sensitivity
+- Report ranges (confidence intervals where possible).
+- Run sensitivity checks for key assumptions (baseline window, control selection, outliers).
+
+---
+
+## Anti-gaming controls (Goodhart-resistant design)
+### Metric design patterns
+- Pair each primary metric with at least one **guardrail** (e.g., faster response time paired with safety outcomes).
+- Use **balanced scorecards** for multi-objective systems.
+- Avoid single-metric incentives for teams/vendors.
+
+### Operational controls
+- **Independent analytics review** for Tier 2–3.
+- **Data quality gates**: lineage completeness, anomaly checks, schema drift monitoring.
+- **Audit sampling**: random claim audits each quarter.
+- **Perverse incentive tests**: explicit review of how a metric could be manipulated.
+
+### Vendor and partner anti-gaming
+- Contractual requirement to provide evidence artifacts and raw logs for audits.
+- Clear penalties for metric manipulation and incentives for transparent reporting.
+
+---
+
+## Governance: roles, cadence, and approvals
+### Roles (minimum)
+- **Benefit Owner (Accountable)**: business/agency lead responsible for benefit definition and operational change.
+- **Analytics Lead (Responsible)**: evaluation design and analysis execution.
+- **Data Steward (Responsible)**: data contracts, lineage, and quality.
+- **Independent Reviewer (Consulted)**: challenge function (internal audit, PMO analytics QA, or external evaluator).
+- **Governance Board (Approver)**: approves Tier 2–3 claims and public reporting.
+
+### Cadence
+- Monthly: portfolio review (Tier 0–1), data quality and leading indicators.
+- Quarterly: claim audits, Tier upgrades, benefits roll-up with uncertainty.
+- Annual: benefits strategy refresh; alignment with budget cycle.
+
+### Approval matrix
+| Activity | Tier 0 | Tier 1 | Tier 2 | Tier 3 |
+|---|---:|---:|---:|---:|
+| Internal reporting | ✅ | ✅ | ✅ | ✅ |
+| Public summary | ❌ | ⚠️ (signal only) | ✅ | ✅ |
+| Material fiscal claim | ❌ | ❌ | ⚠️ | ✅ |
+| Governance board sign-off | ❌ | ❌ | ✅ | ✅ |
+
+---
+
+## Reporting: internal vs public
+### Internal reporting
+- Can include Tier 0–3, but must clearly label tiers.
+- Can include operational detail needed for improvement.
+
+### Public reporting
+- Must avoid disclosing sensitive operational details (security) and personal data.
+- Must present:
+  - Tier, uncertainty, and limitations
+  - Clear narrative separating outputs from outcomes
+  - Equity/distributional notes where relevant and lawful
+
+---
+
+## Cost and TCO coupling
+All Tier 2–3 claims must include a cost basis:
+- Implementation cost (build/buy)
+- Operating cost (cloud, licenses, support)
+- Change management and training
+- Data acquisition and governance overhead
+- Risk costs (privacy/security mitigation)
+
+Net benefit should be expressed as:
+- Net present value (when applicable)
+- Cost per unit improvement (e.g., $/minute reduced)
+
+---
+
+## Tooling and implementation architecture
+### Evidence store
+- Append-only or object-lock storage for evidence artifacts.
+- Versioned datasets and models with immutable identifiers.
+
+### Benefits registry
+- A structured registry (YAML/JSON/DB) backing the claim record template.
+- Integration with:
+  - ADR repository
+  - Issue tracker / change management
+  - Data catalog / lineage tools
+
+### Automation hooks
+- Automated generation of claim evidence packs from pipeline runs.
+- Continuous monitoring of primary and guardrail metrics.
+
+---
+
+## Risks and mitigations
+| Risk | Example | Mitigation |
+|---|---|---|
+| Goodhart’s Law | Teams optimize metric, harm service | Guardrails, audits, balanced scorecards |
+| Attribution overclaim | External factors drive improvement | Tiering + counterfactual standards |
+| Data drift | Metric meaning changes | Data contracts, schema versioning |
+| Political pressure | Publish weak claims | Approval thresholds, independent review |
+| Privacy exposure | Too granular public reporting | Aggregation, suppression, disclosure control |
+
+---
+
+## Minimum viable rollout (90 days)
+1. Stand up benefits registry and claim template.
+2. Define portfolio taxonomy + 10 core metrics with guardrails.
+3. Pilot 3 claims (one per major domain: mobility, resilience, buildings).
+4. Implement lineage capture for those claims.
+5. Establish monthly review + quarterly audit.
+
+---
+
+## Sources
+- HM Treasury, **The Green Book (Appraisal and Evaluation in Central Government)**. GOV.UK publication page (2020). https://www.gov.uk/government/publications/the-green-book-appraisal-and-evaluation-in-central-government/the-green-book-2020
