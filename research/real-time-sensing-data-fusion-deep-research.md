@@ -1,404 +1,427 @@
 # Real-time sensing & data fusion — Deep research
 
-## Executive summary (concise)
-Real-time sensing & data fusion is the foundation of an operational “city state” view: multiple high-velocity streams (IoT telemetry, computer-vision events, GIS layers, citizen reports, and potentially OT/SCADA signals) are aligned in time and space, reconciled for identity and quality, and fused into coherent entities/events usable for detection and decision-making.
+## Executive summary (medium-length)
+Real-time sensing & data fusion is how a “city twin” becomes operational: heterogeneous, high-velocity signals (IoT/telemetry, CCTV-derived metadata, GIS layers, 311/citizen reports, and vendor feeds) are aligned in time and space, reconciled for identity, and fused into **trustworthy state + event products** with explicit freshness, confidence, provenance, and privacy controls.
 
-The core technical challenge is not “ingesting data” but **producing trustworthy, time-aligned, semantically consistent state** under noise, missingness, delays, and conflicting observations—while meeting security, privacy, and reliability constraints.
+The hard parts are governance and operability as much as streaming tech:
+- **Canonical ontology + entity registry governance** must support merges/splits, controlled evolution, and downstream compatibility.
+- **Quality scoring + confidence propagation** must be calibrated and validated to prevent overconfident alerts.
+- **Serving semantics** must define how consumers interpret “current state” under eventual consistency, with a **freshness contract** and fallback behavior.
+- **Privacy boundaries and minimization** must be enforceable for sensitive sources (notably CCTV-derived metadata, 311, and fine-grained IoT telemetry).
+- **Operational ownership + federated on-call** must route incidents cleanly across city agencies and vendors.
+- **Testing strategy** must include replay regression, late/out-of-order harnesses, adversarial cases, and synthetic data.
 
-This document deepens the first research item in [`kali-task-research.md`](../kali-task-research.md:1): *“Real-time sensing & data fusion: Combine live IoT, camera, GIS, and citizen-reported streams into a coherent, time-aligned city state.”*
-
----
-
-## 1. Background and context
-The “digital twin” concept (as implied by the source file’s broader list of city twin capabilities) requires a continuously updated representation of real-world assets, locations, conditions, and events.
-
-Real-time fusion is the enabling layer for downstream use cases:
-- Operational dashboards and situational awareness
-- Event detection (incidents, anomalies, threshold exceedances)
-- Simulation inputs (traffic, flooding, energy, etc.)
-- Automated or semi-automated decisions (dispatch, rerouting, mitigation)
-
-The source’s first research item already outlines:
-- **Keywords:** real-time telemetry, data fusion, sensor streams, event detection, spatiotemporal alignment, edge-to-cloud, situational awareness
-- **Typical data sources:** IoT sensors (traffic, weather, noise), CCTV/computer vision feeds, GIS basemaps, 311/citizen reports, SCADA/OT signals
-- **Methods:** streaming ETL, spatiotemporal joins, entity resolution, sensor calibration, anomaly detection, probabilistic fusion
-
-This document turns those bullets into an actionable blueprint.
+This document is an implementable blueprint for data/platform engineering, domain owners, SRE/ops, governance/privacy stakeholders, and vendors.
 
 ---
 
-## 2. Problem statement
-Build a system that can:
-1) Ingest multiple heterogeneous, high-volume streams and batch feeds.
-2) Normalize them into a shared schema/ontology and consistent identifiers.
-3) Align observations in **time** (latency, clock drift, out-of-order arrival) and **space** (coordinates, map matching, geofences).
-4) Resolve “who/what is this?” across systems (entity resolution).
-5) Fuse competing or complementary observations into:
-   - A **current state** for relevant entities (e.g., intersection congestion, asset health, rainfall intensity)
-   - An **event stream** (e.g., “crash detected”, “flood risk rising”, “illegal dumping report”) with confidence and provenance.
-6) Expose state/events to consumers with strong guarantees:
-   - Traceability/provenance
-   - Data quality indicators
-   - Security and privacy controls
-   - Reliability (SLOs)
+## 1. Scope and outcomes
 
-### What “good” looks like
-- A consistent “city state” where each state fact answers: **what, where, when, who observed, confidence, and lineage**.
-- Minimal false positives/negatives for operational alerts.
-- Observability of the fusion pipeline: drift, freshness, completeness, and latency.
+### 1.1 Scope
+In scope:
+- Ingesting and standardizing multi-source sensing streams and periodic feeds.
+- Entity resolution into canonical IDs (assets, locations, sensors, incidents).
+- Fusion into:
+  - **Events** (discrete occurrences with confidence and provenance).
+  - **State** (best current estimate, including uncertainty and freshness).
+- Serving to operational consumers (dashboards, alerting, automation) with defined semantics.
+- Governance: ontology/identity change control, data contracts, privacy boundaries, ownership.
+- Operability: SLOs, incident routing, runbooks.
+- Testing: replay regression, adversarial/late data, synthetic generation.
 
----
+Out of scope (for this document):
+- Selecting a specific vendor stack.
+- External reference discovery (handled in a separate task).
 
-## 3. Key concepts (practical definitions)
-
-### 3.1 Stream vs state vs event
-- **Stream:** raw or enriched observations arriving over time (sensor readings, detections, reports).
-- **Event:** an inferred or reported occurrence (often discrete) with severity, location, and time bounds.
-- **State:** the system’s current best estimate of a variable/entity (e.g., “road segment speed = 18 km/h”, “pump status = ON”).
-
-### 3.2 Spatiotemporal alignment
-- **Time alignment:** assign observations to a time window considering drift/latency.
-- **Spatial alignment:** consistent coordinate reference system, map matching to road segments or assets, and applying geofences.
-
-### 3.3 Entity resolution
-Match disparate identifiers to a canonical entity:
-- “Camera #A12”, “Intersection 5th & Pine”, and “GIS node 18392” may refer to the same location.
-
-### 3.4 Fusion strategy spectrum
-- **Rule-based fusion:** thresholds, heuristics, deterministic precedence.
-- **Probabilistic fusion:** treat observations as evidence; compute posterior confidence.
-- **Learning-based fusion:** models that learn how to reconcile sensors given context.
+### 1.2 Outcomes (“what good looks like”)
+- Consumers can answer for any state/event: **what, where, when (event time), how fresh, confidence, provenance, and privacy classification**.
+- Operational alerts are **calibrated** (confidence correlates to reality) with measurable precision/recall.
+- Incidents are routed to the right owner (source vs platform vs fusion logic) with predictable MTTR.
 
 ---
 
-## 4. Threat model and security/resilience considerations
-Even though the workspace file is not explicitly “Kali” security research, it includes security-oriented themes elsewhere (e.g., cybersecurity & resilience). Real-time sensing and fusion sits at a high-value trust boundary.
+## 2. Core product model: observation → event + state
 
-### 4.1 Assets to protect
-- Integrity of sensor readings/events (prevent false state)
-- Availability of ingest/fusion pipeline (avoid blind spots)
-- Confidentiality of sensitive streams (CCTV metadata, citizen reports, OT/SCADA)
-- Provenance/audit logs (tamper-resistance)
+### 2.1 Canonical record types
+- **Observation (raw or enriched)**: a single report from a source.
+- **Derived evidence**: normalized features used by fusion (e.g., “speed drop”, “vehicle stopped”).
+- **Event**: discrete occurrence with time bounds, location, severity, and confidence.
+- **State**: continuously updated estimate for an entity/feature with uncertainty and freshness.
 
-### 4.2 Adversaries and failure sources
-- External attackers: network intrusion, malware/ransomware, API abuse
-- Insider misuse: over-permissioned access, data exfiltration
-- Supply chain: compromised devices/firmware, vulnerable dependencies
-- Accidental faults: misconfigured sensors, clock drift, schema changes
-
-### 4.3 Representative abuse cases
-- **Spoofing sensor data:** inject false congestion readings to reroute traffic.
-- **Camera detection poisoning:** trigger fake incident alerts.
-- **Replay attacks:** resend stale “normal” readings to hide anomalies.
-- **Denial of service:** overload message brokers/ingest endpoints.
-- **Data poisoning for ML-based fusion:** bias model decisions over time.
-
-### 4.4 Controls (architecture-level)
-- Strong device identity and authentication for telemetry sources
-- Message integrity (signing) for high-trust feeds; transport encryption
-- Network segmentation (especially if OT/SCADA signals are included)
-- Strict IAM/RBAC for consuming fused state
-- Audit logging and immutable append-only event stores for provenance
-- Anomaly detection not just on “city events” but also on pipeline behavior
+### 2.2 Minimum fields (must-have)
+Every **event** and **state** record MUST carry:
+- `canonical_entity_id` (or `canonical_location_id`)
+- `event_time` (and `event_time_end` for intervals)
+- `processing_time`
+- `freshness` (see §5)
+- `confidence` (0–1) and/or `uncertainty` (distribution or bounds)
+- `provenance` (source(s), transformations, model/rule versions)
+- `quality_signals` (validity, completeness, timeliness, consistency)
+- `privacy_classification` (policy tier + allowed uses)
 
 ---
 
-## 5. Use cases and operational scenarios
-Using the “typical data sources” from the original item, realistic fused outputs include:
+## 3. Canonical ontology + entity registry governance (incl merges/splits)
+This section operationalizes the “canonical IDs” idea into a governed system that can evolve safely.
 
-1) **Incident detection**
-   - Evidence: CV detections + citizen report + sudden probe-speed drop.
-   - Output: a single incident event with confidence and affected road segments.
+### 3.1 Canonical ontology: controlled vocabulary and schemas
+Deliverables:
+- A **canonical ontology** of entity types (e.g., `Sensor`, `Asset`, `RoadSegment`, `Zone`, `Incident`, `WorkOrder`) and event types (e.g., `Collision`, `FloodRiskIncrease`, `IllegalDumpingReport`).
+- For each type: required fields, allowed values, semantics, and privacy tier defaults.
 
-2) **Hazard nowcasting**
-   - Evidence: rainfall radar/gauges + flood sensors + 311 reports.
-   - Output: evolving flood-risk state per neighborhood.
+Rules:
+- Canonical types are versioned (e.g., `ontology_version`).
+- Any consumer-facing change requires compatibility analysis (see §7 change control).
 
-3) **Infrastructure monitoring**
-   - Evidence: vibration/noise sensors + maintenance notes + SCADA tags.
-   - Output: asset health state and anomaly alerts with provenance.
+### 3.2 Entity registry: responsibilities and data model
+The **Entity Registry** is the system of record for canonical IDs and cross-system links.
 
-4) **Situational awareness dashboard**
-   - Evidence: GIS basemap + fused event overlays + state tiles.
-   - Output: a coherent operational view with drill-down lineage.
+Minimum capabilities:
+- Map `source_entity_id` → `canonical_entity_id` with evidence and match confidence.
+- Track **temporal validity** of mappings (`valid_from`, `valid_to`).
+- Support **merges** (many → one canonical) and **splits** (one → many canonical).
+- Emit an **Identity Change Event** stream.
 
----
+Recommended registry tables (conceptual):
+- `canonical_entities` (id, type, attributes, status)
+- `aliases` (source_system, source_id, canonical_id, valid_from/to)
+- `identity_events` (MERGE, SPLIT, DEPRECATE, REKEY)
+- `match_evidence` (features used, score, reviewer, decision)
 
-## 6. Methods and techniques (from concept to implementation)
-This section expands the “Methods” bullets from the source file into implementable approaches.
+### 3.3 Merges, splits, and downstream impact
+Identity changes are inevitable (assets re-labeled, road segments re-modeled, vendor IDs shift).
 
-### 6.1 Streaming ETL (streaming ELT) pipeline design
-Core tasks:
-- Decode/validate incoming messages
-- Normalize timestamps, units, coordinate systems
-- Apply enrichment (geofences, asset metadata lookup)
-- Emit standardized observation records
+Policy:
+- **Merges**: choose a surviving `canonical_entity_id` and mark others as `deprecated` with redirect.
+- **Splits**: create new canonical IDs and define the split rule and time boundary.
+- **No silent rewrites**: all changes produce `IdentityChangeEvent` with effective timestamps.
 
-Important design choices:
-- Exactly-once vs at-least-once processing
-- Event-time vs processing-time semantics
-- Backpressure handling and replay
+Consumer contract:
+- Consumers MUST treat canonical IDs as stable identifiers but subscribe to identity change events if they persist or cache.
+- Serving APIs MUST provide “resolve” endpoints (old → current) and history.
 
-### 6.2 Spatiotemporal joins
-Join patterns:
-- Observation ↔ GIS asset/segment (spatial containment or nearest-neighbor)
-- Observation ↔ observation (co-occurrence in time window + spatial radius)
+### 3.4 Governance workflow (human-in-the-loop)
+Identity and ontology governance must be executable, not aspirational.
 
-Practical considerations:
-- Use hierarchical spatial indexes (tiles, geohashes) to bound joins.
-- Use event-time windows with allowed lateness.
-
-### 6.3 Entity resolution
-Tactics:
-- Canonical identifier registry (mapping table) for known systems.
-- Deterministic match first (shared IDs), then probabilistic match (name + location + attributes).
-
-Outputs should include:
-- Canonical entity ID
-- Match confidence
-- Evidence/provenance (which attributes matched)
-
-### 6.4 Sensor calibration and quality scoring
-Calibration is not a one-time step:
-- Track drift over time.
-- Maintain per-sensor quality score (freshness, variance, bias vs peers).
-
-Quality signals to attach to each observation:
-- Completeness
-- Accuracy estimate (if available)
-- Timestamp certainty
-- Sensor health
-
-### 6.5 Anomaly detection
-Two complementary layers:
-1) **Domain anomalies:** sudden congestion, unusual noise spikes, abnormal OT states.
-2) **Data anomalies:** sensor stuck-at, impossible values, missing bursts.
-
-AI/ML methods for anomaly detection:
-- Time-series autoencoders for detecting unusual patterns in sensor data
-- LSTM/GRU networks for sequential anomaly detection
-- Isolation forests for unsupervised anomaly detection
-- One-class SVM for novelty detection
-- Ensemble methods combining multiple anomaly detectors
-
-### 6.6 Probabilistic fusion (when appropriate)
-When multiple imperfect sources report the same latent variable:
-- Treat each as noisy evidence.
-- Maintain a state estimate with uncertainty.
-
-Implementation patterns:
-- Weighted averaging with dynamic weights from quality scores
-- Bayesian updates for discrete hypotheses (event occurred / did not occur)
-- Kalman filters for state estimation with noisy measurements
-- Particle filters for non-linear, non-Gaussian fusion problems
-- Deep learning-based sensor fusion using attention mechanisms
-
-### 6.7 Privacy-preserving data fusion
-For sensitive data streams (CCTV, citizen reports, location data):
-- Differential privacy for aggregated statistics and public dashboards
-- Federated learning for distributed model training without raw data sharing
-- Secure multi-party computation for joint analytics across agencies
-- Homomorphic encryption for encrypted data processing
-- Zero-trust architecture with mTLS and policy enforcement
-- Edge computing for local data processing before transmission
-
-### 6.8 Standards and protocols
-- MQTT/AMQP for real-time telemetry streaming
-- Apache Kafka for event streaming and message brokering
-- NGSI-LD for context-aware data sharing and semantic interoperability
-- OGC SensorThings API for IoT sensor data
-- OPC UA for industrial/OT sensor integration
-- CoAP for constrained IoT devices
-- DTLS/TLS for secure transport
-- JSON Schema and Avro for data contracts
-- OpenTelemetry for observability and tracing
-- W3C Web of Things (WoT) for IoT device integration
+Workflow:
+1) Proposal (issue/ticket): new type, field, mapping, merge, split.
+2) Automated checks: schema compatibility, impact report, privacy classification.
+3) Review:
+   - Domain steward validates semantics.
+   - Platform steward validates technical fit.
+   - Privacy officer validates minimization/access.
+4) Approval and scheduling.
+5) Release with version + migration plan.
 
 ---
 
-## 7. Reference architecture (conceptual)
-This is an implementation-agnostic architecture aligned to the source’s “edge-to-cloud” and “situational awareness” phrasing.
+## 4. Quality scoring calibration + confidence propagation
+This section turns “quality scoring” into a calibrated system that operators can trust.
 
-### 7.1 Ingestion layer
-- Device/stream gateways
-- Message broker / event bus
-- Schema registry and contracts
+### 4.1 Quality signals (per observation)
+Track at least:
+- **Timeliness**: lag vs source timestamp; late-arrival rate.
+- **Completeness**: expected vs received count; missingness bursts.
+- **Validity**: schema checks, range checks, unit sanity.
+- **Consistency**: cross-source agreement (peer sensors) and temporal smoothness.
+- **Integrity indicators**: device auth failures, signature failures, unusual source IPs.
 
-### 7.2 Stream processing and enrichment
-- Streaming compute jobs for parsing, validation, unit conversion
-- Geospatial enrichment (GIS lookups, map matching)
-- Privacy filters (redaction/minimization where needed)
+### 4.2 Calibration strategy (make scores meaningful)
+Quality scores must be tied to outcomes.
 
-### 7.3 Fusion and state management
-- Entity registry (canonical IDs)
-- Event store (append-only)
-- State store (latest state per entity/feature)
-- Confidence/provenance model
+Implementable approach:
+- Maintain a labeled set of “known-good/known-bad” periods (from incidents, maintenance logs, manual audits).
+- Periodically fit a calibration model:
+  - Example: map raw metrics → `p(observation_reliable)` via isotonic regression or logistic calibration.
+- Validate calibration with reliability plots (predicted vs observed error rates).
 
-### 7.4 Serving and consumption
-- Query APIs (state, history, events)
-- Subscriptions (push alerts)
-- Operational UI dashboards
-- Downstream analytics/simulations
+Operational cadence:
+- Calibrate monthly (or after major sensor firmware/vendor changes).
+- Recalibrate immediately when drift alarms fire (see §8 observability).
 
-### 7.5 Observability and governance
-- Pipeline health metrics (lag, throughput, error rates)
-- Data quality metrics (freshness, completeness, validity)
-- Audit logs and access reports
-- Digital twin synchronization metrics (DT-IRL framework)
-- Model performance metrics for ML-based fusion
-- Privacy budget tracking (ϵ consumption)
-- Cross-domain data lineage and provenance
+### 4.3 Confidence propagation into fused events/state
+Define a consistent confidence model so different teams don’t invent ad-hoc meanings.
 
----
+Recommended semantics:
+- `quality_score` answers: “How reliable is this observation channel right now?”
+- `confidence` answers: “How likely is the inferred event/state to be true given evidence?”
 
-## 8. Tools and implementation approach (vendor-neutral)
-The source file doesn’t name specific products. To avoid inventing citations or claiming specific tools were used, this section stays generic and focuses on capability requirements.
+Propagation rules (implementable):
+- Each fusion rule/model must declare:
+  - Inputs required and their minimum quality thresholds.
+  - How confidence is computed (e.g., Bayesian update, weighted evidence, ensemble).
+  - How uncertainty is represented for state (intervals, distributions).
+- Confidence must never increase without additional evidence or improved quality.
 
-### 8.1 Tool categories you will likely need
-- **Message broker / event streaming platform** (topics, partitions, replay)
-- **Stream processing engine** (event-time windows, stateful processing)
-- **Geospatial services** (spatial indexing, joins, map matching)
-- **Schema governance** (contracts, evolution, validation)
-- **State store** (low-latency reads + TTL where needed)
-- **Event store/data lake** (historical replay, audits)
-- **IAM and secrets management**
-- **Observability stack** (logs, metrics, traces)
-
-### 8.2 Required capabilities checklist
-- Event-time processing and late data handling
-- Idempotent processing and deduplication
-- Backfill/replay workflows
-- Data lineage capture
-- Multi-tenant access control (agency/vendor separation)
+Guardrails:
+- Cap confidence if evidence diversity is low (e.g., only one source type).
+- Penalize stale evidence using freshness decay.
 
 ---
 
-## 9. Step-by-step: building a “coherent, time-aligned city state”
-This is a practical sequence that maps to the source item’s methods.
+## 5. Serving semantics: event + state under eventual consistency with a freshness contract
+Consumers need a precise model of what “current” means.
 
-1) **Define canonical entities and events**
-   - Decide what constitutes an “entity” (asset, road segment, zone, sensor).
-   - Define an event taxonomy and required fields.
+### 5.1 Dual-plane serving: events and state
+- **Event plane (append-only)**: immutable stream of detected/reported events with possible corrections.
+- **State plane (mutable)**: latest estimate per entity/feature, derived from events and observations.
 
-2) **Define an observation schema**
-   - Minimum fields: source, observed_at (event time), received_at, location, metric/value, units, quality, provenance.
+Rule:
+- Events are the audit trail; state is the convenience view.
 
-3) **Establish timestamp strategy**
-   - Require source timestamps where possible.
-   - Track clock drift and estimate correction.
-   - Define allowed lateness windows per source type.
+### 5.2 Event semantics (corrections and idempotency)
+- Events must be idempotent via stable `event_id`.
+- Corrections use explicit event types, e.g. `EventCorrected` / `EventRetracted`, never silent mutation.
 
-4) **Build ingestion with validation and quarantine**
-   - Reject/park messages that fail schema validation.
-   - Keep a “dead letter” path for investigation.
+### 5.3 State semantics (eventual, but bounded by freshness)
+Assume **eventual consistency** across regions/services, but publish a **freshness contract**.
 
-5) **Normalize and enrich spatial context**
-   - Standardize CRS.
-   - Attach GIS features: zone IDs, road segments, asset IDs.
+State record MUST include:
+- `as_of_event_time`: the latest event time incorporated.
+- `computed_at`: processing timestamp.
+- `freshness`: one of:
+  - `FRESH` (within target)
+  - `STALE` (beyond target but within max tolerated)
+  - `EXPIRED` (beyond max tolerated; treat as unavailable)
+- `freshness_target_ms` and `freshness_max_ms` per state product.
 
-6) **Implement entity resolution**
-   - Create a canonical registry and mapping rules.
-   - Include match confidence and evidence.
+Consumer guidance:
+- Dashboards show stale banners and last update time.
+- Automation (dispatch/routing) must refuse to act on `EXPIRED`.
 
-7) **Compute per-source quality scores**
-   - Freshness, noise, drift, missingness.
-   - Feed these scores into fusion weights.
-
-8) **Fuse into state + events**
-   - Choose fusion rules/models per domain variable.
-   - Emit fused state updates and inferred events.
-
-9) **Serve with provenance and security**
-   - Every state/event includes lineage (sources, transforms).
-   - Enforce least privilege on sensitive layers.
-
-10) **Operationalize (SLOs + runbooks)**
-   - Lag SLO, completeness SLO, error budget.
-   - Drill incident response for pipeline failures.
+### 5.4 Eventual-with-freshness-contract: SLO-friendly definition
+Define per product:
+- **Freshness SLO**: % of reads returning `FRESH` (e.g., 99% in 60s).
+- **Completeness SLO**: % of expected entities updated in window.
+- **Correction SLO**: max time to emit correction after late data arrives.
 
 ---
 
-## 10. Common pitfalls and failure modes
-These are predictable failure points in real-time fusion systems.
+## 6. Privacy boundaries and minimization (CCTV-derived metadata, 311, IoT)
+This section makes privacy enforceable with technical and contractual controls.
 
-### 10.1 Latency and out-of-order data
-- Pitfall: using processing time only → incorrect temporal correlations.
-- Mitigation: event-time windows, late-arrival handling, watermarking.
+### 6.1 Data classification and boundaries
+Define tiers (example):
+- **Tier 0 (Public)**: safe aggregates and non-sensitive events.
+- **Tier 1 (Operational)**: internal operational metadata.
+- **Tier 2 (Sensitive)**: potentially identifying or security-relevant.
+- **Tier 3 (Restricted)**: highly sensitive (raw video, precise trajectories, PII).
 
-### 10.2 Brittle spatiotemporal joins
-- Pitfall: naive radius joins explode compute costs or miss matches.
-- Mitigation: tile-based indexes, staged joins, domain-specific constraints.
+Boundary rule:
+- Fusion pipelines must implement **policy enforcement points** that prevent Tier 3 data from flowing into Tier 0/1 products.
 
-### 10.3 Identity mismatch and duplicate entities
-- Pitfall: multiple IDs for the same asset lead to inconsistent state.
-- Mitigation: canonical entity registry + ongoing reconciliation.
+### 6.2 CCTV-derived data: minimization rules
+Allowed by default (subject to local policy):
+- Derived **counts** (e.g., vehicle count per minute per zone).
+- Derived **events** with coarse location/time (e.g., “congestion high”, “object on roadway”) without persistent tracking IDs.
 
-### 10.4 Overtrusting a single source
-- Pitfall: CCTV detection errors dominate decisions.
-- Mitigation: confidence modeling, multi-source corroboration.
+Disallowed by default:
+- Raw video export into the fusion platform.
+- Persistent person- or vehicle-level tracks in general-purpose state stores.
 
-### 10.5 Poor data quality feedback loops
-- Pitfall: no visibility into sensor drift → fusion silently degrades.
-- Mitigation: data-quality SLAs, sensor health dashboards, calibration workflows.
+Controls:
+- Edge processing for CV where feasible; transmit only necessary metadata.
+- Strip or rotate identifiers; avoid cross-camera re-identification.
+- Retention: short TTL for CCTV-derived operational metadata unless explicitly approved.
 
-### 10.6 Governance gaps
-- Pitfall: unclear data ownership → slow incident resolution.
-- Mitigation: stewardship, on-call ownership, documented runbooks.
+### 6.3 311/citizen reports: minimization and safe fusion
+Rules:
+- Separate PII from operational attributes at ingestion.
+- Coarsen location for public outputs (e.g., block-level) and limit free-text exposure.
+- Retention: keep PII only as long as required for case management; fused events should reference case IDs, not personal details.
 
----
+### 6.4 IoT sensors: sensitive inference controls
+Risks include inference from fine-grained location/time patterns.
 
-## 11. Ethics, privacy, and legal notes
-This system can combine data sources that raise significant privacy and civil liberties concerns (notably CCTV-derived signals and citizen-reported data).
+Controls:
+- Default aggregation windows for public/open data.
+- Access controls by purpose; prohibit secondary use without review.
+- Auditable query logging for sensitive tiers.
 
-Principles to apply:
-- **Purpose limitation:** fuse only what is needed for defined operational outcomes.
-- **Data minimization:** avoid retaining raw personal data when derived features suffice.
-- **Transparency:** document what is collected, why, and who can access it.
-- **Access controls:** restrict CCTV-derived outputs and sensitive incident details.
-- **Retention:** define TTLs; keep aggregates longer than raw data where possible.
-
-If OT/SCADA signals are included:
-- Treat as critical infrastructure: segmentation, strict change control, and incident response readiness.
-
----
-
-## 12. Deliverables and success metrics
-### 12.1 Suggested deliverables
-- Observation schema + data contract documentation
-- Canonical entity registry (initial mappings + reconciliation process)
-- Fusion rules/model specs per domain variable
-- Data quality dashboard (freshness/completeness/validity)
-- Provenance model (lineage fields, audit trail)
-- Operational runbooks (pipeline outage, sensor drift, replay/backfill)
-
-### 12.2 Success metrics (examples)
-- End-to-end lag p95/p99 per source
-- % observations passing validation
-- Coverage (% of critical sensors healthy)
-- Alert precision/recall (where ground truth exists)
-- Mean time to detect pipeline failures (MTTD) and recover (MTTR)
+### 6.5 Privacy governance artifacts
+- Data Processing Agreements (DPAs) with vendors.
+- Data Protection Impact Assessment (DPIA) for CCTV/311 fusion products.
+- Documented “allowed uses” per product with enforcement in IAM and APIs.
 
 ---
 
-## 13. References
-### 13.1 Workspace source
-- First research item in [`kali-task-research.md`](../kali-task-research.md:1)
+## 7. Implementable governance: RACI, SLAs/SLOs, change control, and contracts
 
-### 13.2 External references (retrieved via Firecrawl MCP)
-- Comprehensive systematic review of information fusion methods in smart cities (ScienceDirect): https://www.sciencedirect.com/science/article/pii/S1566253524000952
-- Yessef et al. (2025). "Digital twin technology in smart cities: A step toward intelligent urban management." Energy Reports, 14, 5539-5557. DOI: 10.1016/j.egyr.2025.11.097
-- Crespo-Aguado et al. (2024). "Digital twins for smart cities: A systematic review." IEEE Access.
-- Murala et al. (2025). "A service-oriented microservice framework for differential privacy-based protection in industrial IoT smart applications." Scientific Reports, 15, 29230.
-- Jerkovic et al. (2025). "Smart grid IoT framework for predicting energy consumption using federated learning homomorphic encryption." Sensors.
+### 7.1 RACI (minimum viable)
+Roles:
+- **Platform Owner** (data platform engineering)
+- **Domain Data Owner** (agency owning the operational outcome)
+- **Source Owner** (agency/vendor owning devices/systems)
+- **Privacy/Security** (DPO/CISO delegate)
+- **SRE/Operations** (shared reliability function)
+- **Vendor Operator** (if vendor-managed components exist)
 
-### 13.3 Suggested further reading (not fetched)
-- Stream processing "event time" and watermarking concepts
-- Geospatial indexing and efficient spatial joins
-- Entity resolution / record linkage methods
-- Probabilistic sensor fusion (Bayesian filtering) and uncertainty modeling
-- Data governance and privacy-by-design for multi-source city data
-- Deep learning approaches for multi-modal sensor fusion
-- Edge computing architectures for real-time data processing
-- Zero-trust architecture for IoT and sensor networks
-- Federated learning for distributed sensor analytics
+RACI matrix (core activities):
+- Ontology change approval: A=Domain Data Owner, R=Platform Owner, C=Privacy/Security, I=SRE, I=Vendors
+- Entity merge/split approval: A=Domain Data Owner, R=Domain Steward, C=Platform Owner, C=Privacy/Security
+- Source onboarding contract (schema + SLAs): A=Platform Owner, R=Source Owner, C=Domain Owner, C=Privacy/Security
+- Pipeline availability SLO: A=SRE, R=Platform Owner, C=Domain Owner
+- Data quality SLO (freshness/completeness): A=Domain Owner, R=Platform Owner, C=Source Owner
+- Incident response/runbooks: A=SRE, R=Platform Owner, C=Source Owner, I=Domain Owner
+
+### 7.2 SLAs/SLOs (examples you can implement)
+Per source feed (supplier-facing SLA):
+- Uptime % for delivery endpoint
+- Max event-time lag (p95/p99)
+- Schema stability and deprecation notice period
+- Incident notification window (e.g., notify within 15 minutes of outage)
+
+Per fused product (consumer-facing SLO):
+- Read latency p95/p99
+- Freshness SLO (% `FRESH`)
+- Completeness SLO (entity coverage)
+- Correctness proxies (agreement with ground truth where available)
+
+### 7.3 Change control (contracts and versioning)
+Required controls:
+- **Data contracts** for each topic/API: schema, semantics, allowed lateness, retention, privacy tier.
+- Versioning policy:
+  - Backward-compatible changes allowed without consumer migration.
+  - Breaking changes require parallel run, migration window, and deprecation notice.
+- Release checklist:
+  - Impact analysis, replay test pass, privacy review pass, rollback plan, comms plan.
+
+### 7.4 Federated operating model (multi-agency + vendors)
+- Define “platform boundary” vs “source boundary” vs “domain logic boundary”.
+- Use explicit ownership tags in metadata: `owner_team`, `oncall_rotation`, `pager_service`.
+
+---
+
+## 8. Operational ownership, federated on-call, and incident routing
+
+### 8.1 Ownership boundaries (what breaks where)
+Segment the system into operational components:
+- **Source systems/devices**: sensors, CV edge boxes, vendor APIs.
+- **Ingestion**: gateways, brokers, schema validation, quarantine.
+- **Processing**: enrichment, geospatial joins, entity resolution.
+- **Fusion logic**: rules/models producing events/state.
+- **Serving**: APIs, caches, dashboards.
+
+### 8.2 Incident routing rules (implementable)
+Routing should be deterministic based on symptoms:
+- Schema validation failures spike → Source Owner + Platform Owner.
+- Broker lag/partition under-replication → Platform Owner + SRE.
+- Freshness SLO breach for a single source → Source Owner.
+- Confidence calibration drift (over-alerting) → Fusion Owner + Domain Owner.
+- Privacy boundary violation (Tier leakage) → Privacy/Security + Platform Owner (severity high).
+
+### 8.3 Runbooks and escalation
+Minimum runbooks:
+- Pipeline backpressure/lag
+- Late-data surge (watermark adjustments, replay)
+- Sensor drift / stuck-at detection
+- Identity merge/split rollback
+- Privacy incident response (containment, audit, notification)
+
+---
+
+## 9. Testing strategy (replay regression, late-data harness, adversarial + synthetic)
+
+### 9.1 Replay-based regression testing
+Goal: ensure changes don’t degrade detection, freshness, or confidence calibration.
+
+Approach:
+- Maintain curated “golden windows” of historical data (including known incidents and quiet periods).
+- For each pipeline/fusion release:
+  - Replay windows through a test environment.
+  - Compare outputs to baselines: event counts, confidence distributions, state freshness, correction rates.
+
+### 9.2 Late/out-of-order data harness
+Goal: validate event-time semantics and correction behavior.
+
+Harness requirements:
+- Inject controlled reordering, duplicates, and delays per source.
+- Assert:
+  - State transitions are correct given allowed lateness.
+  - Corrections are emitted within the Correction SLO.
+  - No silent state rewrites without provenance updates.
+
+### 9.3 Adversarial and abuse-case testing
+Cover threat-model-driven cases (from spoofing/replay/poisoning):
+- Replay stale “normal” observations.
+- Inject extreme-but-valid values.
+- Simulate compromised device identity.
+- Attempt cross-tenant data access (vendor/agency separation).
+
+Acceptance criteria:
+- Detection of anomalies in pipeline behavior.
+- Access denied and audit logs produced.
+
+### 9.4 Synthetic data generation
+Use synthetic data to fill gaps in real labels and to test rare scenarios.
+
+Recommended synthetic sets:
+- Spatially correlated events (e.g., multi-intersection congestion wave).
+- Sensor drift curves and intermittent outages.
+- Privacy-safe synthetic 311 text templates (no real PII).
+
+---
+
+## 10. Reference architecture (capability view)
+
+### 10.1 Ingestion and contracts
+- Source adapters/gateways with device identity.
+- Schema validation and quarantine.
+- Contract registry (schemas + semantic metadata + privacy tier).
+
+### 10.2 Processing and enrichment
+- Event-time processing with watermarking and allowed lateness.
+- Geospatial enrichment (map matching, geofencing).
+- Entity resolution calls to registry.
+- Policy enforcement points for privacy boundaries.
+
+### 10.3 Fusion and stores
+- Event store (append-only + correction stream).
+- State store (latest + freshness metadata).
+- Feature store (optional) for model-based fusion.
+
+### 10.4 Serving
+- Read APIs for state and event queries.
+- Subscription/alert APIs.
+- Consumer SDK guidance for freshness handling.
+
+---
+
+## 11. Deliverables and success metrics
+
+### 11.1 Deliverables (minimum viable)
+- Canonical ontology (versioned) + glossary.
+- Entity registry service + merge/split workflow + identity change event stream.
+- Per-product freshness contract definitions and SLO dashboards.
+- Confidence calibration playbook + monthly calibration report.
+- Privacy boundary policy spec + enforcement implementation + DPIA artifacts.
+- On-call ownership map + incident routing rules + runbooks.
+- Test harness: replay regression + late-data + adversarial + synthetic generators.
+
+### 11.2 Metrics (examples)
+- Freshness: % `FRESH` by product, p95 end-to-end lag.
+- Data quality: validation pass rate, missingness rate, drift alarms.
+- Fusion correctness: precision/recall where labeled; confidence calibration error.
+- Ops: MTTD/MTTR, incident volume by ownership boundary.
+- Privacy: access denials, policy violations (should be 0), audit log coverage.
+
+---
+
+## 12. References (placeholders; to be populated in a separate task)
+
+### 12.1 Workspace sources
+- [`kali-task-research.md`](../kali-task-research.md:1)
+- [`analysis/real-time-sensing-data-fusion-deep-research.analysis.md`](../analysis/real-time-sensing-data-fusion-deep-research.analysis.md:1)
+
+### 12.2 Standards and specifications
+- **Akidau, Tyler; Bradshaw, Robert; Chambers, Craig; Chernyak, Slava; Fernández-Moctezuma, Rafael J.; Lax, Reuven; McVeety, Sam; Mills, Daniel; Perry, Frances; Schmidt, Eric; Whittle, Sam. _The Dataflow Model: A Practical Approach to Balancing Correctness, Latency, and Cost in Massive-Scale, Unbounded, Out-of-Order Data Processing_.** (Google Research, 2015) https://research.google/pubs/pub43864/ — Canonical description of **event time vs processing time**, **watermarks** (and why they are imperfect), **windowing**, **triggers/panes**, and **refinement** via accumulating and **retracting** updates for late/out-of-order data.
+- **Apache Spark. _Structured Streaming Programming Guide_ (Spark 3.5.x).** https://spark.apache.org/docs/latest/structured-streaming-programming-guide.html — Covers **event-time windows**, **watermarking**, and the **lateness/state-retention trade-off** (e.g., dropping or diverting late data once a watermark passes); also documents fault-tolerance guarantees including conditions for **end-to-end exactly-once** vs **at-least-once**.
+- **Apache Flink. _Timely Stream Processing_ / event time & watermarks (Flink docs).** https://nightlies.apache.org/flink/flink-docs-stable/docs/concepts/time/ — Defines watermarks (e.g., `Watermark(t)` meaning no future elements earlier than `t` are expected) and explains how Flink uses them to drive **event-time progress** and reason about **late events** in windowed computations.
+- **Apache Beam. _Beam Programming Guide: Windowing_ and _Triggers_ (Beam docs).** https://beam.apache.org/documentation/programming-guide/#windowing — Explains event-time **windowing**, **triggers** (early/on-time/late firings), and how pipelines can emit multiple results for the same window as late data arrives, making correction semantics explicit.
+
+### 12.3 Privacy and governance references
+- **European Union. _General Data Protection Regulation (GDPR) — Recitals and Articles_.** https://eur-lex.europa.eu/eli/reg/2016/679/oj — Primary legal source for data protection principles used in governance design, including **data minimization**, **purpose limitation**, and storage limitation; relevant for defining privacy tiers and retention/allowed-use controls for sensor and CCTV-derived metadata.
+
+### 12.4 Security and resilience references
+- **NIST. _Zero Trust Architecture (SP 800-207)_.** https://csrc.nist.gov/publications/detail/sp/800-207/final — Authoritative reference for implementing zero-trust controls around ingestion and serving (identity, policy enforcement points, continuous verification), applicable to multi-agency/vendor sensing pipelines.
+- **NIST. _Security and Privacy Controls for Information Systems and Organizations (SP 800-53 Rev. 5)_.** https://csrc.nist.gov/publications/detail/sp/800-53/rev-5/final — Baseline control catalog for audit logging, integrity, provenance, and resilience controls (e.g., AU, SI, SC families) to make stream-processing and fusion systems operationally and forensically robust.
